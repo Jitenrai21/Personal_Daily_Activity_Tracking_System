@@ -1,5 +1,11 @@
-from . import base
+"""Production settings.
+
+Import core settings from base and override minimal values here.
+"""
+
+# ruff: noqa: F403,F405
+from .base import *
 
 DEBUG = False
-# then reference base.<NAME> if needed, e.g.:
-ALLOWED_HOSTS = base.ALLOWED_HOSTS
+
+ALLOWED_HOSTS = ALLOWED_HOSTS
