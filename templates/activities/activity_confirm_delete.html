@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete activity{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h1>Delete activity</h1>
+    <p>Are you sure you want to delete "{{ activity.title }}"?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn" type="submit">Delete</button>
+      <a class="btn btn-secondary" href="{% url 'activity_detail' activity.pk %}">Cancel</a>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Personal Daily Activity Tracking System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <div class="brand">PDATS</div>
+        <nav class="nav">
+          {% if user.is_authenticated %}
+            <a href="{% url 'activity_list' %}">Activities</a>
+            <a href="{% url 'profile' %}">Profile</a>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="btn btn-secondary" type="submit">Log out</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}">Log in</a>
+            <a class="btn" href="{% url 'signup' %}">Sign up</a>
+          {% endif %}
+        </nav>
+      </header>
+
+      <main class="content">
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <div class="message">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

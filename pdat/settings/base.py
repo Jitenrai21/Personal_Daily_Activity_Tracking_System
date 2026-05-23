@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,8 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "users",
-    "activities",
+    "users.apps.UsersConfig",
+    "activities.apps.ActivitiesConfig",
 ]
 
 MIDDLEWARE = [
@@ -39,7 +40,7 @@ ROOT_URLCONF = "pdat.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -55,7 +56,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "pdat.wsgi.application"
 ASGI_APPLICATION = "pdat.asgi.application"
 
-USE_SQLITE = os.getenv("USE_SQLITE", "false").lower() == "true"
+IS_TESTING = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in " ".join(sys.argv)
+USE_SQLITE = os.getenv("USE_SQLITE", "false").lower() == "true" or IS_TESTING
 
 if USE_SQLITE:
     DATABASES = {
@@ -97,5 +99,12 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "profile"
+LOGOUT_REDIRECT_URL = "login"
+
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

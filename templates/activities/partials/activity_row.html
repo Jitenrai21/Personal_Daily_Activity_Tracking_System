@@ -1,0 +1,22 @@
+<div class="table-row" id="activity-{{ activity.pk }}">
+  <div>
+    <a href="{% url 'activity_detail' activity.pk %}">{{ activity.title }}</a>
+  </div>
+  <div>{{ activity.category.name }}</div>
+  <div>{{ activity.target_value }} {{ activity.get_target_type_display }}</div>
+  <div>
+    <span class="pill">{{ activity.is_active|yesno:"Active,Paused" }}</span>
+  </div>
+  <div class="row-actions">
+    <form
+      method="post"
+      action="{% url 'activity_toggle' activity.pk %}"
+      hx-post="{% url 'activity_toggle' activity.pk %}"
+      hx-target="#activity-{{ activity.pk }}"
+      hx-swap="outerHTML"
+    >
+      {% csrf_token %}
+      <button class="btn btn-secondary" type="submit">Toggle</button>
+    </form>
+  </div>
+</div>

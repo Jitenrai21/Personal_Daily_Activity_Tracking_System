@@ -1,9 +1,12 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from pdat.views import health_view
 
 urlpatterns = [
     path("", health_view, name="health"),
     path("admin/", admin.site.urls),
+    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/", include("users.urls")),
+    path("activities/", include("activities.urls")),
 ]

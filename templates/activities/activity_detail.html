@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity detail{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>{{ activity.title }}</h1>
+      <div class="card-actions">
+        <a class="btn" href="{% url 'activity_update' activity.pk %}">Edit</a>
+        <a class="btn btn-secondary" href="{% url 'activity_list' %}">Back</a>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div>
+        <div class="label">Category</div>
+        <div>{{ activity.category.name }}</div>
+      </div>
+      <div>
+        <div class="label">Target</div>
+        <div>{{ activity.target_value }} {{ activity.get_target_type_display }}</div>
+      </div>
+      <div>
+        <div class="label">Priority</div>
+        <div>{{ activity.priority }}</div>
+      </div>
+      <div>
+        <div class="label">Status</div>
+        <div>{{ activity.is_active|yesno:"Active,Paused" }}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="label">Notes</div>
+      <p>{{ activity.notes|default:"No notes" }}</p>
+    </div>
+    <div class="section">
+      <a class="btn" href="{% url 'recurrence_edit' activity.pk %}">Edit recurrence</a>
+      <a class="btn btn-secondary" href="{% url 'activity_delete' activity.pk %}">Delete</a>
+    </div>
+  </section>
+{% endblock %}
