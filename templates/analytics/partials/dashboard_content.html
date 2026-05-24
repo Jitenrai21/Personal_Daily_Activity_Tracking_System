@@ -1,0 +1,83 @@
+<section class="dashboard-grid">
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <p class="kpi-label">Total minutes</p>
+      <p class="kpi-value">{{ kpis.total_actual }}</p>
+      <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Completion</p>
+      <p class="kpi-value">
+        {% if kpis.completion_rate %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
+      </p>
+      <p class="kpi-foot">Last {{ range_days }} days</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Streak</p>
+      <p class="kpi-value">{{ kpis.streak }} days</p>
+      <p class="kpi-foot">Keep the chain</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Today</p>
+      <p class="kpi-value">{{ kpis.today_actual }} / {{ kpis.today_planned }}</p>
+      <p class="kpi-foot">Actual vs planned</p>
+    </div>
+  </div>
+
+  <div class="chart-card chart-wide">
+    <div class="chart-header">
+      <h2>Daily planned vs actual</h2>
+      <span class="pill">{{ range_days }} days</span>
+    </div>
+    <div class="chart-frame">
+      <canvas id="dailyChart" aria-label="Daily planned vs actual"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>Weekly trends</h2>
+    </div>
+    <div class="chart-frame">
+      <canvas id="weeklyChart" aria-label="Weekly trends"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <h2>Monthly rollup</h2>
+    </div>
+    <div class="chart-frame">
+      <canvas id="monthlyChart" aria-label="Monthly rollup"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card chart-wide">
+    <div class="chart-header">
+      <h2>Heatmap</h2>
+      <span class="muted">Intensity by day</span>
+    </div>
+    <div class="heatmap-grid">
+      {% for week in heatmap %}
+        <div class="heatmap-row">
+          {% for cell in week %}
+            <div
+              class="heatmap-cell level-{{ cell.level }}"
+              title="{{ cell.date }} • {{ cell.value }} min"
+            ></div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{{ daily_labels|json_script:"daily-labels" }}
+{{ daily_actual|json_script:"daily-actual" }}
+{{ daily_planned|json_script:"daily-planned" }}
+{{ weekly_labels|json_script:"weekly-labels" }}
+{{ weekly_actual|json_script:"weekly-actual" }}
+{{ weekly_planned|json_script:"weekly-planned" }}
+{{ monthly_labels|json_script:"monthly-labels" }}
+{{ monthly_actual|json_script:"monthly-actual" }}
+{{ monthly_planned|json_script:"monthly-planned" }}

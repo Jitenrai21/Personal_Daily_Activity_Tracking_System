@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "activities.apps.ActivitiesConfig",
     "planner.apps.PlannerConfig",
     "tracking.apps.TrackingConfig",
+    "analytics.apps.AnalyticsConfig",
 ]
 
 MIDDLEWARE = [

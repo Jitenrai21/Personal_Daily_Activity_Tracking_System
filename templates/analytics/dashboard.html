@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <section class="dashboard-shell fade-in">
+    <div class="dashboard-header">
+      <div>
+        <p class="dashboard-eyebrow">Insights</p>
+        <h1 class="dashboard-title">Your momentum snapshot</h1>
+        <p class="dashboard-subtitle">Track planned vs actual time and spot streaks at a glance.</p>
+      </div>
+      <form
+        class="dashboard-filters"
+        method="get"
+        action="{% url 'dashboard_partial' %}"
+        hx-get="{% url 'dashboard_partial' %}"
+        hx-target="#dashboard-pane"
+        hx-swap="innerHTML"
+      >
+        <div class="filter-group">
+          <label for="range" class="label">Range</label>
+          <select id="range" name="range">
+            {% for option in range_options %}
+              <option value="{{ option }}" {% if option == range_days %}selected{% endif %}>Last {{ option }} days</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="activity" class="label">Activity</label>
+          <select id="activity" name="activity">
+            <option value="">All</option>
+            {% for item in activities %}
+              <option value="{{ item.pk }}" {% if activity and activity.pk == item.pk %}selected{% endif %}>{{ item.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn" type="submit">Update</button>
+      </form>
+    </div>
+
+    <div id="dashboard-pane">
+      {% include 'analytics/partials/dashboard_content.html' %}
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" defer></script>
+  <script>
+    const chartStore = window.dashboardCharts || (window.dashboardCharts = {});
+
+    function loadJson(id) {
+      const node = document.getElementById(id);
+      if (!node) {
+        return null;
+      }
+      return JSON.parse(node.textContent || "null");
+    }
+
+    function renderChart(id, config) {
+      const canvas = document.getElementById(id);
+      if (!canvas) {
+        return;
+      }
+      if (chartStore[id]) {
+        chartStore[id].destroy();
+      }
+      chartStore[id] = new Chart(canvas, config);
+    }
+
+    function renderDashboardCharts() {
+      const dailyLabels = loadJson("daily-labels");
+      if (!dailyLabels) {
+        return;
+      }
+      const dailyActual = loadJson("daily-actual");
+      const dailyPlanned = loadJson("daily-planned");
+      const weeklyLabels = loadJson("weekly-labels");
+      const weeklyActual = loadJson("weekly-actual");
+      const weeklyPlanned = loadJson("weekly-planned");
+      const monthlyLabels = loadJson("monthly-labels");
+      const monthlyActual = loadJson("monthly-actual");
+      const monthlyPlanned = loadJson("monthly-planned");
+
+      renderChart("dailyChart", {
+        type: "bar",
+        data: {
+          labels: dailyLabels,
+          datasets: [
+            {
+              label: "Actual",
+              data: dailyActual,
+              backgroundColor: "#4a4643",
+            },
+            {
+              label: "Planned",
+              data: dailyPlanned,
+              backgroundColor: "#c0b9af",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true },
+          },
+        },
+      });
+
+      renderChart("weeklyChart", {
+        type: "line",
+        data: {
+          labels: weeklyLabels,
+          datasets: [
+            {
+              label: "Actual",
+              data: weeklyActual,
+              borderColor: "#4a4643",
+              backgroundColor: "rgba(74, 70, 67, 0.15)",
+              tension: 0.3,
+            },
+            {
+              label: "Planned",
+              data: weeklyPlanned,
+              borderColor: "#6b6057",
+              backgroundColor: "rgba(107, 96, 87, 0.12)",
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom" } },
+        },
+      });
+
+      renderChart("monthlyChart", {
+        type: "bar",
+        data: {
+          labels: monthlyLabels,
+          datasets: [
+            {
+              label: "Actual",
+              data: monthlyActual,
+              backgroundColor: "#2c2a27",
+            },
+            {
+              label: "Planned",
+              data: monthlyPlanned,
+              backgroundColor: "#e2dcd2",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom" } },
+        },
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderDashboardCharts();
+    });
+
+    document.body.addEventListener("htmx:afterSwap", (event) => {
+      if (event.target && event.target.id === "dashboard-pane") {
+        renderDashboardCharts();
+      }
+    });
+  </script>
+{% endblock %}

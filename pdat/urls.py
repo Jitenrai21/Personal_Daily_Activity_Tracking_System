@@ -11,4 +11,5 @@ urlpatterns = [
     path("activities/", include("activities.urls")),
     path("planner/", include("planner.urls")),
     path("tracking/", include("tracking.urls")),
+    path("", include("analytics.urls")),
 ]

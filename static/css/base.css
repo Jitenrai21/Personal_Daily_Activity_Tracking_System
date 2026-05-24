@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap");
+
 :root {
   --bg-color: #f0ede6;
   --main-color: #e2dcd2;
@@ -5,6 +7,8 @@
   --accent-color: #6b6057;
   --cta-color: #4a4643;
   --border-color: #c0b9af;
+  --dashboard-ink: #1f1d1a;
+  --dashboard-glow: #efe9df;
 }
 
 * {
@@ -13,7 +17,7 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
   background: var(--bg-color);
   color: var(--text-color);
 }
@@ -33,9 +37,22 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-.brand {
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.brand-link:hover .brand-logo {
+  transform: scale(1.04);
 }
 
 .nav {
@@ -256,6 +273,188 @@ textarea {
 
 .planner-item strong {
   display: block;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-shell {
+  background: linear-gradient(140deg, var(--dashboard-glow), var(--bg-color));
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 12px 30px rgba(44, 42, 39, 0.08);
+}
+
+.dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.75rem;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--dashboard-ink);
+}
+
+.dashboard-subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--accent-color);
+}
+
+.dashboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  background: #f9f7f2;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.filter-group {
+  min-width: 180px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  grid-column: 1 / -1;
+}
+
+.kpi-card {
+  padding: 1rem 1.2rem;
+  background: #f9f7f2;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.kpi-label {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-color);
+}
+
+.kpi-value {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.kpi-foot {
+  margin: 0;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+}
+
+.chart-card {
+  padding: 1.2rem 1.4rem;
+  background: #f9f7f2;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 280px;
+}
+
+.chart-wide {
+  grid-column: 1 / -1;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chart-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.chart-frame {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+}
+
+.heatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.heatmap-cell {
+  background: #efe9df;
+  border-radius: 4px;
+  height: 20px;
+}
+
+.heatmap-cell.level-1 {
+  background: #d9d1c5;
+}
+
+.heatmap-cell.level-2 {
+  background: #b9b0a4;
+}
+
+.heatmap-cell.level-3 {
+  background: #8f857b;
+}
+
+.heatmap-cell.level-4 {
+  background: #4a4643;
+}
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    align-items: flex-start;
+  }
+  .dashboard-filters {
+    width: 100%;
+  }
 }
 
 .planner-actions {
