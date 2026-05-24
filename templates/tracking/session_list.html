@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load tz %}
+
+{% block title %}Sessions{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Sessions</h1>
+      <div class="card-actions">
+        <a class="btn btn-secondary" href="{% url 'session_export_csv' %}">Export CSV</a>
+        <a class="btn btn-secondary" href="{% url 'session_export_json' %}">Export JSON</a>
+      </div>
+    </div>
+
+    <div class="section">
+      {% include 'tracking/partials/start_stop_button.html' with running_session=running_session target_id='session-toggle' %}
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Log a session</h2>
+      <form method="post" action="{% url 'session_log' %}" hx-post="{% url 'session_log' %}" hx-target="#session-list" hx-swap="afterbegin">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Add log</button>
+      </form>
+    </div>
+
+    <div id="session-list" class="table">
+      {% include 'tracking/partials/session_list.html' %}
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load tz %}
+
+{% block title %}Session detail{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Session detail</h1>
+      <div class="card-actions">
+        <a class="btn btn-secondary" href="{% url 'session_list' %}">Back</a>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="label">Activity</div>
+        <div>{{ session.activity.title|default:"Unassigned" }}</div>
+      </div>
+      <div>
+        <div class="label">Source</div>
+        <div>{{ session.get_source_display }}</div>
+      </div>
+      <div>
+        <div class="label">Duration</div>
+        <div>{% if session.duration_minutes %}{{ session.duration_minutes }} min{% else %}--{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Edit session</h2>
+      <form method="post" action="{% url 'session_update' session.pk %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Save changes</button>
+      </form>
+    </div>
+
+    <div class="section">
+      <form method="post" action="{% url 'session_delete' session.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-secondary" type="submit">Delete session</button>
+      </form>
+    </div>
+  </section>
+{% endblock %}

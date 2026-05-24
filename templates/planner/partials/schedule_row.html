@@ -5,6 +5,7 @@
     <div class="planner-meta">{{ block.get_source_display }}</div>
   </div>
   <div class="planner-actions">
+    {% include 'tracking/partials/start_stop_button.html' with running_session=running_session activity=block.activity target_id='session-toggle-block-'|add:block.pk %}
     <form method="post" action="{% url 'schedule_delete' block.pk %}" hx-post="{% url 'schedule_delete' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
       {% csrf_token %}
       <button class="btn btn-secondary" type="submit">Remove</button>

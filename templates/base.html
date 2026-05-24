@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Personal Daily Activity Tracking System{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'core/logo.png' %}">
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   </head>
   <body>
@@ -16,6 +17,7 @@
           {% if user.is_authenticated %}
             <a href="{% url 'activity_list' %}">Activities</a>
             <a href="{% url 'planner_day' %}">Planner</a>
+            <a href="{% url 'session_list' %}">Tracking</a>
             <a href="{% url 'profile' %}">Profile</a>
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}

@@ -37,5 +37,8 @@
       <a class="btn" href="{% url 'recurrence_edit' activity.pk %}">Edit recurrence</a>
       <a class="btn btn-secondary" href="{% url 'activity_delete' activity.pk %}">Delete</a>
     </div>
+    <div class="section">
+      {% include 'tracking/partials/start_stop_button.html' with running_session=running_session activity=activity target_id='session-toggle-activity' %}
+    </div>
   </section>
 {% endblock %}

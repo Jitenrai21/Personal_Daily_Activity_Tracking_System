@@ -1,0 +1,24 @@
+<div id="{{ target_id }}" class="session-toggle">
+  {% if running_session %}
+    <form method="post" action="{% url 'session_stop' %}" hx-post="{% url 'session_stop' %}" hx-target="#{{ target_id }}" hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="target_id" value="{{ target_id }}">
+      {% if activity %}
+        <input type="hidden" name="activity_id" value="{{ activity.pk }}">
+      {% endif %}
+      <button class="btn" type="submit">Stop timer</button>
+    </form>
+    {% if running_session.activity %}
+      <p class="muted">Running: {{ running_session.activity.title }}</p>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'session_start' %}" hx-post="{% url 'session_start' %}" hx-target="#{{ target_id }}" hx-swap="outerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="target_id" value="{{ target_id }}">
+      {% if activity %}
+        <input type="hidden" name="activity_id" value="{{ activity.pk }}">
+      {% endif %}
+      <button class="btn" type="submit">Start timer</button>
+    </form>
+  {% endif %}
+</div>

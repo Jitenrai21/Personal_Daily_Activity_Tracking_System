@@ -117,6 +117,16 @@ body {
   background: #f9f7f2;
 }
 
+.table-row-sessions {
+  grid-template-columns: 1.5fr 1.2fr 1.2fr 0.8fr 0.8fr auto;
+}
+
+.session-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .table-row a {
   color: var(--text-color);
   text-decoration: none;
@@ -236,6 +246,12 @@ textarea {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: #f9f7f2;
+}
+
+.planner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .planner-item strong {

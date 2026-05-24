@@ -1,0 +1,15 @@
+{% if sessions %}
+  <div class="table-row table-head table-row-sessions">
+    <div>Activity</div>
+    <div>Start</div>
+    <div>End</div>
+    <div>Duration</div>
+    <div>Source</div>
+    <div></div>
+  </div>
+  {% for session in sessions %}
+    {% include 'tracking/partials/session_row.html' %}
+  {% endfor %}
+{% else %}
+  <p class="muted">No sessions logged yet.</p>
+{% endif %}

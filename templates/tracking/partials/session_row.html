@@ -1,0 +1,20 @@
+{% load tz %}
+
+<div class="table-row table-row-sessions" id="session-{{ session.pk }}">
+  <div>{{ session.activity.title|default:"Unassigned" }}</div>
+  {% timezone profile.timezone %}
+    <div>{{ session.start|date:"Y-m-d H:i" }}</div>
+    <div>
+      {% if session.end %}
+        {{ session.end|date:"Y-m-d H:i" }}
+      {% else %}
+        <span class="pill">Running</span>
+      {% endif %}
+    </div>
+  {% endtimezone %}
+  <div>{% if session.duration_minutes %}{{ session.duration_minutes }} min{% else %}--{% endif %}</div>
+  <div>{{ session.get_source_display }}</div>
+  <div class="row-actions">
+    <a class="btn btn-secondary" href="{% url 'session_detail' session.pk %}">Edit</a>
+  </div>
+</div>

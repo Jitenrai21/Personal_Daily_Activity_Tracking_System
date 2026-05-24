@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
     "activities.apps.ActivitiesConfig",
     "planner.apps.PlannerConfig",
+    "tracking.apps.TrackingConfig",
 ]
 
 MIDDLEWARE = [

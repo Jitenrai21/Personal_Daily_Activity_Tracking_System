@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from planner.forms import ScheduleBlockForm, WeeklyRoutineForm
 from planner.models import ScheduleBlock, WeeklyRoutine
 from planner.services import generate_blocks_for_date
+from tracking.models import Session
 
 
 @login_required
@@ -20,6 +21,11 @@ def daily_plan_view(request):
 
     blocks = ScheduleBlock.objects.filter(user=request.user, date=date)
     form = ScheduleBlockForm(user=request.user, initial={"date": date})
+    running_session = (
+        Session.objects.filter(user=request.user, end__isnull=True)
+        .select_related("activity")
+        .first()
+    )
 
     return render(
         request,
@@ -28,6 +34,7 @@ def daily_plan_view(request):
             "date": date,
             "blocks": blocks,
             "form": form,
+            "running_session": running_session,
         },
     )
 

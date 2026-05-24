@@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
 
 from activities.forms import ActivityForm, CategoryForm, RecurrenceRuleForm
 from activities.models import Activity, ActivityCategory, RecurrenceRule
+from tracking.models import Session
 
 
 @login_required
@@ -68,7 +69,16 @@ def activity_list_view(request):
 @login_required
 def activity_detail_view(request, pk):
     activity = get_object_or_404(Activity, pk=pk, user=request.user)
-    return render(request, "activities/activity_detail.html", {"activity": activity})
+    running_session = (
+        Session.objects.filter(user=request.user, end__isnull=True)
+        .select_related("activity")
+        .first()
+    )
+    return render(
+        request,
+        "activities/activity_detail.html",
+        {"activity": activity, "running_session": running_session},
+    )
 
 
 @login_required

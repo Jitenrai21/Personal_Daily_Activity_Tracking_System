@@ -10,4 +10,5 @@ urlpatterns = [
     path("accounts/", include("users.urls")),
     path("activities/", include("activities.urls")),
     path("planner/", include("planner.urls")),
+    path("tracking/", include("tracking.urls")),
 ]
