@@ -213,3 +213,45 @@ textarea {
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
 }
+
+.planner-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+}
+
+.planner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.planner-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #f9f7f2;
+}
+
+.planner-item strong {
+  display: block;
+}
+
+.planner-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.planner-meta {
+  font-size: 0.9rem;
+  color: var(--accent-color);
+}
+
+.section-title {
+  margin: 0 0 0.6rem;
+}

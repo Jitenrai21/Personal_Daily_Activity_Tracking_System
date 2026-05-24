@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Weekly routines{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Weekly routines</h1>
+      <div class="card-actions">
+        <a class="btn btn-secondary" href="{% url 'planner_day' %}">Back to planner</a>
+      </div>
+    </div>
+
+    <div class="planner-grid">
+      <div>
+        <h2 class="section-title">Routines</h2>
+        <div id="routine-list" class="planner-list">
+          {% for routine in routines %}
+            {% include 'planner/partials/routine_row.html' %}
+          {% empty %}
+            <p class="muted">No routines yet. Add one to auto-generate schedules.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="section-title">Add routine</h2>
+        <form method="post" action="{% url 'routine_create' %}" hx-post="{% url 'routine_create' %}" hx-target="#routine-list" hx-swap="beforeend">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button class="btn" type="submit">Add routine</button>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}

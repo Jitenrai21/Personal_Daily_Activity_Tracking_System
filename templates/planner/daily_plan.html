@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily planner{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Daily planner</h1>
+      <div class="card-actions">
+        <a class="btn btn-secondary" href="{% url 'routine_list' %}">Weekly routines</a>
+      </div>
+    </div>
+
+    <div class="planner-grid">
+      <div>
+        <h2 class="section-title">Schedule for {{ date }}</h2>
+        <form method="post" action="{% url 'schedule_generate' %}" hx-post="{% url 'schedule_generate' %}" hx-target="#schedule-list" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="date" value="{{ date }}">
+          <button class="btn btn-secondary" type="submit">Generate from routines</button>
+        </form>
+
+        <div id="schedule-list" class="planner-list">
+          {% include 'planner/partials/schedule_list.html' %}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="section-title">Add block</h2>
+        <form method="post" action="{% url 'schedule_create' %}" hx-post="{% url 'schedule_create' %}" hx-target="#schedule-list" hx-swap="beforeend">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button class="btn" type="submit">Add block</button>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}

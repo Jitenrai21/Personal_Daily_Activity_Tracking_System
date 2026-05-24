@@ -1,0 +1,13 @@
+<div class="planner-item" id="block-{{ block.pk }}">
+  <div>
+    <strong>{{ block.activity.title }}</strong>
+    <div class="planner-meta">{{ block.start_time }} - {{ block.end_time }}</div>
+    <div class="planner-meta">{{ block.get_source_display }}</div>
+  </div>
+  <div class="planner-actions">
+    <form method="post" action="{% url 'schedule_delete' block.pk %}" hx-post="{% url 'schedule_delete' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
+      {% csrf_token %}
+      <button class="btn btn-secondary" type="submit">Remove</button>
+    </form>
+  </div>
+</div>
