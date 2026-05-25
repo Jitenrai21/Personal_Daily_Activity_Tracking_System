@@ -44,12 +44,10 @@ def test_compute_daily_splits_midnight_session():
     ScheduleBlock.objects.create(
         user=user,
         activity=activity,
+        category=category,
         date=dt.date(2026, 1, 2),
         start_time=dt.time(0, 0),
         end_time=dt.time(1, 0),
-        timezone="Asia/Kathmandu",
-        source="manual",
-        is_recurring=False,
     )
 
     metrics = compute_daily(user, dt.date(2026, 1, 2))

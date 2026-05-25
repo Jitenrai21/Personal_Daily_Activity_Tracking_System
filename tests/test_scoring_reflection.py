@@ -50,12 +50,10 @@ def test_daily_score_is_normalized_and_persisted():
     ScheduleBlock.objects.create(
         user=user,
         activity=activity,
+        category=category,
         date=local_date,
         start_time=dt.time(9, 0),
         end_time=dt.time(10, 0),
-        timezone="UTC",
-        source="manual",
-        is_recurring=False,
     )
 
     metrics = compute_daily_score(user, local_date)

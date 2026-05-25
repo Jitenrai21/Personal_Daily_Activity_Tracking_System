@@ -61,9 +61,12 @@ def compute_daily(user, date):
     blocks = ScheduleBlock.objects.filter(user=user, date=date)
     planned_minutes = 0
     for block in blocks:
-        start_dt = dt.datetime.combine(date, block.start_time)
-        end_dt = dt.datetime.combine(date, block.end_time)
-        planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+        if block.start_time and block.end_time:
+            start_dt = dt.datetime.combine(date, block.start_time)
+            end_dt = dt.datetime.combine(date, block.end_time)
+            planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+        elif block.duration_minutes:
+            planned_minutes += int(block.duration_minutes)
 
     completion_rate = None
     if planned_minutes > 0:

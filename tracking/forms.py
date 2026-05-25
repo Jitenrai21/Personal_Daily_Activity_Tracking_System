@@ -33,10 +33,17 @@ class SessionLogForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user is not None:
             self.instance.user = self.user
-            self.fields["activity"].queryset = Activity.objects.filter(user=self.user)
             self.fields["category"].queryset = ActivityCategory.objects.filter(
                 user=self.user, is_archived=False
             )
+            activity_qs = Activity.objects.filter(user=self.user)
+            if self.is_bound:
+                raw_category = self.data.get(self.add_prefix("category"))
+                if raw_category:
+                    activity_qs = activity_qs.filter(category_id=raw_category)
+            elif self.initial.get("category"):
+                activity_qs = activity_qs.filter(category_id=self.initial.get("category"))
+            self.fields["activity"].queryset = activity_qs
             if not self.is_bound and not self.initial.get("local_date"):
                 tz_name = (
                     UserProfile.objects.filter(user=self.user)
@@ -61,13 +68,12 @@ class SessionLogForm(forms.ModelForm):
         if not local_date:
             raise ValidationError("Date is required.")
 
-        if activity and not category:
-            category = activity.category
-        if activity and category and category != activity.category:
-            category = activity.category
-        if not activity and not category:
-            raise ValidationError("Select an activity or a category.")
-        cleaned["category"] = category
+        if not category:
+            raise ValidationError("Category is required.")
+        if not activity:
+            raise ValidationError("Activity is required.")
+        if activity and category and activity.category_id != category.id:
+            raise ValidationError("Activity must belong to the selected category.")
 
         if end_time and not start_time:
             raise ValidationError("Start time is required when end time is provided.")

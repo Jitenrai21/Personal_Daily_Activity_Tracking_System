@@ -3,7 +3,6 @@ from zoneinfo import ZoneInfo
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,6 +11,7 @@ from django.views.decorators.http import require_POST
 from activities.models import Activity
 from tracking.forms import SessionLogForm
 from tracking.models import Session
+from tracking.services import start_timer_session
 from users.models import UserProfile
 
 
@@ -32,6 +32,9 @@ def get_running_session(user):
 def session_list_view(request):
     profile = get_user_profile(request.user)
     activity_map = Activity.objects.filter(user=request.user).select_related("category")
+    activity_choices = Activity.objects.filter(user=request.user).select_related(
+        "category"
+    )
     activities = Activity.objects.filter(user=request.user, is_active=True).order_by(
         "title"
     )
@@ -50,6 +53,7 @@ def session_list_view(request):
             "running_session": running_session,
             "profile": profile,
             "activities": activities,
+            "activity_choices": activity_choices,
             "activity_map": activity_map,
         },
     )
@@ -65,35 +69,22 @@ def session_start_view(request):
             pk=activity_id, user=request.user
         ).first()
     notes = (request.POST.get("notes") or "").strip()
-    profile = get_user_profile(request.user)
-    tz = ZoneInfo(profile.timezone)
+    planned_block_id = request.POST.get("planned_block_id")
+    metadata = None
+    if planned_block_id:
+        metadata = {"planned_block_id": planned_block_id}
 
-    with transaction.atomic():
-        running = (
-            Session.objects.select_for_update()
-            .filter(user=request.user, end__isnull=True)
-            .first()
-        )
-        if running:
-            if request.headers.get("HX-Request"):
-                return HttpResponse("Timer already running.", status=409)
-            messages.error(request, "A timer is already running.")
-            return redirect("session_list")
-
-        now = timezone.now()
-        local_now = now.astimezone(tz)
-        session = Session(
-            user=request.user,
-            activity_id=activity_id or None,
-            category=activity.category if activity else None,
-            local_date=local_now.date(),
-            start_time=local_now.time().replace(microsecond=0),
-            start=now,
-            source=Session.SOURCE_TIMER,
-            notes=notes,
-        )
-        session.full_clean()
-        session.save()
+    session, running = start_timer_session(
+        user=request.user,
+        activity=activity,
+        notes=notes,
+        metadata=metadata,
+    )
+    if running:
+        if request.headers.get("HX-Request"):
+            return HttpResponse("Timer already running.", status=409)
+        messages.error(request, "A timer is already running.")
+        return redirect("session_list")
 
     running_session = get_running_session(request.user)
     if request.headers.get("HX-Request"):
@@ -174,6 +165,9 @@ def session_log_view(request):
 
     profile = get_user_profile(request.user)
     activity_map = Activity.objects.filter(user=request.user).select_related("category")
+    activity_choices = Activity.objects.filter(user=request.user).select_related(
+        "category"
+    )
     sessions = Session.objects.filter(user=request.user).select_related(
         "activity", "category"
     )
@@ -191,6 +185,7 @@ def session_log_view(request):
             "running_session": running_session,
             "profile": profile,
             "activities": activities,
+            "activity_choices": activity_choices,
             "activity_map": activity_map,
         },
     )
@@ -201,6 +196,9 @@ def session_detail_view(request, pk):
     session = get_object_or_404(Session, pk=pk, user=request.user)
     profile = get_user_profile(request.user)
     activity_map = Activity.objects.filter(user=request.user).select_related("category")
+    activity_choices = Activity.objects.filter(user=request.user).select_related(
+        "category"
+    )
     form = SessionLogForm(instance=session, user=request.user)
     return render(
         request,
@@ -209,6 +207,7 @@ def session_detail_view(request, pk):
             "session": session,
             "form": form,
             "profile": profile,
+            "activity_choices": activity_choices,
             "activity_map": activity_map,
         },
     )

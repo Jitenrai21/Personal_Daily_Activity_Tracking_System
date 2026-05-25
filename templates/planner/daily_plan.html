@@ -6,20 +6,11 @@
   <section class="card card-wide">
     <div class="card-header">
       <h1>Daily planner</h1>
-      <div class="card-actions">
-        <a class="btn btn-secondary" href="{% url 'routine_list' %}">Weekly routines</a>
-      </div>
     </div>
 
     <div class="planner-grid">
       <div>
         <h2 class="section-title">Schedule for {{ date }}</h2>
-        <form method="post" action="{% url 'schedule_generate' %}" hx-post="{% url 'schedule_generate' %}" hx-target="#schedule-list" hx-swap="innerHTML">
-          {% csrf_token %}
-          <input type="hidden" name="date" value="{{ date|date:"Y-m-d" }}">
-          <button class="btn btn-secondary" type="submit">Generate from routines</button>
-        </form>
-
         <div id="schedule-list" class="planner-list">
           {% include 'planner/partials/schedule_list.html' %}
         </div>
@@ -29,7 +20,80 @@
         <h2 class="section-title">Add block</h2>
         <form method="post" action="{% url 'schedule_create' %}" hx-post="{% url 'schedule_create' %}" hx-target="#schedule-list" hx-swap="beforeend">
           {% csrf_token %}
-          {% include 'partials/form_fields.html' with form=form %}
+          {% if form.non_field_errors %}
+            <div class="form-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="session-form-grid">
+            <div class="session-form-row">
+                <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+              <div class="form-control">
+                  {{ form.category }}
+                  {% if form.category.errors %}
+                    <div class="form-error">{{ form.category.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+                <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
+              <div class="form-control">
+                  <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
+                    <option value="">Select activity</option>
+                    {% for item in activity_choices %}
+                      <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
+                    {% endfor %}
+                  </select>
+                  {% if form.activity.errors %}
+                    <div class="form-error">{{ form.activity.errors }}</div>
+                  {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+              <div class="form-control">
+                {{ form.date }}
+                {% if form.date.errors %}
+                  <div class="form-error">{{ form.date.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.start_time.id_for_label }}">Start time (optional)</label>
+              <div class="form-control">
+                {{ form.start_time }}
+                {% if form.start_time.errors %}
+                  <div class="form-error">{{ form.start_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.end_time.id_for_label }}">End time (optional)</label>
+              <div class="form-control">
+                {{ form.end_time }}
+                {% if form.end_time.errors %}
+                  <div class="form-error">{{ form.end_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.duration_minutes.id_for_label }}">Duration (minutes)</label>
+              <div class="form-control">
+                {{ form.duration_minutes }}
+                <div class="form-help" data-duration-preview>Duration will auto-fill when start/end are set.</div>
+                {% if form.duration_minutes.errors %}
+                  <div class="form-error">{{ form.duration_minutes.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+              <div class="form-control">
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                  <div class="form-error">{{ form.notes.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
           <div class="form-actions">
             <button class="btn" type="submit">Add block</button>
           </div>
@@ -37,4 +101,69 @@
       </div>
     </div>
   </section>
+
+  <script>
+    const startField = document.getElementById("{{ form.start_time.id_for_label }}");
+    const endField = document.getElementById("{{ form.end_time.id_for_label }}");
+    const durationField = document.getElementById("{{ form.duration_minutes.id_for_label }}");
+    const preview = document.querySelector("[data-duration-preview]");
+    const activityField = document.getElementById("{{ form.activity.id_for_label }}");
+    const categoryField = document.getElementById("{{ form.category.id_for_label }}");
+
+    const updatePreview = () => {
+      if (!startField || !endField || !preview) {
+        return;
+      }
+      const start = startField.value;
+      const end = endField.value;
+      if (!start || !end) {
+        preview.textContent = "Duration will auto-fill when start/end are set.";
+        return;
+      }
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
+      const minutes = (eh * 60 + em) - (sh * 60 + sm);
+      if (minutes > 0) {
+        preview.textContent = `Auto duration: ${minutes} min`;
+        if (durationField) {
+          durationField.value = minutes;
+        }
+      } else {
+        preview.textContent = "End time must be after start time.";
+      }
+    };
+
+    if (startField) startField.addEventListener("change", updatePreview);
+    if (endField) endField.addEventListener("change", updatePreview);
+
+    const filterActivities = () => {
+      if (!activityField || !categoryField) {
+        return;
+      }
+      const selectedCategory = categoryField.value;
+      let hasSelection = false;
+      Array.from(activityField.options).forEach((option) => {
+        if (!option.value) {
+          option.hidden = false;
+          return;
+        }
+        const matches = option.dataset.category === selectedCategory;
+        option.hidden = !matches;
+        if (!matches && option.selected) {
+          option.selected = false;
+        }
+        if (matches && option.selected) {
+          hasSelection = true;
+        }
+      });
+      if (!hasSelection && activityField.value) {
+        activityField.value = "";
+      }
+    };
+
+    if (categoryField) {
+      categoryField.addEventListener("change", filterActivities);
+      filterActivities();
+    }
+  </script>
 {% endblock %}

@@ -88,6 +88,7 @@ def test_manual_session_log(client):
     response = client.post(
         reverse("session_log"),
         {
+            "category": category.pk,
             "activity": activity.pk,
             "local_date": "2026-01-01",
             "start_time": "09:00",
@@ -117,6 +118,7 @@ def test_duration_only_session_log(client):
     response = client.post(
         reverse("session_log"),
         {
+            "category": category.pk,
             "activity": activity.pk,
             "local_date": "2026-01-02",
             "duration_minutes": 25,

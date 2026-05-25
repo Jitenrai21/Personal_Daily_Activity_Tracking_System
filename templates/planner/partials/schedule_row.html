@@ -1,11 +1,40 @@
-<div class="planner-item" id="block-{{ block.pk }}">
+<div
+  class="planner-item session-toggle"
+  id="block-{{ block.pk }}"
+  {% if running_session and running_session.metadata.planned_block_id == block.pk %}
+    data-session-start="{{ running_session.start|date:'c' }}"
+  {% endif %}
+>
   <div>
     <strong>{{ block.activity.title }}</strong>
-    <div class="planner-meta">{{ block.start_time }} - {{ block.end_time }}</div>
-    <div class="planner-meta">{{ block.get_source_display }}</div>
+    <div class="planner-meta">{{ block.category.name|default:"--" }} · {{ block.date }}</div>
+    <div class="planner-meta">
+      {% if block.start_time and block.end_time %}
+        {{ block.start_time }} - {{ block.end_time }}
+      {% elif block.start_time %}
+        {{ block.start_time }}
+      {% else %}
+        --
+      {% endif %}
+      · {% if block.duration_minutes %}{{ block.duration_minutes }} min{% else %}--{% endif %}
+    </div>
+    {% if block.notes %}
+      <div class="planner-meta">{{ block.notes }}</div>
+    {% endif %}
   </div>
   <div class="planner-actions">
-    {% include 'tracking/partials/start_stop_button.html' with running_session=running_session activity=block.activity target_id='session-toggle-block-'|add:block.pk %}
+    {% if running_session and running_session.metadata.planned_block_id == block.pk %}
+      <form method="post" action="{% url 'schedule_stop_timer' block.pk %}" hx-post="{% url 'schedule_stop_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button class="btn" type="submit">Stop timer</button>
+      </form>
+      <p class="timer" data-session-elapsed>00:00:00</p>
+    {% else %}
+      <form method="post" action="{% url 'schedule_start_timer' block.pk %}" hx-post="{% url 'schedule_start_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button class="btn" type="submit">Start timer</button>
+      </form>
+    {% endif %}
     <form method="post" action="{% url 'schedule_delete' block.pk %}" hx-post="{% url 'schedule_delete' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
       {% csrf_token %}
       <button class="btn btn-secondary" type="submit">Remove</button>

@@ -3,8 +3,8 @@ import datetime as dt
 from django import forms
 from django.core.exceptions import ValidationError
 
-from planner.models import ScheduleBlock, WeeklyRoutine
-from users.models import UserProfile
+from activities.models import Activity, ActivityCategory
+from planner.models import ScheduleBlock
 
 
 class ScheduleBlockForm(forms.ModelForm):
@@ -12,17 +12,18 @@ class ScheduleBlockForm(forms.ModelForm):
         model = ScheduleBlock
         fields = (
             "activity",
+            "category",
             "date",
             "start_time",
             "end_time",
-            "source",
-            "is_recurring",
+            "duration_minutes",
             "notes",
         )
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -30,62 +31,59 @@ class ScheduleBlockForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user:
             self.instance.user = self.user
-            self.fields["activity"].queryset = self.user.activity_set.all()
-            profile = UserProfile.objects.filter(user=self.user).first()
-            if profile:
-                self.instance.timezone = profile.timezone
+            self.fields["category"].queryset = ActivityCategory.objects.filter(
+                user=self.user, is_archived=False
+            )
+            activity_qs = Activity.objects.filter(user=self.user, is_active=True)
+            if self.is_bound:
+                raw_category = self.data.get(self.add_prefix("category"))
+                if raw_category:
+                    activity_qs = activity_qs.filter(category_id=raw_category)
+            elif self.initial.get("category"):
+                activity_qs = activity_qs.filter(category_id=self.initial.get("category"))
+            self.fields["activity"].queryset = activity_qs
+            if not self.is_bound and not self.initial.get("date"):
+                self.initial["date"] = dt.date.today()
+        if (
+            self.instance
+            and self.instance.activity_id
+            and not self.instance.category_id
+        ):
+            self.initial.setdefault("category", self.instance.activity.category_id)
 
     def clean(self):
         cleaned = super().clean()
-        if not self.user:
-            return cleaned
+        activity = cleaned.get("activity")
+        category = cleaned.get("category")
+        date = cleaned.get("date")
+        start_time = cleaned.get("start_time")
+        end_time = cleaned.get("end_time")
+        duration_minutes = cleaned.get("duration_minutes")
 
-        profile = UserProfile.objects.filter(user=self.user).first()
-        start = cleaned.get("start_time")
-        end = cleaned.get("end_time")
+        if not date:
+            raise ValidationError("Date is required.")
 
-        if profile and profile.wake_time and profile.sleep_time and start and end:
-            if start < profile.wake_time or end > profile.sleep_time:
-                raise ValidationError(
-                    "Schedule block must fall within your wake/sleep window."
-                )
+        if not category:
+            raise ValidationError("Category is required.")
+        if not activity:
+            raise ValidationError("Activity is required.")
+        if activity and category and activity.category_id != category.id:
+            raise ValidationError("Activity must belong to the selected category.")
 
-        return cleaned
+        if end_time and not start_time:
+            raise ValidationError("Start time is required when end time is provided.")
 
+        if not start_time and not end_time and not duration_minutes:
+            raise ValidationError("Provide a time range or duration.")
 
-class WeeklyRoutineForm(forms.ModelForm):
-    class Meta:
-        model = WeeklyRoutine
-        fields = (
-            "activity",
-            "weekday",
-            "start_time",
-            "end_time",
-            "notes",
-            "is_active",
-        )
-        widgets = {
-            "start_time": forms.TimeInput(attrs={"type": "time"}),
-            "end_time": forms.TimeInput(attrs={"type": "time"}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)
-        if self.user:
-            self.instance.user = self.user
-            self.fields["activity"].queryset = self.user.activity_set.all()
-
-    def clean(self):
-        cleaned = super().clean()
-        weekday = cleaned.get("weekday")
-        start = cleaned.get("start_time")
-        end = cleaned.get("end_time")
-
-        if weekday is not None and (weekday < 0 or weekday > 6):
-            self.add_error("weekday", "Weekday must be between 0 and 6.")
-
-        if start and end and end <= start:
-            self.add_error("end_time", "End time must be after start time.")
+        if start_time and end_time:
+            if end_time <= start_time:
+                raise ValidationError("End time must be after start time.")
+            delta = dt.datetime.combine(date, end_time) - dt.datetime.combine(
+                date, start_time
+            )
+            cleaned["duration_minutes"] = int(delta.total_seconds() // 60)
+        elif start_time and not duration_minutes:
+            raise ValidationError("Provide an end time or duration.")
 
         return cleaned
