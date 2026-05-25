@@ -7,9 +7,11 @@
     <h1>Category</h1>
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn" type="submit">Save</button>
-      <a class="btn btn-secondary" href="{% url 'category_list' %}">Cancel</a>
+      {% include 'partials/form_fields.html' with form=form %}
+      <div class="form-actions">
+        <button class="btn" type="submit">Save</button>
+        <a class="btn btn-secondary" href="{% url 'category_list' %}">Cancel</a>
+      </div>
     </form>
   </section>
 {% endblock %}

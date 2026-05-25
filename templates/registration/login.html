@@ -7,8 +7,10 @@
     <h1>Log in</h1>
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn" type="submit">Log in</button>
+      {% include 'partials/form_fields.html' with form=form %}
+      <div class="form-actions">
+        <button class="btn" type="submit">Log in</button>
+      </div>
     </form>
     <div class="muted">
       <a href="{% url 'password_reset' %}">Forgot password?</a>

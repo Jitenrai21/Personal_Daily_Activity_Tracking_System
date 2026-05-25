@@ -35,6 +35,7 @@ def test_compute_daily_splits_midnight_session():
 
     Session.objects.create(
         user=user,
+        local_date=local_start.date(),
         start=local_start.astimezone(dt.timezone.utc),
         end=local_end.astimezone(dt.timezone.utc),
         source=Session.SOURCE_MANUAL,
@@ -68,6 +69,7 @@ def test_update_daily_creates_record():
     end = start + dt.timedelta(minutes=20)
     Session.objects.create(
         user=user,
+        local_date=start.date(),
         start=start,
         end=end,
         source=Session.SOURCE_MANUAL,

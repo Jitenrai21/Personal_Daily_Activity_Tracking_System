@@ -7,8 +7,10 @@
     <h1>Create account</h1>
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn" type="submit">Create account</button>
+      {% include 'partials/form_fields.html' with form=form %}
+      <div class="form-actions">
+        <button class="btn" type="submit">Create account</button>
+      </div>
     </form>
     <div class="muted">
       Already have an account? <a href="{% url 'login' %}">Log in</a>

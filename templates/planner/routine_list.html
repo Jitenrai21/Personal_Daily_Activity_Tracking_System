@@ -27,8 +27,10 @@
         <h2 class="section-title">Add routine</h2>
         <form method="post" action="{% url 'routine_create' %}" hx-post="{% url 'routine_create' %}" hx-target="#routine-list" hx-swap="beforeend">
           {% csrf_token %}
-          {{ form.as_p }}
-          <button class="btn" type="submit">Add routine</button>
+          {% include 'partials/form_fields.html' with form=form %}
+          <div class="form-actions">
+            <button class="btn" type="submit">Add routine</button>
+          </div>
         </form>
       </div>
     </div>

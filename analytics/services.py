@@ -40,12 +40,23 @@ def compute_daily(user, date):
         .order_by("start")
     )
 
+    duration_only_sessions = Session.objects.filter(
+        user=user,
+        local_date=date,
+        duration_minutes__isnull=False,
+        start__isnull=True,
+        end__isnull=True,
+    )
+
     total_minutes = 0
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
         seconds = max(0, (overlap_end - overlap_start).total_seconds())
         total_minutes += int(seconds // 60)
+
+    for session in duration_only_sessions:
+        total_minutes += session.duration_minutes or 0
 
     blocks = ScheduleBlock.objects.filter(user=user, date=date)
     planned_minutes = 0
@@ -62,7 +73,7 @@ def compute_daily(user, date):
         "total_minutes": total_minutes,
         "planned_minutes": planned_minutes,
         "completion_rate": completion_rate,
-        "sessions_count": sessions.count(),
+        "sessions_count": sessions.count() + duration_only_sessions.count(),
     }
 
 

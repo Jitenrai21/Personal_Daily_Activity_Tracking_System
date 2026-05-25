@@ -1,7 +1,9 @@
+import datetime as dt
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from activities.models import Activity
+from activities.models import Activity, ActivityCategory
 
 
 class Session(models.Model):
@@ -16,7 +18,14 @@ class Session(models.Model):
 
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     activity = models.ForeignKey(Activity, on_delete=models.SET_NULL, null=True, blank=True)
-    start = models.DateTimeField()
+    category = models.ForeignKey(
+        ActivityCategory, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    local_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+    duration_minutes = models.PositiveIntegerField(null=True, blank=True)
+    start = models.DateTimeField(null=True, blank=True)
     end = models.DateTimeField(null=True, blank=True)
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
     notes = models.TextField(blank=True)
@@ -25,33 +34,51 @@ class Session(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-start"]
+        ordering = ["-local_date", "-start"]
         indexes = [
             models.Index(fields=["user", "start"]),
+            models.Index(fields=["user", "local_date"]),
             models.Index(fields=["created_at"]),
         ]
 
     def clean(self) -> None:
-        if self.end and self.end <= self.start:
+        if self.start and self.end and self.end <= self.start:
             raise ValidationError({"end": "End time must be after start time."})
+
+        if (
+            self.start_time
+            and self.end_time
+            and (self.start is None or self.end is None)
+            and self.end_time <= self.start_time
+        ):
+            raise ValidationError({"end_time": "End time must be after start time."})
 
     @property
     def duration(self):
-        if not self.end:
-            return None
-        return self.end - self.start
+        if self.duration_minutes is not None:
+            return dt.timedelta(minutes=self.duration_minutes)
 
-    @property
-    def duration_minutes(self):
-        duration = self.duration
-        if duration is None:
-            return None
-        return int(duration.total_seconds() // 60)
+        if self.start and self.end:
+            return self.end - self.start
+        return None
+
+    def save(self, *args, **kwargs):
+        if self.duration_minutes is None:
+            if self.start and self.end:
+                seconds = (self.end - self.start).total_seconds()
+                self.duration_minutes = int(seconds // 60)
+            elif self.local_date and self.start_time and self.end_time:
+                start_dt = dt.datetime.combine(self.local_date, self.start_time)
+                end_dt = dt.datetime.combine(self.local_date, self.end_time)
+                seconds = (end_dt - start_dt).total_seconds()
+                self.duration_minutes = int(seconds // 60)
+
+        super().save(*args, **kwargs)
 
     @property
     def is_running(self) -> bool:
-        return self.end is None
+        return self.end is None and self.source == self.SOURCE_TIMER
 
     def __str__(self) -> str:
         label = self.activity.title if self.activity else "Unassigned"
-        return f"{label} ({self.start})"
+        return f"{label} ({self.local_date})"

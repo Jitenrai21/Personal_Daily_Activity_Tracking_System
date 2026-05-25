@@ -11,13 +11,22 @@ from planner.services import generate_blocks_for_date
 from tracking.models import Session
 
 
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return dt.date.fromisoformat(value)
+    except ValueError:
+        try:
+            return dt.datetime.strptime(value, "%B %d, %Y").date()
+        except ValueError:
+            return None
+
+
 @login_required
 def daily_plan_view(request):
     date_str = request.GET.get("date")
-    if date_str:
-        date = dt.date.fromisoformat(date_str)
-    else:
-        date = dt.date.today()
+    date = _parse_date(date_str) or dt.date.today()
 
     blocks = ScheduleBlock.objects.filter(user=request.user, date=date)
     form = ScheduleBlockForm(user=request.user, initial={"date": date})
@@ -123,7 +132,9 @@ def routine_delete_view(request, pk):
 @require_POST
 def generate_day_view(request):
     date_str = request.POST.get("date")
-    date = dt.date.fromisoformat(date_str)
+    date = _parse_date(date_str)
+    if not date:
+        return HttpResponse("Invalid date", status=400)
     generate_blocks_for_date(request.user, date)
     blocks = ScheduleBlock.objects.filter(user=request.user, date=date)
     if request.headers.get("HX-Request"):

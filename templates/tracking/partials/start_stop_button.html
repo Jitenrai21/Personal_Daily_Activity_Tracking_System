@@ -1,4 +1,4 @@
-<div id="{{ target_id }}" class="session-toggle">
+<div id="{{ target_id }}" class="session-toggle" {% if running_session %}data-session-start="{{ running_session.start|date:'c' }}"{% endif %}>
   {% if running_session %}
     <form method="post" action="{% url 'session_stop' %}" hx-post="{% url 'session_stop' %}" hx-target="#{{ target_id }}" hx-swap="outerHTML">
       {% csrf_token %}
@@ -8,15 +8,32 @@
       {% endif %}
       <button class="btn" type="submit">Stop timer</button>
     </form>
-    {% if running_session.activity %}
-      <p class="muted">Running: {{ running_session.activity.title }}</p>
-    {% endif %}
+    <div class="session-meta">
+      {% if running_session.activity %}
+        <p class="muted">Running: {{ running_session.activity.title }}</p>
+      {% else %}
+        <p class="muted">Running: Unassigned</p>
+      {% endif %}
+      <p class="timer" data-session-elapsed>00:00:00</p>
+    </div>
   {% else %}
     <form method="post" action="{% url 'session_start' %}" hx-post="{% url 'session_start' %}" hx-target="#{{ target_id }}" hx-swap="outerHTML">
       {% csrf_token %}
       <input type="hidden" name="target_id" value="{{ target_id }}">
       {% if activity %}
         <input type="hidden" name="activity_id" value="{{ activity.pk }}">
+      {% elif activities %}
+        <label class="label" for="activity-select-{{ target_id }}">Activity</label>
+        <select id="activity-select-{{ target_id }}" name="activity_id">
+          <option value="">Unassigned</option>
+          {% for item in activities %}
+            <option value="{{ item.pk }}">{{ item.title }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+      {% if show_notes %}
+        <label class="label" for="notes-{{ target_id }}">Notes</label>
+        <input id="notes-{{ target_id }}" type="text" name="notes" placeholder="Optional note">
       {% endif %}
       <button class="btn" type="submit">Start timer</button>
     </form>

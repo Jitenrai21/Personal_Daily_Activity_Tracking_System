@@ -27,7 +27,25 @@
   <div class="chart-card chart-wide">
     <div class="chart-header">
       <h2>Daily planned vs actual</h2>
-      <span class="pill">{{ range_days }} days</span>
+      <div class="chart-actions">
+        <form
+          class="chart-controls"
+          method="get"
+          action="{% url 'dashboard_partial' %}"
+          hx-get="{% url 'dashboard_partial' %}"
+          hx-target="#dashboard-pane"
+          hx-swap="innerHTML"
+          hx-include=".dashboard-filters"
+        >
+          <label class="label" for="daily-year">Year</label>
+          <select id="daily-year" name="year" hx-trigger="change">
+            {% for year in year_options %}
+              <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        <span class="pill">{{ range_days }} days</span>
+      </div>
     </div>
     <div class="chart-frame">
       <canvas id="dailyChart" aria-label="Daily planned vs actual"></canvas>

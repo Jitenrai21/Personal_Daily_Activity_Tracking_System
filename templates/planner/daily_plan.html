@@ -16,7 +16,7 @@
         <h2 class="section-title">Schedule for {{ date }}</h2>
         <form method="post" action="{% url 'schedule_generate' %}" hx-post="{% url 'schedule_generate' %}" hx-target="#schedule-list" hx-swap="innerHTML">
           {% csrf_token %}
-          <input type="hidden" name="date" value="{{ date }}">
+          <input type="hidden" name="date" value="{{ date|date:"Y-m-d" }}">
           <button class="btn btn-secondary" type="submit">Generate from routines</button>
         </form>
 
@@ -29,8 +29,10 @@
         <h2 class="section-title">Add block</h2>
         <form method="post" action="{% url 'schedule_create' %}" hx-post="{% url 'schedule_create' %}" hx-target="#schedule-list" hx-swap="beforeend">
           {% csrf_token %}
-          {{ form.as_p }}
-          <button class="btn" type="submit">Add block</button>
+          {% include 'partials/form_fields.html' with form=form %}
+          <div class="form-actions">
+            <button class="btn" type="submit">Add block</button>
+          </div>
         </form>
       </div>
     </div>

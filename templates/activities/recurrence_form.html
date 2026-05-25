@@ -7,9 +7,11 @@
     <h1>Recurrence for {{ activity.title }}</h1>
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn" type="submit">Save recurrence</button>
-      <a class="btn btn-secondary" href="{% url 'activity_detail' activity.pk %}">Cancel</a>
+      {% include 'partials/form_fields.html' with form=form %}
+      <div class="form-actions">
+        <button class="btn" type="submit">Save recurrence</button>
+        <a class="btn btn-secondary" href="{% url 'activity_detail' activity.pk %}">Cancel</a>
+      </div>
     </form>
   </section>
 {% endblock %}

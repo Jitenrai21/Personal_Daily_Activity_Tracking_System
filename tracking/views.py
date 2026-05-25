@@ -31,11 +31,14 @@ def get_running_session(user):
 @login_required
 def session_list_view(request):
     profile = get_user_profile(request.user)
-    sessions = (
-        Session.objects.filter(user=request.user)
-        .select_related("activity")
-        .order_by("-start")
+    activity_map = Activity.objects.filter(user=request.user).select_related("category")
+    activities = Activity.objects.filter(user=request.user, is_active=True).order_by(
+        "title"
     )
+    sessions = Session.objects.filter(user=request.user).select_related(
+        "activity", "category"
+    )
+    sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
     form = SessionLogForm(user=request.user)
     return render(
@@ -46,6 +49,8 @@ def session_list_view(request):
             "form": form,
             "running_session": running_session,
             "profile": profile,
+            "activities": activities,
+            "activity_map": activity_map,
         },
     )
 
@@ -59,6 +64,9 @@ def session_start_view(request):
         activity = Activity.objects.filter(
             pk=activity_id, user=request.user
         ).first()
+    notes = (request.POST.get("notes") or "").strip()
+    profile = get_user_profile(request.user)
+    tz = ZoneInfo(profile.timezone)
 
     with transaction.atomic():
         running = (
@@ -72,11 +80,17 @@ def session_start_view(request):
             messages.error(request, "A timer is already running.")
             return redirect("session_list")
 
+        now = timezone.now()
+        local_now = now.astimezone(tz)
         session = Session(
             user=request.user,
             activity_id=activity_id or None,
-            start=timezone.now(),
+            category=activity.category if activity else None,
+            local_date=local_now.date(),
+            start_time=local_now.time().replace(microsecond=0),
+            start=now,
             source=Session.SOURCE_TIMER,
+            notes=notes,
         )
         session.full_clean()
         session.save()
@@ -90,6 +104,9 @@ def session_start_view(request):
                 "running_session": running_session,
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
+                "activities": Activity.objects.filter(
+                    user=request.user, is_active=True
+                ).order_by("title"),
             },
         )
     return redirect("session_list")
@@ -105,9 +122,14 @@ def session_stop_view(request):
         messages.error(request, "No active session to stop.")
         return redirect("session_list")
 
-    running_session.end = timezone.now()
+    profile = get_user_profile(request.user)
+    tz = ZoneInfo(profile.timezone)
+    now = timezone.now()
+    local_now = now.astimezone(tz)
+    running_session.end = now
+    running_session.end_time = local_now.time().replace(microsecond=0)
     running_session.full_clean()
-    running_session.save(update_fields=["end", "updated_at"])
+    running_session.save(update_fields=["end", "end_time", "duration_minutes", "updated_at"])
 
     running_session = get_running_session(request.user)
     activity = None
@@ -124,6 +146,9 @@ def session_stop_view(request):
                 "running_session": running_session,
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
+                "activities": Activity.objects.filter(
+                    user=request.user, is_active=True
+                ).order_by("title"),
             },
         )
     return redirect("session_list")
@@ -148,8 +173,15 @@ def session_log_view(request):
         return redirect("session_list")
 
     profile = get_user_profile(request.user)
-    sessions = Session.objects.filter(user=request.user).select_related("activity")
+    activity_map = Activity.objects.filter(user=request.user).select_related("category")
+    sessions = Session.objects.filter(user=request.user).select_related(
+        "activity", "category"
+    )
+    sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
+    activities = Activity.objects.filter(user=request.user, is_active=True).order_by(
+        "title"
+    )
     return render(
         request,
         "tracking/session_list.html",
@@ -158,6 +190,8 @@ def session_log_view(request):
             "form": form,
             "running_session": running_session,
             "profile": profile,
+            "activities": activities,
+            "activity_map": activity_map,
         },
     )
 
@@ -166,11 +200,17 @@ def session_log_view(request):
 def session_detail_view(request, pk):
     session = get_object_or_404(Session, pk=pk, user=request.user)
     profile = get_user_profile(request.user)
+    activity_map = Activity.objects.filter(user=request.user).select_related("category")
     form = SessionLogForm(instance=session, user=request.user)
     return render(
         request,
         "tracking/session_detail.html",
-        {"session": session, "form": form, "profile": profile},
+        {
+            "session": session,
+            "form": form,
+            "profile": profile,
+            "activity_map": activity_map,
+        },
     )
 
 
@@ -215,7 +255,7 @@ def session_delete_view(request, pk):
 def session_export_csv_view(request):
     profile = get_user_profile(request.user)
     local_tz = ZoneInfo(profile.timezone)
-    sessions = Session.objects.filter(user=request.user).select_related("activity")
+    sessions = Session.objects.filter(user=request.user).select_related("activity", "category")
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = "attachment; filename=sessions.csv"
@@ -225,26 +265,38 @@ def session_export_csv_view(request):
         [
             "id",
             "activity",
+            "category",
+            "date",
+            "start_time",
+            "end_time",
             "start_utc",
             "end_utc",
-            "start_local",
-            "end_local",
             "duration_minutes",
             "source",
             "notes",
         ]
     )
     for session in sessions:
-        start_local = session.start.astimezone(local_tz)
+        start_local = session.start.astimezone(local_tz) if session.start else None
         end_local = session.end.astimezone(local_tz) if session.end else None
+        local_date = session.local_date
+        start_time = session.start_time
+        end_time = session.end_time
+        if not local_date and start_local:
+            local_date = start_local.date()
+            start_time = start_local.time().replace(microsecond=0)
+        if not end_time and end_local:
+            end_time = end_local.time().replace(microsecond=0)
         writer.writerow(
             [
                 session.pk,
                 session.activity.title if session.activity else "",
-                session.start.isoformat(),
+                session.category.name if session.category else "",
+                local_date.isoformat() if local_date else "",
+                start_time.isoformat() if start_time else "",
+                end_time.isoformat() if end_time else "",
+                session.start.isoformat() if session.start else "",
                 session.end.isoformat() if session.end else "",
-                start_local.isoformat(),
-                end_local.isoformat() if end_local else "",
                 session.duration_minutes or "",
                 session.source,
                 session.notes,
@@ -258,19 +310,31 @@ def session_export_csv_view(request):
 def session_export_json_view(request):
     profile = get_user_profile(request.user)
     local_tz = ZoneInfo(profile.timezone)
-    sessions = Session.objects.filter(user=request.user).select_related("activity")
+    sessions = Session.objects.filter(user=request.user).select_related("activity", "category")
 
     payload = []
     for session in sessions:
-        start_local = session.start.astimezone(local_tz)
+        start_local = session.start.astimezone(local_tz) if session.start else None
         end_local = session.end.astimezone(local_tz) if session.end else None
+        local_date = session.local_date
+        start_time = session.start_time
+        end_time = session.end_time
+        if not local_date and start_local:
+            local_date = start_local.date()
+            start_time = start_local.time().replace(microsecond=0)
+        if not end_time and end_local:
+            end_time = end_local.time().replace(microsecond=0)
         payload.append(
             {
                 "id": session.pk,
                 "activity": session.activity.title if session.activity else None,
-                "start_utc": session.start.isoformat(),
+                "category": session.category.name if session.category else None,
+                "date": local_date.isoformat() if local_date else None,
+                "start_time": start_time.isoformat() if start_time else None,
+                "end_time": end_time.isoformat() if end_time else None,
+                "start_utc": session.start.isoformat() if session.start else None,
                 "end_utc": session.end.isoformat() if session.end else None,
-                "start_local": start_local.isoformat(),
+                "start_local": start_local.isoformat() if start_local else None,
                 "end_local": end_local.isoformat() if end_local else None,
                 "duration_minutes": session.duration_minutes,
                 "source": session.source,

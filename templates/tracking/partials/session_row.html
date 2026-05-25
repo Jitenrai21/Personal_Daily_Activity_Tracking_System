@@ -2,13 +2,27 @@
 
 <div class="table-row table-row-sessions" id="session-{{ session.pk }}">
   <div>{{ session.activity.title|default:"Unassigned" }}</div>
+  <div>{{ session.category.name|default:"--" }}</div>
+  <div>{{ session.local_date|default:"--" }}</div>
   {% timezone profile.timezone %}
-    <div>{{ session.start|date:"Y-m-d H:i" }}</div>
     <div>
-      {% if session.end %}
-        {{ session.end|date:"Y-m-d H:i" }}
+      {% if session.start_time %}
+        {{ session.start_time|time:"H:i" }}
+      {% elif session.start %}
+        {{ session.start|date:"Y-m-d H:i" }}
       {% else %}
+        --
+      {% endif %}
+    </div>
+    <div>
+      {% if session.end_time %}
+        {{ session.end_time|time:"H:i" }}
+      {% elif session.end %}
+        {{ session.end|date:"Y-m-d H:i" }}
+      {% elif session.source == "timer" %}
         <span class="pill">Running</span>
+      {% else %}
+        --
       {% endif %}
     </div>
   {% endtimezone %}

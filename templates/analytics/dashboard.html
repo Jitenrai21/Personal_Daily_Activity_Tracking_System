@@ -17,6 +17,7 @@
         hx-get="{% url 'dashboard_partial' %}"
         hx-target="#dashboard-pane"
         hx-swap="innerHTML"
+        hx-include="#daily-year"
       >
         <div class="filter-group">
           <label for="range" class="label">Range</label>
@@ -67,11 +68,20 @@
       chartStore[id] = new Chart(canvas, config);
     }
 
+    function formatDailyLabel(value) {
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
     function renderDashboardCharts() {
       const dailyLabels = loadJson("daily-labels");
       if (!dailyLabels) {
         return;
       }
+      const formattedDailyLabels = dailyLabels.map(formatDailyLabel);
       const dailyActual = loadJson("daily-actual");
       const dailyPlanned = loadJson("daily-planned");
       const weeklyLabels = loadJson("weekly-labels");
@@ -81,20 +91,27 @@
       const monthlyActual = loadJson("monthly-actual");
       const monthlyPlanned = loadJson("monthly-planned");
 
+      const chartPalette = {
+        actual: "#3f8f6b",
+        actualFill: "rgba(63, 143, 107, 0.18)",
+        planned: "#f2c94c",
+        plannedFill: "rgba(242, 201, 76, 0.22)",
+      };
+
       renderChart("dailyChart", {
         type: "bar",
         data: {
-          labels: dailyLabels,
+          labels: formattedDailyLabels,
           datasets: [
             {
               label: "Actual",
               data: dailyActual,
-              backgroundColor: "#4a4643",
+              backgroundColor: chartPalette.actual,
             },
             {
               label: "Planned",
               data: dailyPlanned,
-              backgroundColor: "#c0b9af",
+              backgroundColor: chartPalette.planned,
             },
           ],
         },
@@ -102,29 +119,41 @@
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            x: { stacked: true },
+            x: {
+              stacked: true,
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 8,
+                maxRotation: 0,
+                minRotation: 0,
+              },
+            },
             y: { stacked: true, beginAtZero: true },
           },
         },
       });
 
+      const formattedWeeklyLabels = weeklyLabels
+        ? weeklyLabels.map(formatDailyLabel)
+        : weeklyLabels;
+
       renderChart("weeklyChart", {
         type: "line",
         data: {
-          labels: weeklyLabels,
+          labels: formattedWeeklyLabels,
           datasets: [
             {
               label: "Actual",
               data: weeklyActual,
-              borderColor: "#4a4643",
-              backgroundColor: "rgba(74, 70, 67, 0.15)",
+              borderColor: chartPalette.actual,
+              backgroundColor: chartPalette.actualFill,
               tension: 0.3,
             },
             {
               label: "Planned",
               data: weeklyPlanned,
-              borderColor: "#6b6057",
-              backgroundColor: "rgba(107, 96, 87, 0.12)",
+              borderColor: chartPalette.planned,
+              backgroundColor: chartPalette.plannedFill,
               tension: 0.3,
             },
           ],
@@ -133,6 +162,16 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { position: "bottom" } },
+          scales: {
+            x: {
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 6,
+                maxRotation: 0,
+                minRotation: 0,
+              },
+            },
+          },
         },
       });
 
@@ -144,12 +183,12 @@
             {
               label: "Actual",
               data: monthlyActual,
-              backgroundColor: "#2c2a27",
+              backgroundColor: chartPalette.actual,
             },
             {
               label: "Planned",
               data: monthlyPlanned,
-              backgroundColor: "#e2dcd2",
+              backgroundColor: chartPalette.planned,
             },
           ],
         },
