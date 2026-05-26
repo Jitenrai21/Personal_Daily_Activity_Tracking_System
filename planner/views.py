@@ -3,10 +3,11 @@ import datetime as dt
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from activities.models import Activity
-from planner.forms import ScheduleBlockForm
+from activities.models import Activity, ActivityCategory
+from planner.forms import PlannerActivityForm, PlannerCategoryForm, ScheduleBlockForm
 from planner.models import ScheduleBlock
 from tracking.models import Session
 from tracking.services import start_timer_session, stop_timer_session
@@ -24,42 +25,43 @@ def _parse_date(value):
             return None
 
 
+def _planner_context(user, date, schedule_form=None, category_form=None, activity_form=None):
+    blocks = ScheduleBlock.objects.filter(user=user, date=date).select_related(
+        "activity", "category"
+    )
+    running_session = (
+        Session.objects.filter(user=user, end__isnull=True)
+        .select_related("activity")
+        .first()
+    )
+    categories = ActivityCategory.objects.filter(user=user).order_by("name")
+    activities = Activity.objects.filter(user=user).select_related("category").order_by("title")
+    activity_choices = activities
+    return {
+        "date": date,
+        "blocks": blocks,
+        "running_session": running_session,
+        "categories": categories,
+        "activities": activities,
+        "activity_choices": activity_choices,
+        "form": schedule_form or ScheduleBlockForm(user=user, initial={"date": date}),
+        "category_form": category_form or PlannerCategoryForm(),
+        "activity_form": activity_form or PlannerActivityForm(user=user),
+    }
+
+
 @login_required
 def daily_plan_view(request):
     date_str = request.GET.get("date")
     date = _parse_date(date_str) or dt.date.today()
 
-    blocks = ScheduleBlock.objects.filter(user=request.user, date=date).select_related(
-        "activity", "category"
-    )
-    form = ScheduleBlockForm(user=request.user, initial={"date": date})
-    running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True)
-        .select_related("activity")
-        .first()
-    )
-    activity_map = Activity.objects.filter(user=request.user).select_related("category")
-    activity_choices = Activity.objects.filter(
-        user=request.user, is_active=True
-    ).select_related("category")
-
-    return render(
-        request,
-        "planner/daily_plan.html",
-        {
-            "date": date,
-            "blocks": blocks,
-            "form": form,
-            "running_session": running_session,
-            "activity_map": activity_map,
-            "activity_choices": activity_choices,
-        },
-    )
+    return render(request, "planner/daily_plan.html", _planner_context(request.user, date))
 
 
 @login_required
 @require_POST
 def schedule_block_create_view(request):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
     form = ScheduleBlockForm(request.POST, user=request.user)
     if form.is_valid():
         block = form.save(commit=False)
@@ -82,29 +84,10 @@ def schedule_block_create_view(request):
             )
         return redirect("planner_day")
 
-    blocks = ScheduleBlock.objects.filter(user=request.user, date=form.data.get("date")).select_related(
-        "activity", "category"
-    )
-    running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True)
-        .select_related("activity")
-        .first()
-    )
-    activity_map = Activity.objects.filter(user=request.user).select_related("category")
-    activity_choices = Activity.objects.filter(
-        user=request.user, is_active=True
-    ).select_related("category")
     return render(
         request,
         "planner/daily_plan.html",
-        {
-            "date": form.data.get("date"),
-            "blocks": blocks,
-            "form": form,
-            "running_session": running_session,
-            "activity_map": activity_map,
-            "activity_choices": activity_choices,
-        },
+        _planner_context(request.user, date, schedule_form=form),
     )
 
 
@@ -170,3 +153,75 @@ def schedule_block_stop_timer_view(request, pk):
             },
         )
     return redirect("planner_day")
+
+
+@login_required
+@require_POST
+def planner_category_create_view(request):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    form = PlannerCategoryForm(request.POST)
+    if form.is_valid():
+        category = form.save(commit=False)
+        category.user = request.user
+        category.save()
+        return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
+
+    context = _planner_context(request.user, date, category_form=form)
+    return render(request, "planner/daily_plan.html", context)
+
+
+@login_required
+@require_POST
+def planner_category_update_view(request, pk):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    category = get_object_or_404(ActivityCategory, pk=pk, user=request.user)
+    form = PlannerCategoryForm(request.POST, instance=category)
+    if form.is_valid():
+        form.save()
+    return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
+
+
+@login_required
+@require_POST
+def planner_category_delete_view(request, pk):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    category = get_object_or_404(ActivityCategory, pk=pk, user=request.user)
+    category.delete()
+    return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
+
+
+@login_required
+@require_POST
+def planner_activity_create_view(request):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    form = PlannerActivityForm(request.POST, user=request.user)
+    if form.is_valid():
+        activity = form.save(commit=False)
+        activity.user = request.user
+        activity.save()
+        return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
+
+    context = _planner_context(request.user, date, activity_form=form)
+    return render(request, "planner/daily_plan.html", context)
+
+
+@login_required
+@require_POST
+def planner_activity_update_view(request, pk):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    activity = get_object_or_404(Activity, pk=pk, user=request.user)
+    form = PlannerActivityForm(request.POST, instance=activity, user=request.user)
+    if form.is_valid():
+        updated = form.save(commit=False)
+        updated.user = request.user
+        updated.save()
+    return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
+
+
+@login_required
+@require_POST
+def planner_activity_delete_view(request, pk):
+    date = _parse_date(request.POST.get("date")) or dt.date.today()
+    activity = get_object_or_404(Activity, pk=pk, user=request.user)
+    activity.delete()
+    return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")

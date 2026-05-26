@@ -3,21 +3,34 @@
 {% block title %}Daily planner{% endblock %}
 
 {% block content %}
-  <section class="card card-wide">
-    <div class="card-header">
-      <h1>Daily planner</h1>
-    </div>
-
-    <div class="planner-grid">
+  <section class="planner-shell page-shell">
+    <header class="planner-hero page-header surface-card">
       <div>
-        <h2 class="section-title">Schedule for {{ date }}</h2>
+        <p class="page-eyebrow">Daily planner</p>
+        <h1 class="page-title">Shape today with intent</h1>
+        <p class="page-subtitle">Draft a focused schedule, then organize the day.</p>
+      </div>
+      <div class="page-actions">
+        <span class="page-chip">Schedule for {{ date }}</span>
+      </div>
+    </header>
+
+    <div class="planner-stack page-stack">
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Today's blocks</h2>
+          <span class="page-chip">{{ date }}</span>
+        </div>
         <div id="schedule-list" class="planner-list">
           {% include 'planner/partials/schedule_list.html' %}
         </div>
       </div>
 
-      <div>
-        <h2 class="section-title">Add block</h2>
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Add a block</h2>
+          <p class="planner-card-hint">Start with a category, then pick the activity.</p>
+        </div>
         <form method="post" action="{% url 'schedule_create' %}" hx-post="{% url 'schedule_create' %}" hx-target="#schedule-list" hx-swap="beforeend">
           {% csrf_token %}
           {% if form.non_field_errors %}
@@ -25,26 +38,26 @@
           {% endif %}
           <div class="session-form-grid">
             <div class="session-form-row">
-                <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+              <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
               <div class="form-control">
-                  {{ form.category }}
-                  {% if form.category.errors %}
-                    <div class="form-error">{{ form.category.errors }}</div>
+                {{ form.category }}
+                {% if form.category.errors %}
+                  <div class="form-error">{{ form.category.errors }}</div>
                 {% endif %}
               </div>
             </div>
             <div class="session-form-row">
-                <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
+              <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
               <div class="form-control">
-                  <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
-                    <option value="">Select activity</option>
-                    {% for item in activity_choices %}
-                      <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
-                    {% endfor %}
-                  </select>
-                  {% if form.activity.errors %}
-                    <div class="form-error">{{ form.activity.errors }}</div>
-                  {% endif %}
+                <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
+                  <option value="">Select activity</option>
+                  {% for item in activity_choices %}
+                    <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
+                  {% endfor %}
+                </select>
+                {% if form.activity.errors %}
+                  <div class="form-error">{{ form.activity.errors }}</div>
+                {% endif %}
               </div>
             </div>
             <div class="session-form-row">
@@ -99,8 +112,340 @@
           </div>
         </form>
       </div>
+
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Manage categories</h2>
+          <span class="planner-chip">{{ categories|length }}</span>
+        </div>
+        
+        <div class="manage-section">
+          <div class="manage-form-section">
+            <h3 class="manage-subsection-title">Add new category</h3>
+            <form method="post" action="{% url 'planner_category_create' %}">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <div class="session-form-grid">
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ category_form.name.id_for_label }}">Category name</label>
+                  <div class="form-control">{{ category_form.name }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ category_form.description.id_for_label }}">Description</label>
+                  <div class="form-control">{{ category_form.description }}</div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Add category</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="manage-list-section">
+            <h3 class="manage-subsection-title">Existing categories</h3>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for category in categories %}
+                    <tr>
+                      <td>
+                        <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
+                      </td>
+                      <td>
+                        <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
+                      </td>
+                      <td>
+                        <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}" style="display:inline-block;">
+                          {% csrf_token %}
+                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                          <button class="btn btn-secondary" type="submit">Save</button>
+                        </form>
+                        <form method="post" action="{% url 'planner_category_delete' category.pk %}" style="display:inline-block; margin-left: 0.5rem;">
+                          {% csrf_token %}
+                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                          <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3">No categories yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Manage activities</h2>
+          <span class="planner-chip">{{ activities|length }}</span>
+        </div>
+        
+        <div class="manage-section">
+          <div class="manage-form-section">
+            <h3 class="manage-subsection-title">Add new activity</h3>
+            <form method="post" action="{% url 'planner_activity_create' %}">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <div class="session-form-grid">
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.category.id_for_label }}">Category</label>
+                  <div class="form-control">{{ activity_form.category }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.title.id_for_label }}">Title</label>
+                  <div class="form-control">{{ activity_form.title }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.priority.id_for_label }}">Priority</label>
+                  <div class="form-control">{{ activity_form.priority }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.notes.id_for_label }}">Notes</label>
+                  <div class="form-control">{{ activity_form.notes }}</div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Add activity</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="manage-list-section">
+            <h3 class="manage-subsection-title">Existing activities</h3>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in activities %}
+                    <tr>
+                      <td>
+                        <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
+                      </td>
+                      <td>
+                        <select name="category" form="activity-form-{{ item.pk }}">
+                          {% for category in categories %}
+                            <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td>
+                        <input type="number" name="priority" min="1" max="5" value="{{ item.priority }}" required form="activity-form-{{ item.pk }}">
+                      </td>
+                      <td>
+                        <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
+                      </td>
+                      <td>
+                        <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}" style="display:inline-block;">
+                          {% csrf_token %}
+                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                          <button class="btn btn-secondary" type="submit">Save</button>
+                        </form>
+                        <form method="post" action="{% url 'planner_activity_delete' item.pk %}" style="display:inline-block; margin-left: 0.5rem;">
+                          {% csrf_token %}
+                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                          <button class="btn btn-danger" type="submit">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="5">No activities yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
+
+  <style>
+    .planner-card-wide {
+      width: 100%;
+    }
+
+    .planner-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .planner-card-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .planner-card-hint {
+      margin: 0;
+      color: #617167;
+      font-size: 0.9rem;
+    }
+
+    .planner-chip {
+      background: rgba(28, 43, 34, 0.08);
+      color: #1c2b22;
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.75rem;
+    }
+
+    .planner-list {
+      margin-top: 1rem;
+    }
+
+    .planner-card .table-wrap {
+      margin-top: 1rem;
+    }
+
+    /* New styles for improved manage sections layout */
+    .manage-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .manage-form-section,
+    .manage-list-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .manage-subsection-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1c2b22;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .manage-form-section form {
+      margin-top: 0.5rem;
+    }
+
+    .manage-list-section .table-wrap {
+      margin-top: 0;
+      background: #f8f9f8;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    /* Enhanced table styling */
+    .manage-list-section .table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .manage-list-section .table thead th {
+      background: transparent;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #617167;
+      padding: 0.75rem 0.875rem;
+      text-align: left;
+      border-bottom: 2px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .manage-list-section .table thead th:last-child {
+      text-align: right;
+    }
+
+    .manage-list-section .table tbody td {
+      padding: 0.875rem;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.06);
+    }
+
+    .manage-list-section .table tbody td:last-child {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .manage-list-section .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .manage-list-section .table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Table input styling to match form fields */
+    .manage-list-section .table input[type="text"],
+    .manage-list-section .table input[type="number"],
+    .manage-list-section .table select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid rgba(28, 43, 34, 0.15);
+      border-radius: 6px;
+      background: #f8f9f8;
+      font-size: 0.9rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .manage-list-section .table input[type="text"]:focus,
+    .manage-list-section .table input[type="number"]:focus,
+    .manage-list-section .table select:focus {
+      outline: none;
+      border-color: #1c2b22;
+      background: #f8f9f8;
+    }
+
+    /* Action buttons in table */
+    .manage-list-section .table .btn {
+      padding: 0.4rem 0.875rem;
+      font-size: 0.85rem;
+      min-width: auto;
+    }
+
+    .manage-list-section .table td form {
+      margin: 0;
+    }
+
+    /* Empty state styling */
+    .manage-list-section .table tbody tr td[colspan] {
+      text-align: center;
+      color: #617167;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+    /* Responsive layout for larger screens */
+    @media (min-width: 900px) {
+      .manage-section {
+        grid-template-columns: 1fr 2fr;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .planner-hero {
+        align-items: flex-start;
+      }
+    }
+  </style>
 
   <script>
     const startField = document.getElementById("{{ form.start_time.id_for_label }}");

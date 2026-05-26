@@ -18,8 +18,6 @@ def test_session_duration_minutes():
         user=user,
         title="Deep work",
         category=category,
-        target_type="duration",
-        target_value=60,
         priority=1,
     )
     start = timezone.now()
@@ -46,8 +44,6 @@ def test_start_stop_timer_flow(client):
         user=user,
         title="Stretch",
         category=category,
-        target_type="duration",
-        target_value=10,
         priority=1,
     )
 
@@ -79,8 +75,6 @@ def test_manual_session_log(client):
         user=user,
         title="Read",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=2,
     )
 
@@ -109,8 +103,6 @@ def test_duration_only_session_log(client):
         user=user,
         title="Read",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=2,
     )
 
@@ -140,8 +132,6 @@ def test_end_before_start_rejected(client):
         user=user,
         title="Read",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=2,
     )
 
@@ -199,14 +189,13 @@ def test_session_user_isolation(client):
 
 
 @pytest.mark.django_db
-def test_archived_category_excluded_from_form():
+def test_category_queryset_scoped_to_user():
     user = User.objects.create_user(username="u1", password="Pass12345")
-    active = ActivityCategory.objects.create(user=user, name="Active")
-    archived = ActivityCategory.objects.create(
-        user=user, name="Archived", is_archived=True
-    )
+    other = User.objects.create_user(username="u2", password="Pass12345")
+    own = ActivityCategory.objects.create(user=user, name="Own")
+    ActivityCategory.objects.create(user=other, name="Other")
 
     form = SessionLogForm(user=user)
     categories = list(form.fields["category"].queryset)
-    assert active in categories
-    assert archived not in categories
+    assert own in categories
+    assert all(item.user_id == user.id for item in categories)

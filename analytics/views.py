@@ -3,15 +3,22 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse
+from django.db.models import Q, Sum
+from django.db.models.functions import Coalesce
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from activities.models import Activity
+from activities.models import Activity, ActivityCategory
 from analytics.models import AggregatedDaily, DailyReflection, DailyScore
 from analytics.reflection import ensure_daily_reflection
 from analytics.scoring import upsert_daily_score
-from analytics.services import get_day_bounds_utc, get_user_timezone
+from analytics.services import (
+    compute_category_totals,
+    compute_daily_intensity,
+    get_day_bounds_utc,
+    get_user_timezone,
+)
 from planner.models import ScheduleBlock
 from tracking.models import Session
 
@@ -80,7 +87,7 @@ def get_activity_filter(request, user):
     return None
 
 
-def build_daily_series(user, start_date, end_date, activity=None):
+def build_daily_series(user, start_date, end_date, category=None, activity=None):
     days = (end_date - start_date).days + 1
     dates = [start_date + dt.timedelta(days=offset) for offset in range(days)]
 
@@ -112,9 +119,65 @@ def build_daily_series(user, start_date, end_date, activity=None):
             )
             planned_minutes = 0
             for block in blocks:
-                start_dt = dt.datetime.combine(date, block.start_time)
-                end_dt = dt.datetime.combine(date, block.end_time)
-                planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+                if block.start_time and block.end_time:
+                    start_dt = dt.datetime.combine(date, block.start_time)
+                    end_dt = dt.datetime.combine(date, block.end_time)
+                    planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+                elif block.duration_minutes:
+                    planned_minutes += int(block.duration_minutes)
+            planned[date] = planned_minutes
+    elif category:
+        totals = {}
+        planned = {}
+        sessions_count = {}
+        for date in dates:
+            start_utc, end_utc = get_day_bounds_utc(user, date)
+            sessions = Session.objects.filter(
+                user=user,
+                end__isnull=False,
+                start__lt=end_utc,
+                end__gt=start_utc,
+            ).filter(
+                Q(category=category)
+                | Q(category__isnull=True, activity__category=category)
+            )
+            total_minutes = 0
+            for session in sessions:
+                overlap_start = max(session.start, start_utc)
+                overlap_end = min(session.end, end_utc)
+                total_minutes += int(
+                    max(0, (overlap_end - overlap_start).total_seconds()) // 60
+                )
+            totals[date] = total_minutes
+
+            duration_only_sessions = Session.objects.filter(
+                user=user,
+                local_date=date,
+                duration_minutes__isnull=False,
+                start__isnull=True,
+                end__isnull=True,
+            ).filter(
+                Q(category=category)
+                | Q(category__isnull=True, activity__category=category)
+            )
+            duration_minutes = sum(
+                session.duration_minutes or 0 for session in duration_only_sessions
+            )
+            totals[date] += duration_minutes
+            sessions_count[date] = sessions.count() + duration_only_sessions.count()
+
+            blocks = ScheduleBlock.objects.filter(user=user, date=date).filter(
+                Q(category=category)
+                | Q(category__isnull=True, activity__category=category)
+            )
+            planned_minutes = 0
+            for block in blocks:
+                if block.start_time and block.end_time:
+                    start_dt = dt.datetime.combine(date, block.start_time)
+                    end_dt = dt.datetime.combine(date, block.end_time)
+                    planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+                elif block.duration_minutes:
+                    planned_minutes += int(block.duration_minutes)
             planned[date] = planned_minutes
     else:
         aggregates = AggregatedDaily.objects.filter(
@@ -141,6 +204,96 @@ def build_daily_series(user, start_date, end_date, activity=None):
         "planned": planned_values,
         "sessions_count": [sessions_count[date] for date in dates],
     }
+
+
+def build_category_daily_series(user, start_date, end_date, dates, labels):
+    categories = list(ActivityCategory.objects.filter(user=user).order_by("name"))
+    category_map = {
+        category.pk: {
+            "id": category.pk,
+            "key": str(category.pk),
+            "name": category.name,
+            "actual": {date: 0 for date in dates},
+            "planned": {date: 0 for date in dates},
+        }
+        for category in categories
+    }
+    session_rows = (
+        Session.objects.filter(
+            user=user,
+            local_date__range=(start_date, end_date),
+            duration_minutes__isnull=False,
+        )
+        .annotate(resolved_category_id=Coalesce("category_id", "activity__category_id"))
+        .values("resolved_category_id", "local_date")
+        .annotate(total=Sum("duration_minutes"))
+    )
+
+    for row in session_rows:
+        category_id = row["resolved_category_id"]
+        date = row["local_date"]
+        minutes = row["total"] or 0
+        bucket = category_map.setdefault(
+            category_id,
+            {
+                "id": category_id,
+                "key": str(category_id) if category_id is not None else "unassigned",
+                "name": "Unassigned",
+                "actual": {date: 0 for date in dates},
+                "planned": {date: 0 for date in dates},
+            },
+        )
+        if date in bucket["actual"]:
+            bucket["actual"][date] += minutes
+
+    blocks = (
+        ScheduleBlock.objects.filter(user=user, date__range=(start_date, end_date))
+        .select_related("activity", "category")
+        .order_by("date")
+    )
+    for block in blocks:
+        category = block.category or (block.activity.category if block.activity else None)
+        category_id = category.pk if category else None
+        minutes = 0
+        if block.start_time and block.end_time:
+            start_dt = dt.datetime.combine(block.date, block.start_time)
+            end_dt = dt.datetime.combine(block.date, block.end_time)
+            minutes = int((end_dt - start_dt).total_seconds() // 60)
+        elif block.duration_minutes:
+            minutes = int(block.duration_minutes)
+        if minutes <= 0:
+            continue
+        bucket = category_map.setdefault(
+            category_id,
+            {
+                "id": category_id,
+                "key": str(category_id) if category_id is not None else "unassigned",
+                "name": category.name if category else "Unassigned",
+                "actual": {date: 0 for date in dates},
+                "planned": {date: 0 for date in dates},
+            },
+        )
+        if block.date in bucket["planned"]:
+            bucket["planned"][block.date] += minutes
+
+    ordered_ids = [category.pk for category in categories]
+    series = []
+    for category_id in ordered_ids:
+        bucket = category_map.get(category_id)
+        if not bucket:
+            continue
+        series.append(
+            {
+                "id": bucket["id"],
+                "key": bucket["key"],
+                "name": bucket["name"],
+                "labels": labels,
+                "actual": [bucket["actual"][date] for date in dates],
+                "planned": [bucket["planned"][date] for date in dates],
+            }
+        )
+
+    return series
 
 
 def aggregate_weekly(dates, actual, planned):
@@ -184,8 +337,8 @@ def aggregate_monthly(dates, actual, planned):
     return labels, actual_values, planned_values
 
 
-def build_heatmap(dates, actual):
-    total_map = {date: value for date, value in zip(dates, actual)}
+def build_heatmap(dates, intensity):
+    total_map = {date: value for date, value in zip(dates, intensity)}
     if not total_map:
         return []
 
@@ -212,29 +365,27 @@ def build_heatmap(dates, actual):
     return weeks
 
 
-def build_kpis(dates, actual, planned):
-    total_actual = sum(actual)
-    total_planned = sum(planned)
+def build_kpis(total_actual, total_planned, intensity_values, category_totals):
     completion_rate = None
     if total_planned > 0:
         completion_rate = round(total_actual / total_planned * 100)
 
     streak = 0
-    for value in reversed(actual):
+    for value in reversed(intensity_values):
         if value <= 0:
             break
         streak += 1
 
-    today_actual = actual[-1] if actual else 0
-    today_planned = planned[-1] if planned else 0
+    top_category = None
+    if category_totals:
+        top_category = max(category_totals, key=lambda item: item["intensity_score"])
 
     return {
         "total_actual": total_actual,
         "total_planned": total_planned,
         "completion_rate": completion_rate,
         "streak": streak,
-        "today_actual": today_actual,
-        "today_planned": today_planned,
+        "top_category": top_category,
     }
 
 
@@ -257,8 +408,20 @@ def build_context(request):
     if start_date < year_start:
         start_date = year_start
 
-    activity = get_activity_filter(request, user)
-    series = build_daily_series(user, start_date, local_today, activity)
+    series = build_daily_series(user, start_date, end_date)
+
+    intensity_values = [compute_daily_intensity(user, date) for date in series["dates"]]
+    category_totals = compute_category_totals(user, start_date, local_today)
+    category_chart_rows = [
+        row
+        for row in category_totals
+        if row["actual_minutes"] > 0 or row["planned_minutes"] > 0
+    ]
+    if not category_chart_rows:
+        category_chart_rows = category_totals
+    category_labels = [row["name"] for row in category_chart_rows]
+    category_actual = [row["actual_minutes"] for row in category_chart_rows]
+    category_planned = [row["planned_minutes"] for row in category_chart_rows]
 
     weekly_labels, weekly_actual, weekly_planned = aggregate_weekly(
         series["dates"], series["actual"], series["planned"]
@@ -267,16 +430,25 @@ def build_context(request):
         series["dates"], series["actual"], series["planned"]
     )
 
-    heatmap = build_heatmap(series["dates"], series["actual"])
-    kpis = build_kpis(series["dates"], series["actual"], series["planned"])
+    heatmap = build_heatmap(series["dates"], intensity_values)
+    kpis = build_kpis(
+        total_actual=sum(series["actual"]),
+        total_planned=sum(series["planned"]),
+        intensity_values=intensity_values,
+        category_totals=category_totals,
+    )
 
-    activities = Activity.objects.filter(user=user).order_by("title")
+    category_daily_series = build_category_daily_series(
+        user,
+        start_date,
+        end_date,
+        series["dates"],
+        series["labels"],
+    )
 
     return {
         "range_days": days,
         "range_options": RANGE_OPTIONS,
-        "activity": activity,
-        "activities": activities,
         "year_options": year_options,
         "selected_year": selected_year,
         "daily_labels": series["labels"],
@@ -288,6 +460,11 @@ def build_context(request):
         "monthly_labels": monthly_labels,
         "monthly_actual": monthly_actual,
         "monthly_planned": monthly_planned,
+        "category_totals": category_totals,
+        "category_labels": category_labels,
+        "category_actual": category_actual,
+        "category_planned": category_planned,
+        "category_daily_series": category_daily_series,
         "heatmap": heatmap,
         "kpis": kpis,
         "local_today": local_today,

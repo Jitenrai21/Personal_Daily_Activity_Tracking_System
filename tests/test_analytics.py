@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
 from analytics.models import AggregatedDaily
-from analytics.services import compute_daily, update_daily
+from analytics.services import compute_category_totals, compute_daily, compute_daily_intensity, update_daily
 from planner.models import ScheduleBlock
 from tracking.models import Session
 from users.models import UserProfile
@@ -24,8 +24,6 @@ def test_compute_daily_splits_midnight_session():
         user=user,
         title="Late shift",
         category=category,
-        target_type="duration",
-        target_value=60,
         priority=1,
     )
 
@@ -76,3 +74,72 @@ def test_update_daily_creates_record():
     record = update_daily(user, start.date())
     assert AggregatedDaily.objects.filter(user=user, date=start.date()).exists()
     assert record.total_minutes >= 20
+
+
+@pytest.mark.django_db
+def test_category_totals_weighted_by_priority():
+    user = User.objects.create_user(username="u3", password="Pass12345")
+    category = ActivityCategory.objects.create(user=user, name="Deep")
+    low_category = ActivityCategory.objects.create(user=user, name="Light")
+    high = Activity.objects.create(
+        user=user,
+        title="Deep work",
+        category=category,
+        priority=3,
+    )
+    low = Activity.objects.create(
+        user=user,
+        title="Email",
+        category=low_category,
+        priority=1,
+    )
+
+    start = timezone.now()
+    Session.objects.create(
+        user=user,
+        activity=high,
+        category=category,
+        local_date=start.date(),
+        start=start,
+        end=start + dt.timedelta(minutes=10),
+        source=Session.SOURCE_MANUAL,
+    )
+    Session.objects.create(
+        user=user,
+        activity=low,
+        category=low_category,
+        local_date=start.date(),
+        start=start,
+        end=start + dt.timedelta(minutes=10),
+        source=Session.SOURCE_MANUAL,
+    )
+
+    totals = compute_category_totals(user, start.date(), start.date())
+    totals_map = {row["name"]: row for row in totals}
+    assert totals_map["Deep"]["intensity_score"] == 30
+    assert totals_map["Light"]["intensity_score"] == 10
+
+
+@pytest.mark.django_db
+def test_daily_intensity_uses_priority():
+    user = User.objects.create_user(username="u4", password="Pass12345")
+    category = ActivityCategory.objects.create(user=user, name="Focus")
+    activity = Activity.objects.create(
+        user=user,
+        title="Study",
+        category=category,
+        priority=2,
+    )
+    start = timezone.now()
+    Session.objects.create(
+        user=user,
+        activity=activity,
+        category=category,
+        local_date=start.date(),
+        start=start,
+        end=start + dt.timedelta(minutes=15),
+        source=Session.SOURCE_MANUAL,
+    )
+
+    intensity = compute_daily_intensity(user, start.date())
+    assert intensity == 30

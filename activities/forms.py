@@ -1,5 +1,4 @@
 from django import forms
-from django.core.exceptions import ValidationError
 
 from activities.models import Activity, ActivityCategory, RecurrenceRule
 
@@ -7,35 +6,27 @@ from activities.models import Activity, ActivityCategory, RecurrenceRule
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = ActivityCategory
-        fields = ("name", "color", "description", "is_default", "is_archived")
+        fields = ("name", "description")
 
 
 class ActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
         fields = (
-            "title",
             "category",
-            "target_type",
-            "target_value",
+            "title",
             "priority",
             "notes",
-            "is_active",
         )
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if user is not None:
-            self.fields["category"].queryset = ActivityCategory.objects.filter(
-                user=user, is_archived=False
-            )
-
-    def clean_target_value(self):
-        value = self.cleaned_data.get("target_value")
-        if value is None or value <= 0:
-            raise ValidationError("Target value must be greater than 0.")
-        return value
+            self.fields["category"].queryset = ActivityCategory.objects.filter(user=user)
 
 
 class RecurrenceRuleForm(forms.ModelForm):

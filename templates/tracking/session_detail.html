@@ -4,13 +4,19 @@
 {% block title %}Session detail{% endblock %}
 
 {% block content %}
-  <section class="card card-wide">
-    <div class="card-header">
-      <h1>Session detail</h1>
-      <div class="card-actions">
+  <section class="page-shell">
+    <header class="session-detail-header page-header surface-card">
+      <div>
+        <p class="page-eyebrow">Tracking</p>
+        <h1 class="page-title">Session detail</h1>
+        <p class="page-subtitle">Review the session summary and adjust the log below.</p>
+      </div>
+      <div class="page-actions">
         <a class="btn btn-secondary" href="{% url 'session_list' %}">Back</a>
       </div>
-    </div>
+    </header>
+
+    <section class="session-detail-card surface-card page-card">
 
     <div class="detail-grid">
       <div>
@@ -125,6 +131,7 @@
         <button class="btn btn-secondary" type="submit">Delete session</button>
       </form>
     </div>
+    </section>
   </section>
 
   <script>

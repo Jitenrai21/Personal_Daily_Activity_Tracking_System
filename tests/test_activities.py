@@ -1,11 +1,9 @@
-import datetime as dt
-
 import pytest
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.urls import reverse
 
-from activities.models import Activity, ActivityCategory, RecurrenceRule
+from activities.models import Activity, ActivityCategory
 
 
 @pytest.mark.django_db
@@ -17,94 +15,90 @@ def test_category_unique_per_user():
 
 
 @pytest.mark.django_db
-def test_activity_crud_and_owner_scope(client):
+def test_planner_category_crud_and_scope(client):
     user1 = User.objects.create_user(username="u1", password="Pass12345")
     user2 = User.objects.create_user(username="u2", password="Pass12345")
-    cat1 = ActivityCategory.objects.create(user=user1, name="Work")
-    cat2 = ActivityCategory.objects.create(user=user2, name="Play")
 
     client.login(username="u1", password="Pass12345")
-    response = client.post(
-        reverse("activity_create"),
-        {
-            "title": "Study",
-            "category": cat1.pk,
-            "target_type": "duration",
-            "target_value": 120,
-            "priority": 2,
-            "notes": "",
-            "is_active": True,
-        },
-    )
+    response = client.post(reverse("planner_category_create"), {"name": "Work"})
     assert response.status_code == 302
 
-    activity = Activity.objects.get(user=user1)
-    detail_url = reverse("activity_detail", args=[activity.pk])
+    category = ActivityCategory.objects.get(user=user1, name="Work")
+
+    update = client.post(
+        reverse("planner_category_update", args=[category.pk]),
+        {"name": "Focus", "description": "Deep work"},
+    )
+    assert update.status_code == 302
+    category.refresh_from_db()
+    assert category.name == "Focus"
 
     client.logout()
     client.login(username="u2", password="Pass12345")
-    response = client.get(detail_url)
-    assert response.status_code == 404
-
-    response = client.post(
-        reverse("activity_create"),
-        {
-            "title": "Oops",
-            "category": cat2.pk,
-            "target_type": "duration",
-            "target_value": 10,
-            "priority": 1,
-            "notes": "",
-            "is_active": True,
-        },
+    forbidden = client.post(
+        reverse("planner_category_update", args=[category.pk]),
+        {"name": "Hijack"},
     )
-    assert response.status_code == 302
+    assert forbidden.status_code == 404
 
+    own = ActivityCategory.objects.create(user=user2, name="Play")
+    delete = client.post(reverse("planner_category_delete", args=[own.pk]))
+    assert delete.status_code == 302
+    assert not ActivityCategory.objects.filter(pk=own.pk).exists()
 
 @pytest.mark.django_db
-def test_recurrence_validation():
+def test_planner_activity_crud_and_scope(client):
     user = User.objects.create_user(username="u1", password="Pass12345")
-    cat = ActivityCategory.objects.create(user=user, name="Work")
-    activity = Activity.objects.create(
-        user=user,
-        title="Study",
-        category=cat,
-        target_type="duration",
-        target_value=60,
-        priority=1,
-    )
-
-    rule = RecurrenceRule(
-        activity=activity,
-        frequency="weekly",
-        interval=1,
-        weekdays=None,
-        start_date=dt.date(2026, 1, 1),
-        end_date=dt.date(2026, 1, 31),
-    )
-
-    with pytest.raises(Exception):
-        rule.full_clean()
-
-
-@pytest.mark.django_db
-def test_toggle_activity_htmx(client):
-    user = User.objects.create_user(username="u1", password="Pass12345")
+    other = User.objects.create_user(username="u2", password="Pass12345")
     cat = ActivityCategory.objects.create(user=user, name="Health")
-    activity = Activity.objects.create(
-        user=user,
-        title="Run",
-        category=cat,
-        target_type="count",
-        target_value=3,
-        priority=2,
-    )
 
     client.login(username="u1", password="Pass12345")
-    response = client.post(
-        reverse("activity_toggle", args=[activity.pk]),
-        HTTP_HX_REQUEST="true",
+    create = client.post(
+        reverse("planner_activity_create"),
+        {
+            "title": "Run",
+            "category": cat.pk,
+            "priority": 2,
+            "notes": "Morning",
+        },
     )
-    assert response.status_code == 200
+    assert create.status_code == 302
+
+    activity = Activity.objects.get(user=user, title="Run")
+
+    update = client.post(
+        reverse("planner_activity_update", args=[activity.pk]),
+        {
+            "title": "Run fast",
+            "category": cat.pk,
+            "priority": 1,
+            "notes": "Track pace",
+        },
+    )
+    assert update.status_code == 302
     activity.refresh_from_db()
-    assert activity.is_active is False
+    assert activity.title == "Run fast"
+
+    client.logout()
+    client.login(username="u2", password="Pass12345")
+    response = client.post(
+        reverse("planner_activity_update", args=[activity.pk]),
+        {
+            "title": "Steal",
+            "category": cat.pk,
+            "priority": 1,
+            "notes": "",
+        },
+    )
+    assert response.status_code == 404
+
+    own_cat = ActivityCategory.objects.create(user=other, name="Play")
+    own_activity = Activity.objects.create(
+        user=other,
+        title="Game",
+        category=own_cat,
+        priority=3,
+    )
+    delete = client.post(reverse("planner_activity_delete", args=[own_activity.pk]))
+    assert delete.status_code == 302
+    assert not Activity.objects.filter(pk=own_activity.pk).exists()

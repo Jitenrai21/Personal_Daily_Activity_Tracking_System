@@ -7,6 +7,30 @@ from activities.models import Activity, ActivityCategory
 from planner.models import ScheduleBlock
 
 
+class PlannerCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ActivityCategory
+        fields = ("name", "description")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional description"}),
+        }
+
+
+class PlannerActivityForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ("category", "title", "priority", "notes")
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if self.user:
+            self.fields["category"].queryset = ActivityCategory.objects.filter(user=self.user)
+
+
 class ScheduleBlockForm(forms.ModelForm):
     class Meta:
         model = ScheduleBlock
@@ -31,10 +55,8 @@ class ScheduleBlockForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user:
             self.instance.user = self.user
-            self.fields["category"].queryset = ActivityCategory.objects.filter(
-                user=self.user, is_archived=False
-            )
-            activity_qs = Activity.objects.filter(user=self.user, is_active=True)
+            self.fields["category"].queryset = ActivityCategory.objects.filter(user=self.user)
+            activity_qs = Activity.objects.filter(user=self.user)
             if self.is_bound:
                 raw_category = self.data.get(self.add_prefix("category"))
                 if raw_category:

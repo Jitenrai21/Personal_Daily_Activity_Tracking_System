@@ -1,14 +1,10 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 
 
 class ActivityCategory(models.Model):
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    color = models.CharField(max_length=20, blank=True)
     description = models.TextField(blank=True)
-    is_default = models.BooleanField(default=False)
-    is_archived = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
@@ -22,32 +18,18 @@ class ActivityCategory(models.Model):
 
 
 class Activity(models.Model):
-    TARGET_DURATION = "duration"
-    TARGET_COUNT = "count"
-    TARGET_CHOICES = [
-        (TARGET_DURATION, "Duration"),
-        (TARGET_COUNT, "Count"),
-    ]
-
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     category = models.ForeignKey(
         ActivityCategory, on_delete=models.PROTECT, related_name="activities"
     )
     title = models.CharField(max_length=200)
-    target_type = models.CharField(max_length=20, choices=TARGET_CHOICES)
-    target_value = models.PositiveIntegerField()
     priority = models.PositiveSmallIntegerField(default=3)
     notes = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-updated_at"]
-
-    def clean(self) -> None:
-        if self.target_value <= 0:
-            raise ValidationError({"target_value": "Target value must be > 0."})
 
     def __str__(self) -> str:
         return self.title

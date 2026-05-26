@@ -35,7 +35,7 @@ def session_list_view(request):
     activity_choices = Activity.objects.filter(user=request.user).select_related(
         "category"
     )
-    activities = Activity.objects.filter(user=request.user, is_active=True).order_by(
+    activities = Activity.objects.filter(user=request.user).order_by(
         "title"
     )
     sessions = Session.objects.filter(user=request.user).select_related(
@@ -96,7 +96,7 @@ def session_start_view(request):
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
                 "activities": Activity.objects.filter(
-                    user=request.user, is_active=True
+                    user=request.user
                 ).order_by("title"),
             },
         )
@@ -138,7 +138,7 @@ def session_stop_view(request):
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
                 "activities": Activity.objects.filter(
-                    user=request.user, is_active=True
+                    user=request.user
                 ).order_by("title"),
             },
         )
@@ -173,7 +173,7 @@ def session_log_view(request):
     )
     sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
-    activities = Activity.objects.filter(user=request.user, is_active=True).order_by(
+    activities = Activity.objects.filter(user=request.user).order_by(
         "title"
     )
     return render(

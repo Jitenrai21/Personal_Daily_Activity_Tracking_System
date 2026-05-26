@@ -1,3 +1,4 @@
+<!-- Redesigned schedule block with improved UI -->
 <div
   class="planner-item session-toggle"
   id="block-{{ block.pk }}"
@@ -5,39 +6,390 @@
     data-session-start="{{ running_session.start|date:'c' }}"
   {% endif %}
 >
-  <div>
-    <strong>{{ block.activity.title }}</strong>
-    <div class="planner-meta">{{ block.category.name|default:"--" }} · {{ block.date }}</div>
-    <div class="planner-meta">
-      {% if block.start_time and block.end_time %}
-        {{ block.start_time }} - {{ block.end_time }}
-      {% elif block.start_time %}
-        {{ block.start_time }}
+  <div class="planner-item-content">
+    <div class="planner-item-header">
+      <div class="planner-item-title-group">
+        <h3 class="planner-item-title">{{ block.activity.title }}</h3>
+        <span class="planner-item-category-badge">{{ block.category.name|default:"Uncategorized" }}</span>
+      </div>
+      {% if running_session and running_session.metadata.planned_block_id == block.pk %}
+        <span class="planner-status-badge active">
+          <span class="status-indicator"></span>
+          Active
+        </span>
       {% else %}
-        --
+        <span class="planner-status-badge scheduled">Scheduled</span>
       {% endif %}
-      · {% if block.duration_minutes %}{{ block.duration_minutes }} min{% else %}--{% endif %}
     </div>
+
+    <div class="planner-item-details">
+      <div class="planner-detail-group">
+        <svg class="planner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.33333 2V4M10.6667 2V4M3.33333 6.66667H12.6667M4 3.33333H12C12.7364 3.33333 13.3333 3.93029 13.3333 4.66667V12.6667C13.3333 13.403 12.7364 14 12 14H4C3.26362 14 2.66667 13.403 2.66667 12.6667V4.66667C2.66667 3.93029 3.26362 3.33333 4 3.33333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>{{ block.date|date:"M d, Y" }}</span>
+      </div>
+
+      <div class="planner-detail-group">
+        <svg class="planner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 4.66667V8L10.6667 9.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>
+          {% if block.start_time and block.end_time %}
+            {{ block.start_time|date:"g:i A" }} - {{ block.end_time|date:"g:i A" }}
+          {% elif block.start_time %}
+            {{ block.start_time|date:"g:i A" }}
+          {% else %}
+            Time not set
+          {% endif %}
+        </span>
+      </div>
+
+      {% if block.duration_minutes %}
+        <div class="planner-detail-group">
+          <svg class="planner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 4.66667V8H11.3333M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>{{ block.duration_minutes }} min</span>
+        </div>
+      {% endif %}
+    </div>
+
     {% if block.notes %}
-      <div class="planner-meta">{{ block.notes }}</div>
+      <div class="planner-item-notes">
+        <svg class="planner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.3333 2H4.66667C3.93029 2 3.33333 2.59695 3.33333 3.33333V12.6667C3.33333 13.403 3.93029 14 4.66667 14H11.3333C12.0697 14 12.6667 13.403 12.6667 12.6667V3.33333C12.6667 2.59695 12.0697 2 11.3333 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.33333 5.33333H10.6667M5.33333 8H10.6667M5.33333 10.6667H8.66667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>{{ block.notes }}</span>
+      </div>
     {% endif %}
   </div>
-  <div class="planner-actions">
+
+  <div class="planner-item-actions">
     {% if running_session and running_session.metadata.planned_block_id == block.pk %}
+      <div class="timer-display" data-session-elapsed>
+        <span class="timer-value">00:00:00</span>
+        <span class="timer-label">Elapsed</span>
+      </div>
       <form method="post" action="{% url 'schedule_stop_timer' block.pk %}" hx-post="{% url 'schedule_stop_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
         {% csrf_token %}
-        <button class="btn" type="submit">Stop timer</button>
+        <button class="btn btn-danger" type="submit">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="8" height="8" rx="1" fill="currentColor"/>
+          </svg>
+          Stop
+        </button>
       </form>
-      <p class="timer" data-session-elapsed>00:00:00</p>
     {% else %}
       <form method="post" action="{% url 'schedule_start_timer' block.pk %}" hx-post="{% url 'schedule_start_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
         {% csrf_token %}
-        <button class="btn" type="submit">Start timer</button>
+        <button class="btn btn-primary" type="submit">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5.33333 3.33333L12 8L5.33333 12.6667V3.33333Z" fill="currentColor"/>
+          </svg>
+          Start
+        </button>
       </form>
     {% endif %}
     <form method="post" action="{% url 'schedule_delete' block.pk %}" hx-post="{% url 'schedule_delete' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
       {% csrf_token %}
-      <button class="btn btn-secondary" type="submit">Remove</button>
+      <button class="btn btn-secondary" type="submit" title="Remove block">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </form>
   </div>
 </div>
+
+<style>
+  /* Planner item container */
+  .planner-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: #f8f9f8;
+    border: 1px solid rgba(28, 43, 34, 0.1);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .planner-item:hover {
+    border-color: rgba(28, 43, 34, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .planner-item[data-session-start] {
+    background: linear-gradient(to right, rgba(63, 143, 107, 0.03) 0%, #f8f9f8 100%);
+    border-color: rgba(63, 143, 107, 0.3);
+  }
+
+  .planner-item:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Content area */
+  .planner-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    min-width: 0;
+  }
+
+  /* Header section */
+  .planner-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .planner-item-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .planner-item-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1c2b22;
+    line-height: 1.3;
+  }
+
+  .planner-item-category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    background: rgba(28, 43, 34, 0.08);
+    color: #1c2b22;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  /* Status badges */
+  .planner-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .planner-status-badge.active {
+    background: rgba(63, 143, 107, 0.12);
+    color: #2d6b4f;
+  }
+
+  .planner-status-badge.scheduled {
+    background: rgba(97, 113, 103, 0.1);
+    color: #617167;
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3f8f6b;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  /* Details section */
+  .planner-item-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+
+  .planner-detail-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #617167;
+    font-size: 0.875rem;
+  }
+
+  .planner-icon {
+    flex-shrink: 0;
+    color: #617167;
+  }
+
+  /* Notes section */
+  .planner-item-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9f8;
+    border-radius: 6px;
+    color: #617167;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .planner-item-notes .planner-icon {
+    margin-top: 0.1rem;
+  }
+
+  /* Actions area */
+  .planner-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .planner-item-actions form {
+    margin: 0;
+  }
+
+  .planner-item-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .planner-item-actions .btn svg {
+    flex-shrink: 0;
+  }
+
+  .planner-item-actions .btn-secondary {
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 1px solid rgba(28, 43, 34, 0.15);
+    color: #617167;
+  }
+
+  .planner-item-actions .btn-secondary:hover {
+    background: rgba(28, 43, 34, 0.05);
+    border-color: rgba(28, 43, 34, 0.25);
+  }
+
+  .planner-item-actions .btn-primary {
+    background: #3f8f6b;
+    color: #f8f9f8;
+    border: none;
+  }
+
+  .planner-item-actions .btn-primary:hover {
+    background: #2d6b4f;
+  }
+
+  .planner-item-actions .btn-danger {
+    background: #eb5757;
+    color: #f8f9f8;
+    border: none;
+  }
+
+  .planner-item-actions .btn-danger:hover {
+    background: #d43f3f;
+  }
+
+  /* Timer display */
+  .timer-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    padding: 0.5rem 0.875rem;
+    background: rgba(63, 143, 107, 0.08);
+    border-radius: 6px;
+  }
+
+  .timer-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d6b4f;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .timer-label {
+    font-size: 0.7rem;
+    color: #617167;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .planner-item {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .planner-item-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .planner-item-details {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .planner-item-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .planner-item-actions .btn {
+      flex: 1;
+    }
+
+    .planner-item-actions .btn-secondary {
+      flex: 0 0 auto;
+    }
+
+    .timer-display {
+      order: -1;
+      align-items: flex-start;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .planner-item-actions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .planner-item-actions .btn,
+    .planner-item-actions .btn-secondary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>

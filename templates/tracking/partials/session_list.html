@@ -1,17 +1,344 @@
+<!-- Redesigned sessions table structure -->
 {% if sessions %}
-  <div class="table-row table-head table-row-sessions">
-    <div>Activity</div>
-    <div>Category</div>
-    <div>Date</div>
-    <div>Start</div>
-    <div>End</div>
-    <div>Duration</div>
-    <div>Source</div>
-    <div></div>
+  <div class="sessions-table-wrapper">
+    <div class="sessions-table">
+      <div class="sessions-table-header">
+        <div class="session-col session-col-activity">Activity</div>
+        <div class="session-col session-col-category">Category</div>
+        <div class="session-col session-col-date">Date</div>
+        <div class="session-col session-col-start">Start</div>
+        <div class="session-col session-col-end">End</div>
+        <div class="session-col session-col-duration">Duration</div>
+        <div class="session-col session-col-source">Source</div>
+        <div class="session-col session-col-actions">Actions</div>
+      </div>
+      <div class="sessions-table-body">
+        {% for session in sessions %}
+          {% include 'tracking/partials/session_row.html' %}
+        {% endfor %}
+      </div>
+    </div>
   </div>
-  {% for session in sessions %}
-    {% include 'tracking/partials/session_row.html' %}
-  {% endfor %}
 {% else %}
-  <p class="muted">No sessions logged yet.</p>
+  <div class="sessions-empty-state">
+    <div class="empty-state-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#617167" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="empty-state-title">No sessions logged yet</p>
+    <p class="empty-state-message">Start tracking your activities to see them here</p>
+  </div>
 {% endif %}
+
+<style>
+  /* Sessions table wrapper */
+  .sessions-table-wrapper {
+    background: #f8f9f8;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .sessions-table {
+    width: 100%;
+    min-width: 800px;
+  }
+
+  /* Table header */
+  .sessions-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1fr 1fr 1fr 1fr 0.8fr;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border-bottom: 2px solid rgba(28, 43, 34, 0.1);
+  }
+
+  .session-col {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #617167;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  .session-col-activity {
+    text-align: left;
+  }
+
+  .session-col-actions {
+    text-align: center;
+  }
+
+  /* Table body */
+  .sessions-table-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+  }
+
+  /* Session row (to be used in session_row.html) */
+  .session-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1fr 1fr 1fr 1fr 0.8fr;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid rgba(28, 43, 34, 0.08);
+    transition: all 0.2s ease;
+    align-items: center;
+  }
+
+  .session-row:hover {
+    border-color: rgba(28, 43, 34, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+  }
+
+  /* Session row cells */
+  .session-cell {
+    font-size: 0.85rem;
+    color: #1c2b22;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .session-cell-activity {
+    font-weight: 600;
+    color: #1c2b22;
+    font-size: 0.875rem;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .session-cell-category {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.2rem 0.6rem;
+    background: rgba(28, 43, 34, 0.08);
+    color: #1c2b22;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .session-cell-date {
+    color: #617167;
+    font-size: 0.85rem;
+  }
+
+  .session-cell-start,
+  .session-cell-end {
+    text-align: center;
+    color: #617167;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+  }
+
+  .session-cell-duration {
+    text-align: center;
+    font-weight: 600;
+    color: #1c2b22;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+  }
+
+  .session-cell-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .session-cell-source.manual {
+    background: rgba(242, 201, 76, 0.15);
+    color: #c79d1e;
+  }
+
+  .session-cell-source.planned {
+    background: rgba(63, 143, 107, 0.12);
+    color: #2d6b4f;
+  }
+
+  .session-cell-source.timer {
+    background: rgba(86, 133, 232, 0.12);
+    color: #3d5a9e;
+  }
+
+  .session-cell-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .session-cell-actions form {
+    margin: 0;
+  }
+
+  .session-cell-actions .btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    min-width: auto;
+  }
+
+  .session-cell-actions .btn-icon {
+    padding: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(28, 43, 34, 0.15);
+    color: #617167;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .session-cell-actions .btn-icon:hover {
+    background: rgba(28, 43, 34, 0.05);
+    border-color: rgba(28, 43, 34, 0.25);
+  }
+
+  .session-cell-actions .btn-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Empty state */
+  .sessions-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: #f8f9f8;
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .empty-state-icon {
+    margin-bottom: 1.25rem;
+    opacity: 0.4;
+  }
+
+  .empty-state-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1c2b22;
+  }
+
+  .empty-state-message {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #617167;
+  }
+
+  /* Responsive design */
+  @media (max-width: 1200px) {
+    .sessions-table {
+      min-width: 700px;
+    }
+
+    .sessions-table-header,
+    .session-row {
+      grid-template-columns: 1.8fr 1.2fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .sessions-table-wrapper {
+      padding: 0.75rem;
+    }
+
+    /* Stack layout for mobile */
+    .sessions-table {
+      min-width: 100%;
+    }
+
+    .sessions-table-header {
+      display: none;
+    }
+
+    .sessions-table-body {
+      gap: 0.75rem;
+    }
+
+    .session-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .session-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .session-cell::before {
+      content: attr(data-label);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #617167;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .session-cell-activity,
+    .session-cell-category,
+    .session-cell-source {
+      align-self: flex-start;
+    }
+
+    .session-cell-activity::before {
+      content: none;
+    }
+
+    .session-cell-activity {
+      font-size: 0.95rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.08);
+    }
+
+    .session-cell-start,
+    .session-cell-end,
+    .session-cell-duration {
+      justify-content: flex-start;
+    }
+
+    .session-cell-actions {
+      justify-content: flex-start;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(28, 43, 34, 0.08);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sessions-empty-state {
+      padding: 3rem 1.5rem;
+    }
+
+    .session-cell-actions {
+      flex-direction: column;
+    }
+
+    .session-cell-actions .btn,
+    .session-cell-actions .btn-icon {
+      width: 100%;
+    }
+  }
+</style>

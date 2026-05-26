@@ -3,14 +3,23 @@
 {% block title %}Profile settings{% endblock %}
 
 {% block content %}
-  <section class="card">
-    <h1>Profile settings</h1>
-    <form method="post">
-      {% csrf_token %}
-      {% include 'partials/form_fields.html' with form=form %}
-      <div class="form-actions">
-        <button class="btn" type="submit">Save changes</button>
+  <section class="page-shell">
+    <header class="page-header surface-card">
+      <div>
+        <p class="page-eyebrow">Account</p>
+        <h1 class="page-title">Profile settings</h1>
+        <p class="page-subtitle">Keep your timezone and preferences up to date.</p>
       </div>
-    </form>
+    </header>
+
+    <div class="page-card surface-card">
+      <form method="post">
+        {% csrf_token %}
+        {% include 'partials/form_fields.html' with form=form %}
+        <div class="form-actions">
+          <button class="btn" type="submit">Save changes</button>
+        </div>
+      </form>
+    </div>
   </section>
 {% endblock %}

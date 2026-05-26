@@ -27,8 +27,6 @@ def test_daily_score_is_normalized_and_persisted():
         user=user,
         title="Build",
         category=category,
-        target_type="duration",
-        target_value=60,
         priority=1,
     )
 

@@ -111,10 +111,79 @@ body {
 
 .content {
   flex: 1;
-  padding: 2rem;
+  padding: 0 2rem 2rem;
   max-width: 1240px;
   margin: 0 auto;
   width: 100%;
+}
+
+.page-shell {
+  padding: 0.75rem 0 1rem;
+  background: transparent;
+}
+
+.surface-card {
+  background: var(--main-color);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(44, 42, 39, 0.08);
+}
+
+.page-header {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.page-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  color: #5c6f65;
+  margin-bottom: 0.5rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+  color: #1c2b22;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: #3c4a42;
+  max-width: 32rem;
+}
+
+.page-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.page-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: var(--main-color);
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-card {
+  width: 100%;
+  padding: 1.5rem;
 }
 
 h1,

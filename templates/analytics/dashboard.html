@@ -3,21 +3,21 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-  <section class="dashboard-shell fade-in">
-    <div class="dashboard-header">
+  <section class="dashboard-shell fade-in page-shell">
+    <header class="dashboard-header page-header surface-card">
       <div>
-        <p class="dashboard-eyebrow">Insights</p>
-        <h1 class="dashboard-title">Your momentum snapshot</h1>
-        <p class="dashboard-subtitle">Track planned vs actual time and spot streaks at a glance.</p>
+        <p class="page-eyebrow">Insights</p>
+        <h1 class="page-title">Your momentum snapshot</h1>
+        <p class="page-subtitle">Compare category momentum and spot priority-weighted streaks.</p>
       </div>
       <form
-        class="dashboard-filters"
+        class="dashboard-filters page-actions"
         method="get"
         action="{% url 'dashboard_partial' %}"
         hx-get="{% url 'dashboard_partial' %}"
         hx-target="#dashboard-pane"
         hx-swap="innerHTML"
-        hx-include="#daily-year"
+        hx-include="#year"
       >
         <div class="filter-group">
           <label for="range" class="label">Range</label>
@@ -28,22 +28,402 @@
           </select>
         </div>
         <div class="filter-group">
-          <label for="activity" class="label">Activity</label>
-          <select id="activity" name="activity">
-            <option value="">All</option>
-            {% for item in activities %}
-              <option value="{{ item.pk }}" {% if activity and activity.pk == item.pk %}selected{% endif %}>{{ item.title }}</option>
+          <label for="year" class="label">Year</label>
+          <select id="year" name="year">
+            {% for year in year_options %}
+              <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
             {% endfor %}
           </select>
         </div>
         <button class="btn" type="submit">Update</button>
       </form>
-    </div>
+    </header>
 
-    <div id="dashboard-pane">
+    <div id="dashboard-pane" class="dashboard-content page-stack">
       {% include 'analytics/partials/dashboard_content.html' %}
     </div>
   </section>
+
+  <style>
+    /* Dashboard-specific layout improvements */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-filters {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 140px;
+    }
+
+    .filter-group .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #617167;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .filter-group select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid rgba(28, 43, 34, 0.15);
+      border-radius: 6px;
+      background: #ffffff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: #1c2b22;
+    }
+
+    .filter-group select:hover {
+      border-color: rgba(28, 43, 34, 0.25);
+    }
+
+    .dashboard-filters .btn {
+      align-self: flex-end;
+      padding: 0.5rem 1.25rem;
+    }
+
+    /* Dashboard content grid */
+    .dashboard-content {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    /* Card styling consistent with planner */
+    .dashboard-card {
+      background: var(--surface-card, #ffffff);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .dashboard-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .dashboard-card-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #1c2b22;
+    }
+
+    .dashboard-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1c2b22;
+    }
+
+    .dashboard-chip {
+      background: rgba(28, 43, 34, 0.08);
+      color: #1c2b22;
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Stats grid layout */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: #f8f9f8;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #617167;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1c2b22;
+      line-height: 1;
+    }
+
+    .stat-subtitle {
+      font-size: 0.85rem;
+      color: #617167;
+    }
+
+    /* Chart containers */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin-top: 1rem;
+    }
+
+    .chart-container canvas {
+      max-height: 300px;
+    }
+
+    /* Category sections grid */
+    .category-sections {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .category-section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .category-section-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #1c2b22;
+    }
+
+    /* Table styling consistent with planner */
+    .dashboard-table-wrap {
+      background: #f8f9f8;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .dashboard-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .dashboard-table thead th {
+      background: transparent;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #617167;
+      padding: 0.75rem 0.875rem;
+      text-align: left;
+      border-bottom: 2px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .dashboard-table thead th:last-child {
+      text-align: right;
+    }
+
+    .dashboard-table tbody td {
+      padding: 0.875rem;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.06);
+      background: #ffffff;
+    }
+
+    .dashboard-table tbody td:last-child {
+      text-align: right;
+    }
+
+    .dashboard-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .dashboard-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .dashboard-table tbody tr:hover td {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: #617167;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+
+    .empty-state-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1c2b22;
+    }
+
+    .empty-state-message {
+      font-size: 0.9rem;
+    }
+
+    /* Responsive layouts */
+    @media (min-width: 768px) {
+      .dashboard-content {
+        gap: 2rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .category-sections {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1400px) {
+      .category-sections {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .dashboard-filters {
+        width: 100%;
+      }
+
+      .filter-group {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .dashboard-filters .btn {
+        width: 100%;
+      }
+
+      .chart-container {
+        height: 250px;
+      }
+    }
+
+    /* Loading state */
+    .dashboard-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      color: #617167;
+    }
+
+    /* Fade in animation */
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Metric badge */
+    .metric-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .metric-badge.positive {
+      background: rgba(63, 143, 107, 0.1);
+      color: #3f8f6b;
+    }
+
+    .metric-badge.neutral {
+      background: rgba(97, 113, 103, 0.1);
+      color: #617167;
+    }
+
+    .metric-badge.negative {
+      background: rgba(235, 87, 87, 0.1);
+      color: #eb5757;
+    }
+
+    /* Priority indicators */
+    .priority-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .priority-indicator.high {
+      background: #eb5757;
+    }
+
+    .priority-indicator.medium {
+      background: #f2c94c;
+    }
+
+    .priority-indicator.low {
+      background: #3f8f6b;
+    }
+  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" defer></script>
   <script>
@@ -77,126 +457,122 @@
     }
 
     function renderDashboardCharts() {
-      const dailyLabels = loadJson("daily-labels");
-      if (!dailyLabels) {
+      const categorySeries = loadJson("category-daily-series");
+      if (!categorySeries) {
         return;
       }
-      const formattedDailyLabels = dailyLabels.map(formatDailyLabel);
-      const dailyActual = loadJson("daily-actual");
-      const dailyPlanned = loadJson("daily-planned");
-      const weeklyLabels = loadJson("weekly-labels");
-      const weeklyActual = loadJson("weekly-actual");
-      const weeklyPlanned = loadJson("weekly-planned");
-      const monthlyLabels = loadJson("monthly-labels");
-      const monthlyActual = loadJson("monthly-actual");
-      const monthlyPlanned = loadJson("monthly-planned");
 
       const chartPalette = {
         actual: "#3f8f6b",
-        actualFill: "rgba(63, 143, 107, 0.18)",
         planned: "#f2c94c",
-        plannedFill: "rgba(242, 201, 76, 0.22)",
       };
 
-      renderChart("dailyChart", {
-        type: "bar",
-        data: {
-          labels: formattedDailyLabels,
-          datasets: [
-            {
-              label: "Actual",
-              data: dailyActual,
-              backgroundColor: chartPalette.actual,
+      categorySeries.forEach((series) => {
+        const formattedDailyLabels = series.labels.map(formatDailyLabel);
+        renderChart(`dailyChart-${series.key}`, {
+          type: "bar",
+          data: {
+            labels: formattedDailyLabels,
+            datasets: [
+              {
+                label: "Actual",
+                data: series.actual,
+                backgroundColor: chartPalette.actual,
+                borderRadius: 4,
+                barThickness: 'flex',
+                maxBarThickness: 40,
+              },
+              {
+                label: "Planned",
+                data: series.planned,
+                backgroundColor: chartPalette.planned,
+                borderRadius: 4,
+                barThickness: 'flex',
+                maxBarThickness: 40,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              intersect: false,
+              mode: 'index',
             },
-            {
-              label: "Planned",
-              data: dailyPlanned,
-              backgroundColor: chartPalette.planned,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              stacked: true,
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 8,
-                maxRotation: 0,
-                minRotation: 0,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                align: 'end',
+                labels: {
+                  boxWidth: 12,
+                  boxHeight: 12,
+                  padding: 15,
+                  font: {
+                    size: 11,
+                    weight: '600',
+                  },
+                  color: '#617167',
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                },
+              },
+              tooltip: {
+                backgroundColor: 'rgba(28, 43, 34, 0.95)',
+                padding: 12,
+                cornerRadius: 6,
+                titleFont: {
+                  size: 12,
+                  weight: '600',
+                },
+                bodyFont: {
+                  size: 11,
+                },
+                displayColors: true,
+                boxWidth: 8,
+                boxHeight: 8,
+                boxPadding: 4,
               },
             },
-            y: { stacked: true, beginAtZero: true },
-          },
-        },
-      });
-
-      const formattedWeeklyLabels = weeklyLabels
-        ? weeklyLabels.map(formatDailyLabel)
-        : weeklyLabels;
-
-      renderChart("weeklyChart", {
-        type: "line",
-        data: {
-          labels: formattedWeeklyLabels,
-          datasets: [
-            {
-              label: "Actual",
-              data: weeklyActual,
-              borderColor: chartPalette.actual,
-              backgroundColor: chartPalette.actualFill,
-              tension: 0.3,
-            },
-            {
-              label: "Planned",
-              data: weeklyPlanned,
-              borderColor: chartPalette.planned,
-              backgroundColor: chartPalette.plannedFill,
-              tension: 0.3,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom" } },
-          scales: {
-            x: {
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 6,
-                maxRotation: 0,
-                minRotation: 0,
+            scales: {
+              x: {
+                grid: {
+                  display: false,
+                },
+                ticks: {
+                  autoSkip: true,
+                  maxTicksLimit: 8,
+                  maxRotation: 0,
+                  minRotation: 0,
+                  color: '#617167',
+                  font: {
+                    size: 11,
+                  },
+                },
+                border: {
+                  color: 'rgba(28, 43, 34, 0.1)',
+                },
+              },
+              y: { 
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(28, 43, 34, 0.06)',
+                  drawBorder: false,
+                },
+                ticks: {
+                  color: '#617167',
+                  font: {
+                    size: 11,
+                  },
+                  precision: 0,
+                },
+                border: {
+                  display: false,
+                },
               },
             },
           },
-        },
-      });
-
-      renderChart("monthlyChart", {
-        type: "bar",
-        data: {
-          labels: monthlyLabels,
-          datasets: [
-            {
-              label: "Actual",
-              data: monthlyActual,
-              backgroundColor: chartPalette.actual,
-            },
-            {
-              label: "Planned",
-              data: monthlyPlanned,
-              backgroundColor: chartPalette.planned,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom" } },
-        },
+        });
       });
     }
 
@@ -207,6 +583,19 @@
     document.body.addEventListener("htmx:afterSwap", (event) => {
       if (event.target && event.target.id === "dashboard-pane") {
         renderDashboardCharts();
+      }
+    });
+
+    // Auto-submit filter form on change
+    document.addEventListener("DOMContentLoaded", () => {
+      const filterForm = document.querySelector(".dashboard-filters");
+      if (filterForm) {
+        const selects = filterForm.querySelectorAll("select");
+        selects.forEach((select) => {
+          select.addEventListener("change", () => {
+            filterForm.dispatchEvent(new Event("submit"));
+          });
+        });
       }
     });
   </script>

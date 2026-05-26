@@ -1,79 +1,47 @@
 <section class="dashboard-grid">
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <p class="kpi-label">Total minutes</p>
+  <div class="kpi-grid page-stack">
+    <div class="kpi-card surface-card page-card">
+      <p class="kpi-label">Total actual</p>
       <p class="kpi-value">{{ kpis.total_actual }}</p>
-      <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
+      <p class="kpi-foot">Minutes worked</p>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card surface-card page-card">
       <p class="kpi-label">Completion</p>
       <p class="kpi-value">
         {% if kpis.completion_rate %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
       </p>
-      <p class="kpi-foot">Last {{ range_days }} days</p>
+      <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card surface-card page-card">
       <p class="kpi-label">Streak</p>
       <p class="kpi-value">{{ kpis.streak }} days</p>
-      <p class="kpi-foot">Keep the chain</p>
+      <p class="kpi-foot">Priority-weighted</p>
     </div>
-    <div class="kpi-card">
-      <p class="kpi-label">Today</p>
-      <p class="kpi-value">{{ kpis.today_actual }} / {{ kpis.today_planned }}</p>
-      <p class="kpi-foot">Actual vs planned</p>
+    <div class="kpi-card surface-card page-card">
+      <p class="kpi-label">Top category</p>
+      <p class="kpi-value">
+        {% if kpis.top_category %}{{ kpis.top_category.name }}{% else %}--{% endif %}
+      </p>
+      <p class="kpi-foot">Highest intensity</p>
     </div>
   </div>
 
-  <div class="chart-card chart-wide">
-    <div class="chart-header">
-      <h2>Daily planned vs actual</h2>
-      <div class="chart-actions">
-        <form
-          class="chart-controls"
-          method="get"
-          action="{% url 'dashboard_partial' %}"
-          hx-get="{% url 'dashboard_partial' %}"
-          hx-target="#dashboard-pane"
-          hx-swap="innerHTML"
-          hx-include=".dashboard-filters"
-        >
-          <label class="label" for="daily-year">Year</label>
-          <select id="daily-year" name="year" hx-trigger="change">
-            {% for year in year_options %}
-              <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-            {% endfor %}
-          </select>
-        </form>
+  {% for series in category_daily_series %}
+    <div class="chart-card chart-wide surface-card page-card">
+      <div class="chart-header">
+        <h2>{{ series.name }} actual vs planned</h2>
         <span class="pill">{{ range_days }} days</span>
       </div>
+      <div class="chart-frame">
+        <canvas id="dailyChart-{{ series.key }}" aria-label="Daily actual vs planned"></canvas>
+      </div>
     </div>
-    <div class="chart-frame">
-      <canvas id="dailyChart" aria-label="Daily planned vs actual"></canvas>
-    </div>
-  </div>
+  {% endfor %}
 
-  <div class="chart-card">
-    <div class="chart-header">
-      <h2>Weekly trends</h2>
-    </div>
-    <div class="chart-frame">
-      <canvas id="weeklyChart" aria-label="Weekly trends"></canvas>
-    </div>
-  </div>
-
-  <div class="chart-card">
-    <div class="chart-header">
-      <h2>Monthly rollup</h2>
-    </div>
-    <div class="chart-frame">
-      <canvas id="monthlyChart" aria-label="Monthly rollup"></canvas>
-    </div>
-  </div>
-
-  <div class="chart-card chart-wide">
+  <div class="chart-card chart-wide surface-card page-card">
     <div class="chart-header">
       <h2>Heatmap</h2>
-      <span class="muted">Intensity by day</span>
+      <span class="muted">Intensity-based Streaks</span>
     </div>
     <div class="heatmap-grid">
       {% for week in heatmap %}
@@ -81,7 +49,7 @@
           {% for cell in week %}
             <div
               class="heatmap-cell level-{{ cell.level }}"
-              title="{{ cell.date }} • {{ cell.value }} min"
+              title="{{ cell.date }} • {{ cell.value }} pts"
             ></div>
           {% endfor %}
         </div>
@@ -90,12 +58,4 @@
   </div>
 </section>
 
-{{ daily_labels|json_script:"daily-labels" }}
-{{ daily_actual|json_script:"daily-actual" }}
-{{ daily_planned|json_script:"daily-planned" }}
-{{ weekly_labels|json_script:"weekly-labels" }}
-{{ weekly_actual|json_script:"weekly-actual" }}
-{{ weekly_planned|json_script:"weekly-planned" }}
-{{ monthly_labels|json_script:"monthly-labels" }}
-{{ monthly_actual|json_script:"monthly-actual" }}
-{{ monthly_planned|json_script:"monthly-planned" }}
+{{ category_daily_series|json_script:"category-daily-series" }}

@@ -18,8 +18,6 @@ def test_planner_auto_duration_from_times():
         user=user,
         title="Study",
         category=category,
-        target_type="duration",
-        target_value=60,
         priority=1,
     )
 
@@ -48,8 +46,6 @@ def test_planner_duration_only_block():
         user=user,
         title="Stretch",
         category=category,
-        target_type="duration",
-        target_value=10,
         priority=1,
     )
 
@@ -77,8 +73,6 @@ def test_planner_end_before_start_rejected():
         user=user,
         title="Read",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=1,
     )
 
@@ -106,8 +100,6 @@ def test_schedule_user_isolation(client):
         user=user1,
         title="Task",
         category=category1,
-        target_type="duration",
-        target_value=30,
         priority=1,
     )
 
@@ -127,17 +119,16 @@ def test_schedule_user_isolation(client):
 
 
 @pytest.mark.django_db
-def test_planner_archived_category_excluded_from_form():
+def test_planner_category_queryset_scoped_to_user():
     user = User.objects.create_user(username="u1", password="Pass12345")
-    active = ActivityCategory.objects.create(user=user, name="Active")
-    archived = ActivityCategory.objects.create(
-        user=user, name="Archived", is_archived=True
-    )
+    other = User.objects.create_user(username="u2", password="Pass12345")
+    own = ActivityCategory.objects.create(user=user, name="Own")
+    ActivityCategory.objects.create(user=other, name="Other")
 
     form = ScheduleBlockForm(user=user)
     categories = list(form.fields["category"].queryset)
-    assert active in categories
-    assert archived not in categories
+    assert own in categories
+    assert all(item.user_id == user.id for item in categories)
 
 
 @pytest.mark.django_db
@@ -148,8 +139,6 @@ def test_planner_start_timer_creates_session(client):
         user=user,
         title="Build",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=1,
     )
     block = ScheduleBlock.objects.create(
@@ -178,8 +167,6 @@ def test_planner_stop_timer_restores_start_ui(client):
         user=user,
         title="Build",
         category=category,
-        target_type="duration",
-        target_value=30,
         priority=1,
     )
     block = ScheduleBlock.objects.create(

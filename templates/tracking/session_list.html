@@ -4,107 +4,129 @@
 {% block title %}Sessions{% endblock %}
 
 {% block content %}
-  <section class="card card-wide">
-    <div class="card-header">
-      <h1>Sessions</h1>
-      <div class="card-actions">
+  <section class="tracking-shell page-shell">
+    <header class="tracking-hero page-header surface-card">
+      <div>
+        <p class="page-eyebrow">Tracking</p>
+        <h1 class="page-title">Sessions</h1>
+        <p class="page-subtitle">Log focused work blocks and keep a clean activity trail.</p>
+      </div>
+      <div class="page-actions">
         <a class="btn btn-secondary" href="{% url 'session_export_csv' %}">Export CSV</a>
         <a class="btn btn-secondary" href="{% url 'session_export_json' %}">Export JSON</a>
       </div>
-    </div>
+    </header>
 
-    <div class="section">
+    <!-- <div class="section">
       {% include 'tracking/partials/start_stop_button.html' with running_session=running_session target_id='session-toggle' activities=activities show_notes=True %}
-    </div>
+    </div> -->
 
-    <div class="section">
-      <h2 class="section-title">Log a session</h2>
-      <form method="post" action="{% url 'session_log' %}" hx-post="{% url 'session_log' %}" hx-target="#session-list" hx-swap="afterbegin">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-          <div class="form-error">{{ form.non_field_errors }}</div>
-        {% endif %}
-        <div class="session-form-grid">
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
-            <div class="form-control">
-              {{ form.category }}
-              {% if form.category.errors %}
-                <div class="form-error">{{ form.category.errors }}</div>
-              {% endif %}
+    <div class="tracking-stack page-stack">
+      <div class="tracking-card surface-card page-card">
+        <h2 class="section-title">Log a session</h2>
+        <form method="post" action="{% url 'session_log' %}" hx-post="{% url 'session_log' %}" hx-target="#session-list" hx-swap="afterbegin">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="session-form-grid">
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+              <div class="form-control">
+                {{ form.category }}
+                {% if form.category.errors %}
+                  <div class="form-error">{{ form.category.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
+              <div class="form-control">
+                <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
+                  <option value="">Select activity</option>
+                  {% for item in activity_choices %}
+                    <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
+                  {% endfor %}
+                </select>
+                {% if form.activity.errors %}
+                  <div class="form-error">{{ form.activity.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.local_date.id_for_label }}">Date</label>
+              <div class="form-control">
+                {{ form.local_date }}
+                {% if form.local_date.errors %}
+                  <div class="form-error">{{ form.local_date.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.start_time.id_for_label }}">Start time (optional)</label>
+              <div class="form-control">
+                {{ form.start_time }}
+                {% if form.start_time.errors %}
+                  <div class="form-error">{{ form.start_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.end_time.id_for_label }}">End time (optional)</label>
+              <div class="form-control">
+                {{ form.end_time }}
+                {% if form.end_time.errors %}
+                  <div class="form-error">{{ form.end_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.duration_minutes.id_for_label }}">Duration (minutes)</label>
+              <div class="form-control">
+                {{ form.duration_minutes }}
+                <div class="form-help" data-duration-preview>Duration will auto-fill when start/end are set.</div>
+                {% if form.duration_minutes.errors %}
+                  <div class="form-error">{{ form.duration_minutes.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+              <div class="form-control">
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                  <div class="form-error">{{ form.notes.errors }}</div>
+                {% endif %}
+              </div>
             </div>
           </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
-            <div class="form-control">
-              <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
-                <option value="">Select activity</option>
-                {% for item in activity_choices %}
-                  <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
-                {% endfor %}
-              </select>
-              {% if form.activity.errors %}
-                <div class="form-error">{{ form.activity.errors }}</div>
-              {% endif %}
-            </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Add log</button>
           </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.local_date.id_for_label }}">Date</label>
-            <div class="form-control">
-              {{ form.local_date }}
-              {% if form.local_date.errors %}
-                <div class="form-error">{{ form.local_date.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.start_time.id_for_label }}">Start time (optional)</label>
-            <div class="form-control">
-              {{ form.start_time }}
-              {% if form.start_time.errors %}
-                <div class="form-error">{{ form.start_time.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.end_time.id_for_label }}">End time (optional)</label>
-            <div class="form-control">
-              {{ form.end_time }}
-              {% if form.end_time.errors %}
-                <div class="form-error">{{ form.end_time.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.duration_minutes.id_for_label }}">Duration (minutes)</label>
-            <div class="form-control">
-              {{ form.duration_minutes }}
-              <div class="form-help" data-duration-preview>Duration will auto-fill when start/end are set.</div>
-              {% if form.duration_minutes.errors %}
-                <div class="form-error">{{ form.duration_minutes.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
-          <div class="session-form-row">
-            <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
-            <div class="form-control">
-              {{ form.notes }}
-              {% if form.notes.errors %}
-                <div class="form-error">{{ form.notes.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn" type="submit">Add log</button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
 
-    <div id="session-list" class="table">
-      {% include 'tracking/partials/session_list.html' %}
+      <div class="tracking-card surface-card page-card">
+        <h2 class="section-title">Session history</h2>
+        <div id="session-list" class="table">
+          {% include 'tracking/partials/session_list.html' %}
+        </div>
+      </div>
     </div>
   </section>
+
+  <style>
+    .tracking-shell {
+      background: transparent;
+    }
+
+    @media (max-width: 900px) {
+      .tracking-hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
 
   <script>
     const startField = document.getElementById("{{ form.start_time.id_for_label }}");
