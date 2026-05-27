@@ -143,42 +143,52 @@
 
           <div class="manage-list-section">
             <h3 class="manage-subsection-title">Existing categories</h3>
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for category in categories %}
-                    <tr>
-                      <td>
-                        <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
-                      </td>
-                      <td>
-                        <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
-                      </td>
-                      <td>
-                        <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}" style="display:inline-block;">
-                          {% csrf_token %}
-                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
-                          <button class="btn btn-secondary" type="submit">Save</button>
-                        </form>
-                        <form method="post" action="{% url 'planner_category_delete' category.pk %}" style="display:inline-block; margin-left: 0.5rem;">
-                          {% csrf_token %}
-                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
-                          <button class="btn btn-danger" type="submit">Delete</button>
-                        </form>
-                      </td>
-                    </tr>
-                  {% empty %}
-                    <tr><td colspan="3">No categories yet.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+            <div class="mgmt-table-wrap">
+              {% if categories %}
+                <div class="mgmt-table">
+                  <div class="mgmt-table-header mgmt-cat-grid">
+                    <div class="mgmt-col">Name</div>
+                    <div class="mgmt-col">Description</div>
+                    <div class="mgmt-col mgmt-col-actions">Actions</div>
+                  </div>
+                  <div class="mgmt-table-body">
+                    {% for category in categories %}
+                      <div class="mgmt-row mgmt-cat-grid">
+                        <div class="mgmt-cell" data-label="Name">
+                          <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Description">
+                          <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                          <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                          <form method="post" action="{% url 'planner_category_delete' category.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% else %}
+                <div class="mgmt-empty">No categories yet.</div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -222,54 +232,64 @@
 
           <div class="manage-list-section">
             <h3 class="manage-subsection-title">Existing activities</h3>
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Priority</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item in activities %}
-                    <tr>
-                      <td>
-                        <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
-                      </td>
-                      <td>
-                        <select name="category" form="activity-form-{{ item.pk }}">
-                          {% for category in categories %}
-                            <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
-                          {% endfor %}
-                        </select>
-                      </td>
-                      <td>
-                        <input type="number" name="priority" min="1" max="5" value="{{ item.priority }}" required form="activity-form-{{ item.pk }}">
-                      </td>
-                      <td>
-                        <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
-                      </td>
-                      <td>
-                        <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}" style="display:inline-block;">
-                          {% csrf_token %}
-                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
-                          <button class="btn btn-secondary" type="submit">Save</button>
-                        </form>
-                        <form method="post" action="{% url 'planner_activity_delete' item.pk %}" style="display:inline-block; margin-left: 0.5rem;">
-                          {% csrf_token %}
-                          <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
-                          <button class="btn btn-danger" type="submit">Delete</button>
-                        </form>
-                      </td>
-                    </tr>
-                  {% empty %}
-                    <tr><td colspan="5">No activities yet.</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+            <div class="mgmt-table-wrap">
+              {% if activities %}
+                <div class="mgmt-table">
+                  <div class="mgmt-table-header mgmt-act-grid">
+                    <div class="mgmt-col">Title</div>
+                    <div class="mgmt-col">Category</div>
+                    <div class="mgmt-col mgmt-col-center">Priority</div>
+                    <div class="mgmt-col">Notes</div>
+                    <div class="mgmt-col mgmt-col-actions">Actions</div>
+                  </div>
+                  <div class="mgmt-table-body">
+                    {% for item in activities %}
+                      <div class="mgmt-row mgmt-act-grid">
+                        <div class="mgmt-cell" data-label="Title">
+                          <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Category">
+                          <select name="category" form="activity-form-{{ item.pk }}">
+                            {% for category in categories %}
+                              <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-center" data-label="Priority">
+                          <input type="number" name="priority" min="1" max="5" value="{{ item.priority }}" required form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Notes">
+                          <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                          <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                          <form method="post" action="{% url 'planner_activity_delete' item.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% else %}
+                <div class="mgmt-empty">No activities yet.</div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -344,93 +364,164 @@
       margin-top: 0.5rem;
     }
 
-    .manage-list-section .table-wrap {
+    .manage-list-section .table-wrap,
+    .mgmt-table-wrap {
       margin-top: 0;
-      background: #f8f9f8;
+      background: #f9f8f5;
       border-radius: 8px;
       padding: 1rem;
+      overflow-x: auto;
     }
 
-    /* Enhanced table styling */
-    .manage-list-section .table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
+    /* Grid column templates */
+    .mgmt-cat-grid {
+      grid-template-columns: 1.5fr 2fr 5rem;
     }
 
-    .manage-list-section .table thead th {
-      background: transparent;
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      color: #617167;
-      padding: 0.75rem 0.875rem;
-      text-align: left;
+    .mgmt-act-grid {
+      grid-template-columns: 1.5fr 1.2fr 5rem 1.5fr 5rem;
+    }
+
+    /* Header row */
+    .mgmt-table-header {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.6rem 0.875rem;
       border-bottom: 2px solid rgba(28, 43, 34, 0.1);
     }
 
-    .manage-list-section .table thead th:last-child {
-      text-align: right;
+    .mgmt-col {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #617167;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
     }
 
-    .manage-list-section .table tbody td {
-      padding: 0.875rem;
-      vertical-align: middle;
-      border-bottom: 1px solid rgba(28, 43, 34, 0.06);
+    .mgmt-col-center {
+      text-align: center;
     }
 
-    .manage-list-section .table tbody td:last-child {
-      text-align: right;
-      white-space: nowrap;
+    .mgmt-col-actions {
+      text-align: center;
     }
 
-    .manage-list-section .table tbody tr:last-child td {
-      border-bottom: none;
+    /* Body */
+    .mgmt-table-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-top: 0.625rem;
     }
 
-    .manage-list-section .table tbody tr:hover {
-      background: rgba(255, 255, 255, 0.5);
+    /* Data rows */
+    .mgmt-row {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.75rem 0.875rem;
+      background: #f9f8f5;
+      border: 1px solid rgba(28, 43, 34, 0.08);
+      border-radius: 6px;
+      align-items: center;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Table input styling to match form fields */
-    .manage-list-section .table input[type="text"],
-    .manage-list-section .table input[type="number"],
-    .manage-list-section .table select {
+    .mgmt-row:hover {
+      border-color: rgba(28, 43, 34, 0.16);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Cells */
+    .mgmt-cell {
+      display: flex;
+      align-items: center;
+    }
+
+    .mgmt-cell-center {
+      justify-content: center;
+    }
+
+    .mgmt-cell-actions {
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .mgmt-cell-actions form {
+      margin: 0;
+      display: flex;
+    }
+
+    /* Inputs inside rows */
+    .mgmt-row input[type="text"],
+    .mgmt-row input[type="number"],
+    .mgmt-row select {
       width: 100%;
-      padding: 0.5rem 0.75rem;
+      padding: 0.4rem 0.625rem;
       border: 1px solid rgba(28, 43, 34, 0.15);
       border-radius: 6px;
-      background: #f8f9f8;
-      font-size: 0.9rem;
-      transition: border-color 0.2s ease;
+      background: #f9f8f5;
+      font-size: 0.85rem;
+      color: #1c2b22;
+      transition: border-color 0.15s ease, background 0.15s ease;
     }
 
-    .manage-list-section .table input[type="text"]:focus,
-    .manage-list-section .table input[type="number"]:focus,
-    .manage-list-section .table select:focus {
+    .mgmt-row input[type="number"] {
+      width: 4rem;
+      text-align: center;
+    }
+
+    .mgmt-row input[type="text"]:focus,
+    .mgmt-row input[type="number"]:focus,
+    .mgmt-row select:focus {
       outline: none;
       border-color: #1c2b22;
-      background: #f8f9f8;
+      background: #f9f8f5;
     }
 
-    /* Action buttons in table */
-    .manage-list-section .table .btn {
-      padding: 0.4rem 0.875rem;
-      font-size: 0.85rem;
-      min-width: auto;
+    /* Icon buttons */
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
     }
 
-    .manage-list-section .table td form {
-      margin: 0;
+    .btn-icon-save {
+      color: #617167;
+      border-color: rgba(28, 43, 34, 0.15);
     }
 
-    /* Empty state styling */
-    .manage-list-section .table tbody tr td[colspan] {
+    .btn-icon-save:hover {
+      background: rgba(63, 143, 107, 0.1);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
+    }
+
+    .btn-icon-delete {
+      color: #617167;
+      border-color: rgba(28, 43, 34, 0.15);
+    }
+
+    .btn-icon-delete:hover {
+      background: rgba(235, 87, 87, 0.08);
+      border-color: rgba(235, 87, 87, 0.3);
+      color: #c0392b;
+    }
+
+    /* Empty state */
+    .mgmt-empty {
+      padding: 2.5rem;
       text-align: center;
+      font-size: 0.85rem;
       color: #617167;
       font-style: italic;
-      padding: 2rem;
     }
 
     /* Responsive layout for larger screens */

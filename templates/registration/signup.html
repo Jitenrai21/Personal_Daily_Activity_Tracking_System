@@ -3,17 +3,210 @@
 {% block title %}Sign up{% endblock %}
 
 {% block content %}
-  <section class="card">
-    <h1>Create account</h1>
-    <form method="post">
+<section class="auth-shell">
+  <div class="auth-card surface-card">
+
+    <div class="auth-brand">
+      <div class="auth-brand-mark">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="28" height="28" rx="8" fill="#1c2b22"/>
+          <path d="M7 14C7 10.134 10.134 7 14 7V7C17.866 7 21 10.134 21 14V14C21 17.866 17.866 21 14 21V21" stroke="#f8f9f8" stroke-width="1.75" stroke-linecap="round"/>
+          <circle cx="14" cy="21" r="1.5" fill="#3f8f6b"/>
+        </svg>
+      </div>
+      <span class="auth-brand-name">Momentum</span>
+    </div>
+
+    <div class="auth-header">
+      <p class="auth-eyebrow">Get started</p>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start shaping your days with intent.</p>
+    </div>
+
+    <form class="auth-form" method="post">
       {% csrf_token %}
       {% include 'partials/form_fields.html' with form=form %}
-      <div class="form-actions">
-        <button class="btn" type="submit">Create account</button>
+      <div class="auth-actions">
+        <button class="btn auth-btn" type="submit">Create account</button>
       </div>
     </form>
-    <div class="muted">
-      Already have an account? <a href="{% url 'login' %}">Log in</a>
+
+    <div class="auth-footer">
+      <span class="auth-footer-text">Already have an account?</span>
+      <a class="auth-footer-link" href="{% url 'login' %}">Log in</a>
     </div>
-  </section>
+
+  </div>
+
+  <p class="auth-ambient">Track. Reflect. Improve.</p>
+</section>
+
+<style>
+  /* ── Layout ── */
+  .auth-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    gap: 1.25rem;
+    background: #f0ede6;
+  }
+
+  :root {
+    --auth-pad: 2.25rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: #f4f6f4;
+    border-radius: 14px;
+    border: 1px solid rgba(28, 43, 34, 0.1);
+    box-shadow: 0 2px 16px rgba(28, 43, 34, 0.06), 0 1px 3px rgba(28, 43, 34, 0.04);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: authCardIn 0.3s ease both;
+  }
+
+  @keyframes authCardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Brand ── */
+  .auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: var(--auth-pad) var(--auth-pad) 0;
+  }
+
+  .auth-brand-mark {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .auth-brand-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1c2b22;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Header ── */
+  .auth-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 1.5rem var(--auth-pad) 0;
+  }
+
+  .auth-eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #3f8f6b;
+  }
+
+  .auth-title {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #1c2b22;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .auth-subtitle {
+    margin: 0.2rem 0 0;
+    font-size: 0.875rem;
+    color: #617167;
+    line-height: 1.5;
+  }
+
+  /* ── Divider under header ── */
+  .auth-header::after {
+    content: '';
+    display: block;
+    margin-top: 1.25rem;
+    height: 1px;
+    background: rgba(28, 43, 34, 0.08);
+  }
+
+  /* ── Form ── */
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 1.5rem var(--auth-pad) 0;
+  }
+
+  /* ── Primary action button ── */
+  .auth-actions {
+    margin-top: 1.25rem;
+  }
+
+  .auth-btn {
+    width: 100%;
+    padding: 0.7rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  /* ── Footer ── */
+  .auth-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 1.25rem var(--auth-pad) var(--auth-pad);
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(28, 43, 34, 0.08);
+  }
+
+  .auth-footer-text {
+    font-size: 0.85rem;
+    color: #617167;
+  }
+
+  .auth-footer-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1c2b22;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .auth-footer-link:hover {
+    color: #3f8f6b;
+  }
+
+  /* ── Ambient tagline below card ── */
+  .auth-ambient {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(28, 43, 34, 0.3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    :root { --auth-pad: 1.5rem; }
+
+    .auth-card {
+      border-radius: 12px;
+    }
+  }
+</style>
 {% endblock %}

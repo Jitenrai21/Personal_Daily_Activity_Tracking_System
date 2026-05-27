@@ -1,34 +1,131 @@
 {% load tz %}
 
-<div class="table-row table-row-sessions" id="session-{{ session.pk }}">
-  <div>{{ session.activity.title|default:"Unassigned" }}</div>
-  <div>{{ session.category.name|default:"--" }}</div>
-  <div>{{ session.local_date|default:"--" }}</div>
+<div class="session-row" id="session-{{ session.pk }}">
+
+  <div class="session-cell session-cell-activity">
+    {{ session.activity.title|default:"Unassigned" }}
+  </div>
+
+  <div class="session-cell" data-label="Category">
+    <span class="session-cell-category">
+      {{ session.category.name|default:"--" }}
+    </span>
+  </div>
+
+  <div class="session-cell session-cell-date" data-label="Date">
+    {{ session.local_date|default:"--" }}
+  </div>
+
   {% timezone profile.timezone %}
-    <div>
+    <div class="session-cell session-cell-start" data-label="Start">
       {% if session.start_time %}
         {{ session.start_time|time:"H:i" }}
       {% elif session.start %}
-        {{ session.start|date:"Y-m-d H:i" }}
+        {{ session.start|date:"H:i" }}
       {% else %}
         --
       {% endif %}
     </div>
-    <div>
+
+    <div class="session-cell session-cell-end" data-label="End">
       {% if session.end_time %}
         {{ session.end_time|time:"H:i" }}
       {% elif session.end %}
-        {{ session.end|date:"Y-m-d H:i" }}
+        {{ session.end|date:"H:i" }}
       {% elif session.source == "timer" %}
-        <span class="pill">Running</span>
+        <span class="session-running-pill">
+          <span class="session-running-dot"></span>
+          Running
+        </span>
       {% else %}
         --
       {% endif %}
     </div>
   {% endtimezone %}
-  <div>{% if session.duration_minutes %}{{ session.duration_minutes }} min{% else %}--{% endif %}</div>
-  <div>{{ session.get_source_display }}</div>
-  <div class="row-actions">
-    <a class="btn btn-secondary" href="{% url 'session_detail' session.pk %}">Edit</a>
+
+  <div class="session-cell session-cell-duration" data-label="Duration">
+    {% if session.duration_minutes %}
+      {{ session.duration_minutes }} min
+    {% else %}
+      --
+    {% endif %}
   </div>
+
+  <div class="session-cell" data-label="Source">
+    <span class="session-cell-source {{ session.source|lower }}">
+      {% if session.source == "timer" %}
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 4.66667V8L10.6667 9.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      {% elif session.source == "manual" %}
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.3333 2H4.66667C3.93029 2 3.33333 2.59695 3.33333 3.33333V12.6667C3.33333 13.403 3.93029 14 4.66667 14H11.3333C12.0697 14 12.6667 13.403 12.6667 12.6667V3.33333C12.6667 2.59695 12.0697 2 11.3333 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.33333 5.33333H10.6667M5.33333 8H10.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      {% elif session.source == "planned" %}
+        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.33333 2V4M10.6667 2V4M3.33333 6.66667H12.6667M4 3.33333H12C12.7364 3.33333 13.3333 3.93029 13.3333 4.66667V12.6667C13.3333 13.403 12.7364 14 12 14H4C3.26362 14 2.66667 13.403 2.66667 12.6667V4.66667C2.66667 3.93029 3.26362 3.33333 4 3.33333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      {% endif %}
+      {{ session.get_source_display }}
+    </span>
+  </div>
+
+  <div class="session-cell session-cell-actions" data-label="Actions">
+    <a class="btn-icon" href="{% url 'session_detail' session.pk %}" title="Edit session">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.3333 2.00004C11.5084 1.82494 11.7163 1.68605 11.9451 1.59129C12.1739 1.49653 12.4191 1.44775 12.6667 1.44775C12.9142 1.44775 13.1594 1.49653 13.3882 1.59129C13.617 1.68605 13.8249 1.82494 14 2.00004C14.1751 2.17513 14.314 2.383 14.4088 2.61182C14.5035 2.84063 14.5523 3.08581 14.5523 3.33337C14.5523 3.58094 14.5035 3.82612 14.4088 4.05493C14.314 4.28375 14.1751 4.49162 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
+
 </div>
+
+<style>
+  /* Running pill — scoped here so it travels with the row partial */
+  .session-running-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    background: rgba(63, 143, 107, 0.12);
+    color: #2d6b4f;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .session-running-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3f8f6b;
+    animation: session-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes session-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+  }
+
+  /* btn-icon as anchor */
+  a.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    background: transparent;
+    border: 1px solid rgba(28, 43, 34, 0.15);
+    border-radius: 6px;
+    color: #617167;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  a.btn-icon:hover {
+    background: rgba(28, 43, 34, 0.05);
+    border-color: rgba(28, 43, 34, 0.25);
+  }
+</style>
