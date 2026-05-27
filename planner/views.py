@@ -10,7 +10,7 @@ from activities.models import Activity, ActivityCategory
 from planner.forms import PlannerActivityForm, PlannerCategoryForm, ScheduleBlockForm
 from planner.models import ScheduleBlock
 from tracking.models import Session
-from tracking.services import start_timer_session, stop_timer_session
+from tracking.services import pause_timer_session, resume_timer_session, start_timer_session, stop_timer_session
 
 
 def _parse_date(value):
@@ -48,6 +48,39 @@ def _planner_context(user, date, schedule_form=None, category_form=None, activit
         "category_form": category_form or PlannerCategoryForm(),
         "activity_form": activity_form or PlannerActivityForm(user=user),
     }
+
+
+def _planner_timer_row_response(request, block):
+    running_session = (
+        Session.objects.filter(user=request.user, end__isnull=True)
+        .select_related("activity")
+        .first()
+    )
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "planner/partials/schedule_row.html",
+            {
+                "block": block,
+                "running_session": running_session,
+            },
+        )
+    return redirect("planner_day")
+
+
+def _block_timer_session(user, block):
+    session = (
+        Session.objects.filter(user=user, end__isnull=True)
+        .select_related("activity")
+        .first()
+    )
+    if not session:
+        return None
+
+    metadata = session.metadata if isinstance(session.metadata, dict) else {}
+    if str(metadata.get("planned_block_id")) != str(block.pk):
+        return None
+    return session
 
 
 @login_required
@@ -122,17 +155,37 @@ def schedule_block_start_timer_view(request, pk):
     if running:
         return HttpResponse("Timer already running.", status=409)
 
-    running_session = session
-    if request.headers.get("HX-Request"):
-        return render(
-            request,
-            "planner/partials/schedule_row.html",
-            {
-                "block": block,
-                "running_session": running_session,
-            },
-        )
-    return redirect("planner_day")
+    return _planner_timer_row_response(request, block)
+
+
+@login_required
+@require_POST
+def schedule_block_pause_timer_view(request, pk):
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+    active_session = _block_timer_session(request.user, block)
+    if not active_session:
+        return HttpResponse("No active session to pause.", status=400)
+
+    paused = pause_timer_session(request.user)
+    if not paused:
+        return HttpResponse("No active session to pause.", status=400)
+
+    return _planner_timer_row_response(request, block)
+
+
+@login_required
+@require_POST
+def schedule_block_resume_timer_view(request, pk):
+    block = get_object_or_404(ScheduleBlock, pk=pk, user=request.user)
+    active_session = _block_timer_session(request.user, block)
+    if not active_session:
+        return HttpResponse("No paused session to resume.", status=400)
+
+    resumed = resume_timer_session(request.user)
+    if not resumed:
+        return HttpResponse("No paused session to resume.", status=400)
+
+    return _planner_timer_row_response(request, block)
 
 
 @login_required
@@ -143,16 +196,7 @@ def schedule_block_stop_timer_view(request, pk):
     if not stopped:
         return HttpResponse("No active session to stop.", status=400)
 
-    if request.headers.get("HX-Request"):
-        return render(
-            request,
-            "planner/partials/schedule_row.html",
-            {
-                "block": block,
-                "running_session": None,
-            },
-        )
-    return redirect("planner_day")
+    return _planner_timer_row_response(request, block)
 
 
 @login_required

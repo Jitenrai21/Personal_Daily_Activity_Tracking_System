@@ -37,6 +37,33 @@ def test_session_duration_minutes():
 
 
 @pytest.mark.django_db
+def test_session_duration_minutes_respects_pause_time():
+    user = User.objects.create_user(username="u1", password="Pass12345")
+    category = ActivityCategory.objects.create(user=user, name="Focus")
+    activity = Activity.objects.create(
+        user=user,
+        title="Deep work",
+        category=category,
+        priority=1,
+    )
+    start = timezone.now()
+    end = start + dt.timedelta(minutes=45)
+    session = Session.objects.create(
+        user=user,
+        activity=activity,
+        category=category,
+        local_date=start.date(),
+        start_time=start.time().replace(microsecond=0),
+        end_time=end.time().replace(microsecond=0),
+        start=start,
+        end=end,
+        paused_seconds=900,
+        source=Session.SOURCE_MANUAL,
+    )
+    assert session.duration_minutes == 30
+
+
+@pytest.mark.django_db
 def test_start_stop_timer_flow(client):
     user = User.objects.create_user(username="u1", password="Pass12345")
     category = ActivityCategory.objects.create(user=user, name="Health")

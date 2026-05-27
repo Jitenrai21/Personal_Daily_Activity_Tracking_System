@@ -73,8 +73,7 @@
       }
 
       function updateSessionTimers() {
-        const timers = document.querySelectorAll(".session-toggle[data-session-start]");
-        const now = Date.now();
+        const timers = document.querySelectorAll(".session-toggle[data-session-start], .session-toggle[data-session-state]");
         timers.forEach((node) => {
           const start = node.getAttribute("data-session-start");
           if (!start) {
@@ -84,7 +83,13 @@
           if (Number.isNaN(startTime)) {
             return;
           }
-          const elapsedSeconds = Math.max(0, Math.floor((now - startTime) / 1000));
+          const pausedSeconds = Number.parseInt(node.getAttribute("data-session-paused-seconds") || "0", 10) || 0;
+          const pausedAt = node.getAttribute("data-session-paused-at");
+          const effectiveEnd = pausedAt ? Date.parse(pausedAt) : Date.now();
+          if (Number.isNaN(effectiveEnd)) {
+            return;
+          }
+          const elapsedSeconds = Math.max(0, Math.floor((effectiveEnd - startTime) / 1000) - pausedSeconds);
           const label = node.querySelector("[data-session-elapsed]");
           if (label) {
             label.textContent = formatElapsed(elapsedSeconds);

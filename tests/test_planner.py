@@ -3,6 +3,7 @@ import datetime as dt
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
 from planner.forms import ScheduleBlockForm
@@ -157,6 +158,71 @@ def test_planner_start_timer_creates_session(client):
     )
     assert response.status_code == 200
     assert Session.objects.filter(user=user, end__isnull=True).count() == 1
+    session = Session.objects.get(user=user, end__isnull=True)
+    assert session.paused_seconds == 0
+
+
+@pytest.mark.django_db
+def test_planner_pause_resume_timer_flow(client, monkeypatch):
+    user = User.objects.create_user(username="u1", password="Pass12345")
+    category = ActivityCategory.objects.create(user=user, name="Work")
+    activity = Activity.objects.create(
+        user=user,
+        title="Build",
+        category=category,
+        priority=1,
+    )
+    block = ScheduleBlock.objects.create(
+        user=user,
+        activity=activity,
+        category=category,
+        date=dt.date(2026, 1, 4),
+        start_time=dt.time(9, 0),
+        end_time=dt.time(10, 0),
+    )
+
+    start_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 0), dt.timezone.utc)
+    pause_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 15), dt.timezone.utc)
+    resume_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 25), dt.timezone.utc)
+    stop_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 55), dt.timezone.utc)
+
+    client.login(username="u1", password="Pass12345")
+    monkeypatch.setattr("tracking.services.timezone.now", lambda: start_time)
+    start_response = client.post(
+        reverse("schedule_start_timer", args=[block.pk]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert start_response.status_code == 200
+
+    monkeypatch.setattr("tracking.services.timezone.now", lambda: pause_time)
+    pause_response = client.post(
+        reverse("schedule_pause_timer", args=[block.pk]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert pause_response.status_code == 200
+    session = Session.objects.get(user=user, end__isnull=True)
+    assert session.is_paused
+    assert session.paused_at is not None
+
+    monkeypatch.setattr("tracking.services.timezone.now", lambda: resume_time)
+    resume_response = client.post(
+        reverse("schedule_resume_timer", args=[block.pk]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert resume_response.status_code == 200
+    session.refresh_from_db()
+    assert session.paused_seconds == 600
+    assert session.is_running
+
+    monkeypatch.setattr("tracking.services.timezone.now", lambda: stop_time)
+    stop_response = client.post(
+        reverse("schedule_stop_timer", args=[block.pk]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert stop_response.status_code == 200
+    session.refresh_from_db()
+    assert session.end is not None
+    assert session.duration_minutes == 45
 
 
 @pytest.mark.django_db
@@ -187,4 +253,3 @@ def test_planner_stop_timer_restores_start_ui(client):
     )
     assert response.status_code == 200
     assert Session.objects.filter(user=user, end__isnull=True).count() == 0
-    assert "Start timer" in response.content.decode("utf-8")

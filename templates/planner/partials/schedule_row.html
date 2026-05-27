@@ -3,7 +3,10 @@
   class="planner-item session-toggle"
   id="block-{{ block.pk }}"
   {% if running_session and running_session.metadata.planned_block_id == block.pk %}
+    data-session-state="{{ running_session.timer_state }}"
     data-session-start="{{ running_session.start|date:'c' }}"
+    data-session-paused-seconds="{{ running_session.paused_seconds }}"
+    {% if running_session.paused_at %}data-session-paused-at="{{ running_session.paused_at|date:'c' }}"{% endif %}
   {% endif %}
 >
   <div class="planner-item-content">
@@ -13,9 +16,9 @@
         <span class="planner-item-category-badge">{{ block.category.name|default:"Uncategorized" }}</span>
       </div>
       {% if running_session and running_session.metadata.planned_block_id == block.pk %}
-        <span class="planner-status-badge active">
+        <span class="planner-status-badge {% if running_session.is_paused %}paused{% else %}active{% endif %}">
           <span class="status-indicator"></span>
-          Active
+          {% if running_session.is_paused %}Paused{% else %}Active{% endif %}
         </span>
       {% else %}
         <span class="planner-status-badge scheduled">Scheduled</span>
@@ -73,6 +76,28 @@
         <span class="timer-value">00:00:00</span>
         <span class="timer-label">Elapsed</span>
       </div>
+      {% if running_session.is_paused %}
+        <form method="post" action="{% url 'schedule_resume_timer' block.pk %}" hx-post="{% url 'schedule_resume_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.33333 3.33333L12 8L5.33333 12.6667V3.33333Z" fill="currentColor"/>
+            </svg>
+            Resume
+          </button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'schedule_pause_timer' block.pk %}" hx-post="{% url 'schedule_pause_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
+          {% csrf_token %}
+          <button class="btn btn-secondary" type="submit">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="3.5" width="2" height="9" rx="1" fill="currentColor"/>
+              <rect x="10" y="3.5" width="2" height="9" rx="1" fill="currentColor"/>
+            </svg>
+            Pause
+          </button>
+        </form>
+      {% endif %}
       <form method="post" action="{% url 'schedule_stop_timer' block.pk %}" hx-post="{% url 'schedule_stop_timer' block.pk %}" hx-target="#block-{{ block.pk }}" hx-swap="outerHTML">
         {% csrf_token %}
         <button class="btn btn-danger" type="submit">
@@ -199,6 +224,11 @@
     color: #2d6b4f;
   }
 
+  .planner-status-badge.paused {
+    background: rgba(242, 201, 76, 0.16);
+    color: #8a6d1d;
+  }
+
   .planner-status-badge.scheduled {
     background: rgba(97, 113, 103, 0.1);
     color: #617167;
@@ -211,6 +241,11 @@
     border-radius: 50%;
     background: #3f8f6b;
     animation: pulse 2s ease-in-out infinite;
+  }
+
+  .planner-status-badge.paused .status-indicator {
+    background: #f2c94c;
+    animation: none;
   }
 
   @keyframes pulse {
@@ -327,12 +362,20 @@
     border-radius: 6px;
   }
 
+  .planner-item[data-session-state="paused"] .timer-display {
+    background: rgba(242, 201, 76, 0.16);
+  }
+
   .timer-value {
     font-size: 1.1rem;
     font-weight: 700;
     color: #2d6b4f;
     font-variant-numeric: tabular-nums;
     line-height: 1;
+  }
+
+  .planner-item[data-session-state="paused"] .timer-value {
+    color: #8a6d1d;
   }
 
   .timer-label {

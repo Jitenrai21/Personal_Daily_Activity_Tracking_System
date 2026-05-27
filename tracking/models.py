@@ -2,6 +2,7 @@ import datetime as dt
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
 
@@ -27,6 +28,7 @@ class Session(models.Model):
     duration_minutes = models.PositiveIntegerField(null=True, blank=True)
     start = models.DateTimeField(null=True, blank=True)
     end = models.DateTimeField(null=True, blank=True)
+    paused_seconds = models.PositiveIntegerField(default=0)
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
     notes = models.TextField(blank=True)
     metadata = models.JSONField(blank=True, null=True)
@@ -62,11 +64,48 @@ class Session(models.Model):
             return self.end - self.start
         return None
 
+    @property
+    def timer_state(self) -> str:
+        if self.end is not None:
+            return "stopped"
+
+        metadata = self.metadata if isinstance(self.metadata, dict) else {}
+        state = metadata.get("timer_state")
+        if state in {"running", "paused"}:
+            return state
+        if self.source == self.SOURCE_TIMER:
+            return "running"
+        return "stopped"
+
+    @property
+    def is_paused(self) -> bool:
+        return self.timer_state == "paused"
+
+    @property
+    def paused_at(self):
+        metadata = self.metadata if isinstance(self.metadata, dict) else {}
+        paused_at = metadata.get("paused_at")
+        if not paused_at:
+            return None
+        try:
+            return dt.datetime.fromisoformat(paused_at)
+        except ValueError:
+            return None
+
+    @property
+    def timer_elapsed_seconds(self) -> int:
+        if not self.start:
+            return 0
+
+        effective_end = self.end or self.paused_at or timezone.now()
+        elapsed = (effective_end - self.start).total_seconds() - (self.paused_seconds or 0)
+        return max(0, int(elapsed))
+
     def save(self, *args, **kwargs):
         if self.duration_minutes is None:
             if self.start and self.end:
-                seconds = (self.end - self.start).total_seconds()
-                self.duration_minutes = int(seconds // 60)
+                seconds = (self.end - self.start).total_seconds() - (self.paused_seconds or 0)
+                self.duration_minutes = max(0, int(seconds // 60))
             elif self.local_date and self.start_time and self.end_time:
                 start_dt = dt.datetime.combine(self.local_date, self.start_time)
                 end_dt = dt.datetime.combine(self.local_date, self.end_time)
@@ -77,7 +116,7 @@ class Session(models.Model):
 
     @property
     def is_running(self) -> bool:
-        return self.end is None and self.source == self.SOURCE_TIMER
+        return self.end is None and self.source == self.SOURCE_TIMER and not self.is_paused
 
     def __str__(self) -> str:
         label = self.activity.title if self.activity else "Unassigned"
