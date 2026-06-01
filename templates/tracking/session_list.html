@@ -107,7 +107,44 @@
       </div>
 
       <div class="tracking-card surface-card page-card">
-        <h2 class="section-title">Session history</h2>
+        <div class="history-filter-row">
+          <h2 class="section-title">Session history</h2>
+          <form
+            class="history-filter-form"
+            method="get"
+            action="{% url 'session_list' %}"
+            hx-get="{% url 'session_list' %}"
+            hx-target="#session-list"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            data-today="{{ today_iso }}"
+          >
+            <label class="form-label history-filter-label" for="history-selected-date">Filter date</label>
+            <div class="history-filter-controls">
+              <div class="history-date-input-wrap">
+                <svg class="history-date-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M8 2V5M16 2V5M3 9H21M5 4H19C20.1046 4 21 4.89543 21 6V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V6C3 4.89543 3.89543 4 5 4Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <input
+                  id="history-selected-date"
+                  name="selected_date"
+                  type="date"
+                  value="{{ selected_date_iso }}"
+                  max="{{ today_iso }}"
+                  aria-describedby="history-date-help"
+                  onchange="this.form.requestSubmit()"
+                >
+              </div>
+              <button class="btn btn-secondary" type="button" data-history-today>Today</button>
+            </div>
+          </form>
+        </div>
+        <p id="history-date-help" class="history-filter-meta">
+          Showing {{ selected_date|date:"M d, Y" }} sessions.
+          {% if selected_date_invalid %}
+            Invalid date received, defaulted to today.
+          {% endif %}
+        </p>
         <div id="session-list" class="table">
           {% include 'tracking/partials/session_list.html' %}
         </div>
@@ -120,10 +157,93 @@
       background: transparent;
     }
 
+    .history-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .history-filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.55rem 0.75rem;
+    }
+
+    .history-filter-label {
+      padding-top: 0;
+      margin-right: 0.25rem;
+    }
+
+    .history-filter-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .history-date-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .history-date-icon {
+      position: absolute;
+      left: 0.55rem;
+      color: #617167;
+      pointer-events: none;
+    }
+
+    .history-date-input-wrap input[type="date"] {
+      min-width: 170px;
+      width: auto;
+      padding-left: 2rem;
+      background: #f9f7f2;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-color);
+      font: inherit;
+    }
+
+    .history-date-input-wrap input[type="date"]:focus-visible {
+      outline: 2px solid rgba(74, 70, 67, 0.35);
+      outline-offset: 1px;
+    }
+
+    .history-filter-meta {
+      margin: 0 0 0.75rem;
+      color: #617167;
+      font-size: 0.85rem;
+    }
+
     @media (max-width: 900px) {
       .tracking-hero {
         flex-direction: column;
         align-items: flex-start;
+      }
+
+      .history-filter-row {
+        align-items: flex-start;
+      }
+
+      .history-filter-form {
+        width: 100%;
+      }
+
+      .history-filter-controls {
+        width: 100%;
+      }
+
+      .history-date-input-wrap {
+        flex: 1 1 220px;
+      }
+
+      .history-date-input-wrap input[type="date"] {
+        width: 100%;
       }
     }
   </style>
@@ -135,6 +255,9 @@
     const preview = document.querySelector("[data-duration-preview]");
     const activityField = document.getElementById("{{ form.activity.id_for_label }}");
     const categoryField = document.getElementById("{{ form.category.id_for_label }}");
+    const historyFilterForm = document.querySelector(".history-filter-form");
+    const historyDateInput = document.getElementById("history-selected-date");
+    const historyTodayButton = document.querySelector("[data-history-today]");
 
     const updatePreview = () => {
       if (!startField || !endField || !preview) {
@@ -190,6 +313,13 @@
     if (categoryField) {
       categoryField.addEventListener("change", filterActivities);
       filterActivities();
+    }
+
+    if (historyFilterForm && historyDateInput && historyTodayButton) {
+      historyTodayButton.addEventListener("click", () => {
+        historyDateInput.value = historyFilterForm.dataset.today || "";
+        historyFilterForm.requestSubmit();
+      });
     }
   </script>
 {% endblock %}

@@ -1,4 +1,5 @@
 import csv
+import datetime as dt
 from zoneinfo import ZoneInfo
 
 from django.contrib import messages
@@ -28,9 +29,27 @@ def get_running_session(user):
     )
 
 
+def resolve_selected_date(request, profile):
+    tz = ZoneInfo(profile.timezone)
+    today_local = timezone.now().astimezone(tz).date()
+    raw_date = (request.POST.get("selected_date") or request.GET.get("selected_date") or "").strip()
+
+    if not raw_date:
+        return today_local, today_local, False
+
+    try:
+        selected_date = dt.date.fromisoformat(raw_date)
+        return selected_date, today_local, False
+    except ValueError:
+        return today_local, today_local, True
+
+
 @login_required
 def session_list_view(request):
     profile = get_user_profile(request.user)
+    selected_date, today_local, selected_date_invalid = resolve_selected_date(
+        request, profile
+    )
     activity_map = Activity.objects.filter(user=request.user).select_related("category")
     activity_choices = Activity.objects.filter(user=request.user).select_related(
         "category"
@@ -41,9 +60,22 @@ def session_list_view(request):
     sessions = Session.objects.filter(user=request.user).select_related(
         "activity", "category"
     )
+    sessions = sessions.filter(local_date=selected_date)
     sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
     form = SessionLogForm(user=request.user)
+
+    if request.headers.get("HX-Request") and request.GET.get("selected_date"):
+        return render(
+            request,
+            "tracking/partials/session_list.html",
+            {
+                "sessions": sessions,
+                "profile": profile,
+                "selected_date": selected_date,
+            },
+        )
+
     return render(
         request,
         "tracking/session_list.html",
@@ -55,6 +87,10 @@ def session_list_view(request):
             "activities": activities,
             "activity_choices": activity_choices,
             "activity_map": activity_map,
+            "selected_date": selected_date,
+            "selected_date_iso": selected_date.isoformat(),
+            "today_iso": today_local.isoformat(),
+            "selected_date_invalid": selected_date_invalid,
         },
     )
 
@@ -164,6 +200,9 @@ def session_log_view(request):
         return redirect("session_list")
 
     profile = get_user_profile(request.user)
+    selected_date, today_local, selected_date_invalid = resolve_selected_date(
+        request, profile
+    )
     activity_map = Activity.objects.filter(user=request.user).select_related("category")
     activity_choices = Activity.objects.filter(user=request.user).select_related(
         "category"
@@ -171,6 +210,7 @@ def session_log_view(request):
     sessions = Session.objects.filter(user=request.user).select_related(
         "activity", "category"
     )
+    sessions = sessions.filter(local_date=selected_date)
     sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
     activities = Activity.objects.filter(user=request.user).order_by(
@@ -187,6 +227,10 @@ def session_log_view(request):
             "activities": activities,
             "activity_choices": activity_choices,
             "activity_map": activity_map,
+            "selected_date": selected_date,
+            "selected_date_iso": selected_date.isoformat(),
+            "today_iso": today_local.isoformat(),
+            "selected_date_invalid": selected_date_invalid,
         },
     )
 
