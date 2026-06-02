@@ -6,6 +6,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.db.models import Q, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -78,6 +79,27 @@ def parse_year(request, year_options, fallback_year):
         if year in year_options:
             return year
     return fallback_year
+
+
+def _resolve_dashboard_date_range(request, local_today, default_days):
+    raw_from = (request.GET.get("from_date") or "").strip()
+    raw_to = (request.GET.get("to_date") or "").strip()
+
+    if not raw_from and not raw_to:
+        return None, None, False
+
+    start_date = _parse_date(raw_from) if raw_from else None
+    end_date = _parse_date(raw_to) if raw_to else None
+
+    if end_date is None:
+        end_date = local_today
+    if start_date is None:
+        start_date = end_date - dt.timedelta(days=default_days - 1)
+
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    return start_date, end_date, True
 
 
 def get_activity_filter(request, user):
@@ -395,23 +417,34 @@ def build_context(request):
     tz = get_user_timezone(user)
     local_today = timezone.now().astimezone(tz).date()
 
+    custom_start_date, custom_end_date, custom_range_active = _resolve_dashboard_date_range(
+        request,
+        local_today,
+        days,
+    )
+
     year_options = build_year_options(user, tz, local_today)
-    selected_year = parse_year(request, year_options, local_today.year)
-
-    if selected_year == local_today.year:
-        end_date = local_today
+    if custom_range_active:
+        start_date = custom_start_date
+        end_date = custom_end_date
+        selected_year = end_date.year
     else:
-        end_date = dt.date(selected_year, 12, 31)
+        selected_year = parse_year(request, year_options, local_today.year)
 
-    start_date = end_date - dt.timedelta(days=days - 1)
-    year_start = dt.date(selected_year, 1, 1)
-    if start_date < year_start:
-        start_date = year_start
+        if selected_year == local_today.year:
+            end_date = local_today
+        else:
+            end_date = dt.date(selected_year, 12, 31)
+
+        start_date = end_date - dt.timedelta(days=days - 1)
+        year_start = dt.date(selected_year, 1, 1)
+        if start_date < year_start:
+            start_date = year_start
 
     series = build_daily_series(user, start_date, end_date)
 
     intensity_values = [compute_daily_intensity(user, date) for date in series["dates"]]
-    category_totals = compute_category_totals(user, start_date, local_today)
+    category_totals = compute_category_totals(user, start_date, end_date)
     category_chart_rows = [
         row
         for row in category_totals
@@ -447,10 +480,12 @@ def build_context(request):
     )
 
     return {
-        "range_days": days,
+        "range_days": (end_date - start_date).days + 1,
         "range_options": RANGE_OPTIONS,
         "year_options": year_options,
         "selected_year": selected_year,
+        "from_date_value": start_date.isoformat(),
+        "to_date_value": end_date.isoformat(),
         "daily_labels": series["labels"],
         "daily_actual": series["actual"],
         "daily_planned": series["planned"],
@@ -480,7 +515,12 @@ def dashboard_view(request):
 @login_required
 def dashboard_partial_view(request):
     context = build_context(request)
-    return render(request, "analytics/partials/dashboard_content.html", context)
+    response = render(request, "analytics/partials/dashboard_content.html", context)
+    query = request.GET.urlencode()
+    response["HX-Push-Url"] = (
+        f"{reverse('dashboard')}?{query}" if query else reverse('dashboard')
+    )
+    return response
 
 
 @login_required
@@ -538,8 +578,8 @@ def _resolve_date_range(request, default_days=30):
     tz = get_user_timezone(request.user)
     local_today = timezone.now().astimezone(tz).date()
 
-    start = _parse_date(request.GET.get("start"))
-    end = _parse_date(request.GET.get("end"))
+    start = _parse_date(request.GET.get("from_date") or request.GET.get("start"))
+    end = _parse_date(request.GET.get("to_date") or request.GET.get("end"))
 
     if not end:
         end = local_today

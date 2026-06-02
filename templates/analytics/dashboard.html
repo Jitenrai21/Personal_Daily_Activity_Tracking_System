@@ -13,29 +13,31 @@
       <form
         class="dashboard-filters page-actions"
         method="get"
-        action="{% url 'dashboard_partial' %}"
+        action="{% url 'dashboard' %}"
         hx-get="{% url 'dashboard_partial' %}"
         hx-target="#dashboard-pane"
         hx-swap="innerHTML"
-        hx-include="#year"
       >
         <div class="filter-group">
-          <label for="range" class="label">Range</label>
-          <select id="range" name="range">
-            {% for option in range_options %}
-              <option value="{{ option }}" {% if option == range_days %}selected{% endif %}>Last {{ option }} days</option>
-            {% endfor %}
-          </select>
+          <label for="from_date" class="label">From date</label>
+          <input id="from_date" name="from_date" type="date" value="{{ from_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
         </div>
         <div class="filter-group">
-          <label for="year" class="label">Year</label>
-          <select id="year" name="year">
-            {% for year in year_options %}
-              <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-            {% endfor %}
-          </select>
+          <label for="to_date" class="label">To date</label>
+          <input id="to_date" name="to_date" type="date" value="{{ to_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
         </div>
-        <button class="btn" type="submit">Update</button>
+        <div class="dashboard-filter-actions">
+          <button class="btn" type="submit">Apply</button>
+          <button
+            class="btn btn-secondary"
+            type="button"
+            data-dashboard-reset
+            data-default-from="{{ from_date_value }}"
+            data-default-to="{{ to_date_value }}"
+          >
+            Reset
+          </button>
+        </div>
       </form>
     </header>
 
@@ -65,7 +67,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      min-width: 140px;
+      min-width: 160px;
     }
 
     .filter-group .label {
@@ -76,23 +78,31 @@
       letter-spacing: 0.02em;
     }
 
-    .filter-group select {
+    .filter-group input[type="date"] {
       padding: 0.5rem 0.75rem;
       border: 1px solid rgba(28, 43, 34, 0.15);
       border-radius: 6px;
-      background: #ffffff;
+      background: #f9f7f2;
       font-size: 0.9rem;
-      cursor: pointer;
       transition: border-color 0.2s ease;
+      font: inherit;
+      height: 38px;
     }
 
-    .filter-group select:focus {
+    .filter-group input[type="date"]:focus {
       outline: none;
       border-color: #1c2b22;
     }
 
-    .filter-group select:hover {
+    .filter-group input[type="date"]:hover {
       border-color: rgba(28, 43, 34, 0.25);
+    }
+
+    .dashboard-filter-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .dashboard-filters .btn {
@@ -184,15 +194,24 @@
     }
 
     /* Chart containers */
-    .chart-container {
+    .chart-frame {
       position: relative;
       width: 100%;
       height: 300px;
       margin-top: 1rem;
     }
 
-    .chart-container canvas {
-      max-height: 300px;
+    .chart-frame canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dashboard-chart-frame {
+      flex: 0 0 300px;
+      min-height: 300px;
+      height: 300px;
+      overflow: hidden;
     }
 
     /* Category sections grid */
@@ -347,8 +366,14 @@
         width: 100%;
       }
 
-      .chart-container {
-        height: 250px;
+      .chart-frame {
+        height: 300px;
+      }
+
+      .dashboard-chart-frame {
+        flex-basis: 300px;
+        min-height: 300px;
+        height: 300px;
       }
     }
 
@@ -429,6 +454,15 @@
   <script>
     const chartStore = window.dashboardCharts || (window.dashboardCharts = {});
 
+    function destroyDashboardCharts() {
+      Object.keys(chartStore).forEach((id) => {
+        if (chartStore[id]) {
+          chartStore[id].destroy();
+          delete chartStore[id];
+        }
+      });
+    }
+
     function loadJson(id) {
       const node = document.getElementById(id);
       if (!node) {
@@ -457,6 +491,8 @@
     }
 
     function renderDashboardCharts() {
+      destroyDashboardCharts();
+
       const categorySeries = loadJson("category-daily-series");
       if (!categorySeries) {
         return;
@@ -479,16 +515,18 @@
                 data: series.actual,
                 backgroundColor: chartPalette.actual,
                 borderRadius: 4,
-                barThickness: 'flex',
-                maxBarThickness: 40,
+                categoryPercentage: 0.72,
+                barPercentage: 0.88,
+                maxBarThickness: 24,
               },
               {
                 label: "Planned",
                 data: series.planned,
                 backgroundColor: chartPalette.planned,
                 borderRadius: 4,
-                barThickness: 'flex',
-                maxBarThickness: 40,
+                categoryPercentage: 0.72,
+                barPercentage: 0.88,
+                maxBarThickness: 24,
               },
             ],
           },
@@ -582,20 +620,31 @@
 
     document.body.addEventListener("htmx:afterSwap", (event) => {
       if (event.target && event.target.id === "dashboard-pane") {
-        renderDashboardCharts();
+        window.requestAnimationFrame(() => {
+          renderDashboardCharts();
+        });
       }
     });
 
-    // Auto-submit filter form on change
+    document.body.addEventListener("htmx:beforeSwap", (event) => {
+      if (event.target && event.target.id === "dashboard-pane") {
+        destroyDashboardCharts();
+      }
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
       const filterForm = document.querySelector(".dashboard-filters");
       if (filterForm) {
-        const selects = filterForm.querySelectorAll("select");
-        selects.forEach((select) => {
-          select.addEventListener("change", () => {
-            filterForm.dispatchEvent(new Event("submit"));
+        const resetButton = filterForm.querySelector("[data-dashboard-reset]");
+        if (resetButton) {
+          resetButton.addEventListener("click", () => {
+            const fromField = filterForm.querySelector("#from_date");
+            const toField = filterForm.querySelector("#to_date");
+            if (fromField) fromField.value = resetButton.dataset.defaultFrom || "";
+            if (toField) toField.value = resetButton.dataset.defaultTo || "";
+            filterForm.requestSubmit();
           });
-        });
+        }
       }
     });
   </script>

@@ -175,7 +175,10 @@
 
     .history-filter-label {
       padding-top: 0;
-      margin-right: 0.25rem;
+      margin: 0 0.25rem 0 0;
+      align-self: center;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .history-filter-controls {
@@ -201,12 +204,18 @@
     .history-date-input-wrap input[type="date"] {
       min-width: 170px;
       width: auto;
+      height: 38px;
       padding-left: 2rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-right: 0.75rem;
       background: #f9f7f2;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       color: var(--text-color);
       font: inherit;
+      line-height: 1;
+      box-sizing: border-box;
     }
 
     .history-date-input-wrap input[type="date"]:focus-visible {
