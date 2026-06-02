@@ -53,7 +53,7 @@ body {
   justify-content: center;
   padding: 0.5rem;
   border-radius: 12px;
-  background: #f7f2e9;
+  background: var(--surface-soft);
   border: 1px solid var(--border-color);
 }
 
@@ -108,7 +108,6 @@ body {
   background: #f5efe5;
   color: var(--dashboard-ink);
 }
-
 .content {
   flex: 1;
   padding: 0 2rem 2rem;
@@ -143,19 +142,19 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: 0.75rem;
-  color: #5c6f65;
+  color: var(--accent-color);
   margin-bottom: 0.5rem;
 }
 
 .page-title {
   font-size: 2rem;
   margin: 0 0 0.5rem;
-  color: #1c2b22;
+  color: var(--dashboard-ink);
 }
 
 .page-subtitle {
   margin: 0;
-  color: #3c4a42;
+  color: var(--accent-color);
   max-width: 32rem;
 }
 
@@ -256,7 +255,7 @@ h2 {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
-  background: #f9f7f2;
+  background: var(--surface-soft);
   width: 100%;
 }
 
@@ -267,7 +266,7 @@ h2 {
   padding: 0.75rem 1rem;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
-  background: #f9f7f2;
+  background: var(--surface-soft);
 }
 
 .table-row > div {
@@ -277,7 +276,7 @@ h2 {
 }
 
 .table-row:hover {
-  background: #f4f1eb;
+  background: var(--surface-soft-hover);
 }
 
 .table-row-sessions {
@@ -338,7 +337,7 @@ h2 {
   padding: 0.8rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: #f9f7f2;
+  background: var(--surface-soft);
 }
 
 .list-item p {
@@ -384,7 +383,7 @@ textarea {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  background: #f9f7f2;
+  background: var(--surface-soft);
   color: var(--text-color);
 }
 
@@ -499,7 +498,7 @@ textarea {
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: #f9f7f2;
+  background: var(--surface-soft);
 }
 
 .planner-actions {
@@ -568,7 +567,7 @@ textarea {
   flex-wrap: wrap;
   gap: 1rem;
   align-items: flex-end;
-  background: #f9f7f2;
+  background: var(--surface-soft);
   padding: 1rem;
   border-radius: 12px;
   border: 1px solid var(--border-color);
@@ -593,7 +592,7 @@ textarea {
 
 .kpi-card {
   padding: 1rem 1.2rem;
-  background: #f9f7f2;
+  background: var(--surface-soft);
   border-radius: 12px;
   border: 1px solid var(--border-color);
 }
@@ -620,7 +619,7 @@ textarea {
 
 .chart-card {
   padding: 1.2rem 1.4rem;
-  background: #f9f7f2;
+  background: var(--surface-soft);
   border-radius: 14px;
   border: 1px solid var(--border-color);
   display: flex;
