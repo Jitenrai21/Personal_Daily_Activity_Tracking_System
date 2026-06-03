@@ -230,14 +230,53 @@ def build_daily_series(user, start_date, end_date, category=None, activity=None)
 
 def build_category_daily_series(user, start_date, end_date, dates, labels):
     categories = list(ActivityCategory.objects.filter(user=user).order_by("name"))
-    category_map = {
-        category.pk: {
-            "id": category.pk,
-            "key": str(category.pk),
-            "name": category.name,
+
+    def make_bucket(category_id, category_name):
+        return {
+            "id": category_id,
+            "key": str(category_id) if category_id is not None else "unassigned",
+            "name": category_name,
             "actual": {date: 0 for date in dates},
             "planned": {date: 0 for date in dates},
+            "activity_breakdown": {date: [] for date in dates},
+            "_activity_lookup": {date: {} for date in dates},
         }
+
+    def get_bucket(category_id, category_name):
+        bucket = category_map.get(category_id)
+        if bucket is None:
+          bucket = make_bucket(category_id, category_name)
+          category_map[category_id] = bucket
+        return bucket
+
+    def add_activity_minutes(bucket, date, activity, kind, minutes):
+        if date not in bucket["activity_breakdown"]:
+            return
+
+        activity_id = activity.pk if activity else None
+        activity_key = activity_id if activity_id is not None else "unassigned"
+        activity_name = activity.title if activity else "Unassigned"
+        description = (activity.notes or "").strip() if activity else ""
+        lookup = bucket["_activity_lookup"][date]
+        entry = lookup.get(activity_key)
+        if entry is None:
+            entry = {
+                "id": activity_id,
+                "key": str(activity_key),
+                "name": activity_name,
+                "description": description,
+                "actual": 0,
+                "planned": 0,
+            }
+            lookup[activity_key] = entry
+            bucket["activity_breakdown"][date].append(entry)
+
+        if description and not entry["description"]:
+            entry["description"] = description
+        entry[kind] += minutes
+
+    category_map = {
+        category.pk: make_bucket(category.pk, category.name)
         for category in categories
     }
     session_rows = (
@@ -246,27 +285,23 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
             local_date__range=(start_date, end_date),
             duration_minutes__isnull=False,
         )
+        .select_related("activity", "activity__category", "category")
         .annotate(resolved_category_id=Coalesce("category_id", "activity__category_id"))
-        .values("resolved_category_id", "local_date")
-        .annotate(total=Sum("duration_minutes"))
+        .order_by("local_date", "activity__title")
     )
 
-    for row in session_rows:
-        category_id = row["resolved_category_id"]
-        date = row["local_date"]
-        minutes = row["total"] or 0
-        bucket = category_map.setdefault(
-            category_id,
-            {
-                "id": category_id,
-                "key": str(category_id) if category_id is not None else "unassigned",
-                "name": "Unassigned",
-                "actual": {date: 0 for date in dates},
-                "planned": {date: 0 for date in dates},
-            },
-        )
+    for session in session_rows:
+        category = session.category or (session.activity.category if session.activity else None)
+        category_id = session.resolved_category_id
+        date = session.local_date
+        minutes = session.duration_minutes or 0
+        if minutes <= 0:
+            continue
+
+        bucket = get_bucket(category_id, category.name if category else "Unassigned")
         if date in bucket["actual"]:
             bucket["actual"][date] += minutes
+            add_activity_minutes(bucket, date, session.activity, "actual", minutes)
 
     blocks = (
         ScheduleBlock.objects.filter(user=user, date__range=(start_date, end_date))
@@ -285,18 +320,10 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
             minutes = int(block.duration_minutes)
         if minutes <= 0:
             continue
-        bucket = category_map.setdefault(
-            category_id,
-            {
-                "id": category_id,
-                "key": str(category_id) if category_id is not None else "unassigned",
-                "name": category.name if category else "Unassigned",
-                "actual": {date: 0 for date in dates},
-                "planned": {date: 0 for date in dates},
-            },
-        )
+        bucket = get_bucket(category_id, category.name if category else "Unassigned")
         if block.date in bucket["planned"]:
             bucket["planned"][block.date] += minutes
+            add_activity_minutes(bucket, block.date, block.activity, "planned", minutes)
 
     ordered_ids = [category.pk for category in categories]
     series = []
@@ -304,6 +331,14 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
         bucket = category_map.get(category_id)
         if not bucket:
             continue
+        activity_breakdown = []
+        for date in dates:
+            day_entries = list(bucket["activity_breakdown"][date])
+            day_entries.sort(
+                key=lambda item: (item["actual"] + item["planned"], item["name"]),
+                reverse=True,
+            )
+            activity_breakdown.append(day_entries)
         series.append(
             {
                 "id": bucket["id"],
@@ -312,6 +347,7 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
                 "labels": labels,
                 "actual": [bucket["actual"][date] for date in dates],
                 "planned": [bucket["planned"][date] for date in dates],
+                "activity_breakdown": activity_breakdown,
             }
         )
 

@@ -3,6 +3,8 @@
 :root {
   --bg-color: #f0ede6;
   --main-color: #e2dcd2;
+  --surface-soft: #f7f4ee;
+  --surface-soft-hover: #f2ede4;
   --text-color: #2c2a27;
   --accent-color: #6b6057;
   --cta-color: #4a4643;

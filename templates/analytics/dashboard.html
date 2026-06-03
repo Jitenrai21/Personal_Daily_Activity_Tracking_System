@@ -570,6 +570,51 @@
                 boxWidth: 8,
                 boxHeight: 8,
                 boxPadding: 4,
+                callbacks: {
+                  title(tooltipItems) {
+                    if (!tooltipItems.length) {
+                      return series.name;
+                    }
+                    return `${series.name} • ${tooltipItems[0].label}`;
+                  },
+                  label(context) {
+                    const label = context.dataset.label || "Value";
+                    const value = context.formattedValue || 0;
+                    return `${label}: ${value} min`;
+                  },
+                  afterBody(tooltipItems) {
+                    if (!tooltipItems.length) {
+                      return [];
+                    }
+
+                    const dataIndex = tooltipItems[0].dataIndex;
+                    const breakdown = (series.activity_breakdown && series.activity_breakdown[dataIndex]) || [];
+                    if (!breakdown.length) {
+                      return ["Activity breakdown: none available"];
+                    }
+
+                    const lines = ["Activity breakdown:"];
+                    breakdown.slice(0, 6).forEach((item) => {
+                      const parts = [];
+                      if (item.actual) {
+                        parts.push(`actual ${item.actual} min`);
+                      }
+                      if (item.planned) {
+                        parts.push(`planned ${item.planned} min`);
+                      }
+                      if (item.description) {
+                        parts.push(item.description);
+                      }
+                      lines.push(`${item.name}: ${parts.join(" • ")}`);
+                    });
+
+                    if (breakdown.length > 6) {
+                      lines.push(`+ ${breakdown.length - 6} more activities`);
+                    }
+
+                    return lines;
+                  },
+                },
               },
             },
             scales: {
