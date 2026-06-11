@@ -3,6 +3,9 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+  {# Tabler icons outline webfont #}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+
   <section class="dashboard-shell fade-in page-shell">
     <header class="dashboard-header page-header surface-card">
       <div>
@@ -47,7 +50,7 @@
   </section>
 
   <style>
-    /* Dashboard-specific layout improvements */
+    /* ─── Dashboard shell layout ─────────────────────────────── */
     .dashboard-header {
       display: flex;
       justify-content: space-between;
@@ -110,14 +113,204 @@
       padding: 0.5rem 1.25rem;
     }
 
-    /* Dashboard content grid */
+    /* ─── Dashboard content grid ─────────────────────────────── */
     .dashboard-content {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
     }
 
-    /* Card styling consistent with planner */
+    /* ─── KPI cards ──────────────────────────────────────────── */
+    /*
+     * Base card — shared structure, no color.
+     * Each modifier (--teal, --amber, --purple, --neutral) applies
+     * its own background, border, and text colors.
+     */
+    .kpi-card {
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      border: 1px solid transparent; /* overridden by modifier */
+      transition: box-shadow 0.15s ease;
+    }
+
+    /* Teal — actual / done output */
+    .kpi-card--teal {
+      background: #E1F5EE;
+      border-color: #5DCAA5;
+    }
+    .kpi-card--teal .kpi-label { color: #0F6E56; }
+    .kpi-card--teal .kpi-value { color: #085041; }
+    .kpi-card--teal .kpi-foot  { color: #0F6E56; }
+
+    /* Amber — planned targets / completion */
+    .kpi-card--amber {
+      background: #FAEEDA;
+      border-color: #EF9F27;
+    }
+    .kpi-card--amber .kpi-label { color: #854F0B; }
+    .kpi-card--amber .kpi-value { color: #633806; }
+    .kpi-card--amber .kpi-foot  { color: #854F0B; }
+
+    /* Purple — streaks / momentum */
+    .kpi-card--purple {
+      background: #EEEDFE;
+      border-color: #AFA9EC;
+    }
+    .kpi-card--purple .kpi-label { color: #534AB7; }
+    .kpi-card--purple .kpi-value { color: #3C3489; }
+    .kpi-card--purple .kpi-foot  { color: #534AB7; }
+
+    /* Neutral — descriptive / top category */
+    .kpi-card--neutral {
+      background: var(--surface-soft, #f6f7f6);
+      border-color: rgba(28, 43, 34, 0.15);
+    }
+    .kpi-card--neutral .kpi-label { color: #617167; }
+    .kpi-card--neutral .kpi-value { color: #1c2b22; }
+    .kpi-card--neutral .kpi-foot  { color: #617167; }
+
+    /* Typography inside KPI cards */
+    .kpi-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin: 0;
+    }
+
+    /* Smaller value for long text like a category name */
+    .kpi-value--sm {
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+
+    .kpi-foot {
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    /* Completion progress bar (inside amber KPI card) */
+    .kpi-progress-bar {
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(133, 79, 11, 0.18);
+      overflow: hidden;
+      margin: 2px 0;
+    }
+
+    .kpi-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: #EF9F27;
+      max-width: 100%;
+      transition: width 0.4s ease;
+    }
+
+    /* ─── Streak badge (inside purple KPI foot) ──────────────── */
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 3px 10px 3px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid;
+      line-height: 1;
+    }
+
+    /* Active streak → amber */
+    .streak-badge--active {
+      background: #FAEEDA;
+      border-color: #EF9F27;
+      color: #633806;
+    }
+
+    .streak-badge--active .ti {
+      color: #EF9F27;
+      font-size: 14px;
+    }
+
+    /* Personal best → purple */
+    .streak-badge--record {
+      background: #EEEDFE;
+      border-color: #AFA9EC;
+      color: #3C3489;
+    }
+
+    .streak-badge--record .ti {
+      color: #7F77DD;
+      font-size: 14px;
+    }
+
+    /* ─── Stats grid (legacy, kept for compatibility) ─────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--surface-soft);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #617167;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1c2b22;
+      line-height: 1;
+    }
+
+    .stat-subtitle {
+      font-size: 0.85rem;
+      color: #617167;
+    }
+
+    /* ─── Chart containers ───────────────────────────────────── */
+    .chart-frame {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin-top: 1rem;
+    }
+
+    .chart-frame canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .dashboard-chart-frame {
+      flex: 0 0 300px;
+      min-height: 300px;
+      height: 300px;
+      overflow: hidden;
+    }
+
+    /* ─── Card shared styles ─────────────────────────────────── */
     .dashboard-card {
       background: var(--surface-card, #ffffff);
       border-radius: 12px;
@@ -157,64 +350,7 @@
       font-weight: 600;
     }
 
-    /* Stats grid layout */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .stat-card {
-      background: var(--surface-soft);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.85rem;
-      color: #617167;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1c2b22;
-      line-height: 1;
-    }
-
-    .stat-subtitle {
-      font-size: 0.85rem;
-      color: #617167;
-    }
-
-    /* Chart containers */
-    .chart-frame {
-      position: relative;
-      width: 100%;
-      height: 300px;
-      margin-top: 1rem;
-    }
-
-    .chart-frame canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .dashboard-chart-frame {
-      flex: 0 0 300px;
-      min-height: 300px;
-      height: 300px;
-      overflow: hidden;
-    }
-
-    /* Category sections grid */
+    /* ─── Category sections ──────────────────────────────────── */
     .category-sections {
       display: grid;
       grid-template-columns: 1fr;
@@ -243,7 +379,7 @@
       color: #1c2b22;
     }
 
-    /* Table styling consistent with planner */
+    /* ─── Table ──────────────────────────────────────────────── */
     .dashboard-table-wrap {
       background: var(--surface-soft);
       border-radius: 8px;
@@ -269,9 +405,7 @@
       border-bottom: 2px solid rgba(28, 43, 34, 0.1);
     }
 
-    .dashboard-table thead th:last-child {
-      text-align: right;
-    }
+    .dashboard-table thead th:last-child { text-align: right; }
 
     .dashboard-table tbody td {
       padding: 0.875rem;
@@ -280,23 +414,32 @@
       background: var(--surface-soft);
     }
 
-    .dashboard-table tbody td:last-child {
-      text-align: right;
-    }
-
-    .dashboard-table tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    .dashboard-table tbody tr:hover {
-      background: var(--surface-soft-hover);
-    }
+    .dashboard-table tbody td:last-child { text-align: right; }
+    .dashboard-table tbody tr:last-child td { border-bottom: none; }
 
     .dashboard-table tbody tr:hover td {
       background: var(--surface-soft-hover);
     }
 
-    /* Empty state */
+    /* ─── Heatmap — teal intensity ramp ──────────────────────── */
+    /*
+     * level-0  empty day   (neutral surface)
+     * level-1  low         #9FE1CB  teal-100
+     * level-2  moderate    #5DCAA5  teal-200
+     * level-3  high        #1D9E75  teal-400
+     * level-4  peak        #0F6E56  teal-600
+     */
+    .heatmap-cell.level-0 {
+      background: var(--surface-soft, #f6f7f6);
+      border: 1px solid rgba(28, 43, 34, 0.08);
+    }
+
+    .heatmap-cell.level-1 { background: #9FE1CB; border: 1px solid #5DCAA5; }
+    .heatmap-cell.level-2 { background: #5DCAA5; border: 1px solid #1D9E75; }
+    .heatmap-cell.level-3 { background: #1D9E75; border: 1px solid #0F6E56; }
+    .heatmap-cell.level-4 { background: #0F6E56; border: 1px solid #085041; }
+
+    /* ─── Empty state ────────────────────────────────────────── */
     .empty-state {
       text-align: center;
       padding: 3rem 1.5rem;
@@ -316,93 +459,9 @@
       color: #1c2b22;
     }
 
-    .empty-state-message {
-      font-size: 0.9rem;
-    }
+    .empty-state-message { font-size: 0.9rem; }
 
-    /* Responsive layouts */
-    @media (min-width: 768px) {
-      .dashboard-content {
-        gap: 2rem;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      .category-sections {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (min-width: 1400px) {
-      .category-sections {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-header {
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-
-      .dashboard-filters {
-        width: 100%;
-      }
-
-      .filter-group {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .dashboard-filters .btn {
-        width: 100%;
-      }
-
-      .chart-frame {
-        height: 300px;
-      }
-
-      .dashboard-chart-frame {
-        flex-basis: 300px;
-        min-height: 300px;
-        height: 300px;
-      }
-    }
-
-    /* Loading state */
-    .dashboard-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem 2rem;
-      color: #617167;
-    }
-
-    /* Fade in animation */
-    .fade-in {
-      animation: fadeIn 0.3s ease-in;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Metric badge */
+    /* ─── Misc badges ────────────────────────────────────────── */
     .metric-badge {
       display: inline-flex;
       align-items: center;
@@ -413,22 +472,10 @@
       font-weight: 600;
     }
 
-    .metric-badge.positive {
-      background: rgba(63, 143, 107, 0.1);
-      color: #3f8f6b;
-    }
+    .metric-badge.positive { background: rgba(63, 143, 107, 0.1); color: #3f8f6b; }
+    .metric-badge.neutral  { background: rgba(97, 113, 103, 0.1); color: #617167; }
+    .metric-badge.negative { background: rgba(235, 87, 87, 0.1);  color: #eb5757; }
 
-    .metric-badge.neutral {
-      background: rgba(97, 113, 103, 0.1);
-      color: #617167;
-    }
-
-    .metric-badge.negative {
-      background: rgba(235, 87, 87, 0.1);
-      color: #eb5757;
-    }
-
-    /* Priority indicators */
     .priority-indicator {
       display: inline-block;
       width: 8px;
@@ -437,16 +484,61 @@
       margin-right: 0.5rem;
     }
 
-    .priority-indicator.high {
-      background: #eb5757;
+    .priority-indicator.high   { background: #eb5757; }
+    .priority-indicator.medium { background: #f2c94c; }
+    .priority-indicator.low    { background: #3f8f6b; }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (min-width: 768px) {
+      .dashboard-content { gap: 2rem; }
     }
 
-    .priority-indicator.medium {
-      background: #f2c94c;
+    @media (min-width: 1024px) {
+      .category-sections { grid-template-columns: repeat(2, 1fr); }
     }
 
-    .priority-indicator.low {
-      background: #3f8f6b;
+    @media (min-width: 1400px) {
+      .category-sections { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .dashboard-filters { width: 100%; }
+
+      .filter-group {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .dashboard-filters .btn { width: 100%; }
+
+      .chart-frame { height: 300px; }
+
+      .dashboard-chart-frame {
+        flex-basis: 300px;
+        min-height: 300px;
+        height: 300px;
+      }
+    }
+
+    /* ─── Loading / animation ────────────────────────────────── */
+    .dashboard-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      color: #617167;
+    }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   </style>
 
@@ -465,28 +557,20 @@
 
     function loadJson(id) {
       const node = document.getElementById(id);
-      if (!node) {
-        return null;
-      }
+      if (!node) return null;
       return JSON.parse(node.textContent || "null");
     }
 
     function renderChart(id, config) {
       const canvas = document.getElementById(id);
-      if (!canvas) {
-        return;
-      }
-      if (chartStore[id]) {
-        chartStore[id].destroy();
-      }
+      if (!canvas) return;
+      if (chartStore[id]) chartStore[id].destroy();
       chartStore[id] = new Chart(canvas, config);
     }
 
     function formatDailyLabel(value) {
       const date = new Date(`${value}T00:00:00`);
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
+      if (Number.isNaN(date.getTime())) return value;
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
@@ -494,13 +578,11 @@
       destroyDashboardCharts();
 
       const categorySeries = loadJson("category-daily-series");
-      if (!categorySeries) {
-        return;
-      }
+      if (!categorySeries) return;
 
       const chartPalette = {
-        actual: "#3f8f6b",
-        planned: "#f2c94c",
+        actual:  "#1D9E75", /* teal-400 — matches KPI card tint */
+        planned: "#EF9F27", /* amber-400 — matches KPI card tint */
       };
 
       categorySeries.forEach((series) => {
@@ -533,48 +615,35 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-              intersect: false,
-              mode: 'index',
-            },
+            interaction: { intersect: false, mode: "index" },
             plugins: {
               legend: {
                 display: true,
-                position: 'top',
-                align: 'end',
+                position: "top",
+                align: "end",
                 labels: {
                   boxWidth: 12,
                   boxHeight: 12,
                   padding: 15,
-                  font: {
-                    size: 11,
-                    weight: '600',
-                  },
-                  color: '#617167',
+                  font: { size: 11, weight: "600" },
+                  color: "#617167",
                   usePointStyle: true,
-                  pointStyle: 'circle',
+                  pointStyle: "circle",
                 },
               },
               tooltip: {
-                backgroundColor: 'rgba(28, 43, 34, 0.95)',
+                backgroundColor: "rgba(28, 43, 34, 0.95)",
                 padding: 12,
                 cornerRadius: 6,
-                titleFont: {
-                  size: 12,
-                  weight: '600',
-                },
-                bodyFont: {
-                  size: 11,
-                },
+                titleFont: { size: 12, weight: "600" },
+                bodyFont: { size: 11 },
                 displayColors: true,
                 boxWidth: 8,
                 boxHeight: 8,
                 boxPadding: 4,
                 callbacks: {
                   title(tooltipItems) {
-                    if (!tooltipItems.length) {
-                      return series.name;
-                    }
+                    if (!tooltipItems.length) return series.name;
                     return `${series.name} • ${tooltipItems[0].label}`;
                   },
                   label(context) {
@@ -583,35 +652,19 @@
                     return `${label}: ${value} min`;
                   },
                   afterBody(tooltipItems) {
-                    if (!tooltipItems.length) {
-                      return [];
-                    }
-
+                    if (!tooltipItems.length) return [];
                     const dataIndex = tooltipItems[0].dataIndex;
                     const breakdown = (series.activity_breakdown && series.activity_breakdown[dataIndex]) || [];
-                    if (!breakdown.length) {
-                      return ["Activity breakdown: none available"];
-                    }
-
+                    if (!breakdown.length) return ["Activity breakdown: none available"];
                     const lines = ["Activity breakdown:"];
                     breakdown.slice(0, 6).forEach((item) => {
                       const parts = [];
-                      if (item.actual) {
-                        parts.push(`actual ${item.actual} min`);
-                      }
-                      if (item.planned) {
-                        parts.push(`planned ${item.planned} min`);
-                      }
-                      if (item.description) {
-                        parts.push(item.description);
-                      }
+                      if (item.actual)      parts.push(`actual ${item.actual} min`);
+                      if (item.planned)     parts.push(`planned ${item.planned} min`);
+                      if (item.description) parts.push(item.description);
                       lines.push(`${item.name}: ${parts.join(" • ")}`);
                     });
-
-                    if (breakdown.length > 6) {
-                      lines.push(`+ ${breakdown.length - 6} more activities`);
-                    }
-
+                    if (breakdown.length > 6) lines.push(`+ ${breakdown.length - 6} more activities`);
                     return lines;
                   },
                 },
@@ -619,39 +672,22 @@
             },
             scales: {
               x: {
-                grid: {
-                  display: false,
-                },
+                grid: { display: false },
                 ticks: {
                   autoSkip: true,
                   maxTicksLimit: 8,
                   maxRotation: 0,
                   minRotation: 0,
-                  color: '#617167',
-                  font: {
-                    size: 11,
-                  },
+                  color: "#617167",
+                  font: { size: 11 },
                 },
-                border: {
-                  color: 'rgba(28, 43, 34, 0.1)',
-                },
+                border: { color: "rgba(28, 43, 34, 0.1)" },
               },
-              y: { 
+              y: {
                 beginAtZero: true,
-                grid: {
-                  color: 'rgba(28, 43, 34, 0.06)',
-                  drawBorder: false,
-                },
-                ticks: {
-                  color: '#617167',
-                  font: {
-                    size: 11,
-                  },
-                  precision: 0,
-                },
-                border: {
-                  display: false,
-                },
+                grid: { color: "rgba(28, 43, 34, 0.06)", drawBorder: false },
+                ticks: { color: "#617167", font: { size: 11 }, precision: 0 },
+                border: { display: false },
               },
             },
           },
@@ -665,9 +701,7 @@
 
     document.body.addEventListener("htmx:afterSwap", (event) => {
       if (event.target && event.target.id === "dashboard-pane") {
-        window.requestAnimationFrame(() => {
-          renderDashboardCharts();
-        });
+        window.requestAnimationFrame(() => { renderDashboardCharts(); });
       }
     });
 
@@ -684,9 +718,9 @@
         if (resetButton) {
           resetButton.addEventListener("click", () => {
             const fromField = filterForm.querySelector("#from_date");
-            const toField = filterForm.querySelector("#to_date");
+            const toField   = filterForm.querySelector("#to_date");
             if (fromField) fromField.value = resetButton.dataset.defaultFrom || "";
-            if (toField) toField.value = resetButton.dataset.defaultTo || "";
+            if (toField)   toField.value   = resetButton.dataset.defaultTo   || "";
             filterForm.requestSubmit();
           });
         }

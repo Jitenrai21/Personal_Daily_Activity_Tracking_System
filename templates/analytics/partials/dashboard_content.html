@@ -1,29 +1,57 @@
 <section class="dashboard-grid">
   <div class="kpi-grid page-stack">
-    <div class="kpi-card surface-card page-card">
+
+    {# KPI 1 — Total actual (teal: done/output) #}
+    <div class="kpi-card kpi-card--teal surface-card page-card">
       <p class="kpi-label">Total actual</p>
       <p class="kpi-value">{{ kpis.total_actual }}</p>
       <p class="kpi-foot">Minutes worked</p>
     </div>
-    <div class="kpi-card surface-card page-card">
+
+    {# KPI 2 — Completion (amber: planned target) #}
+    <div class="kpi-card kpi-card--amber surface-card page-card">
       <p class="kpi-label">Completion</p>
       <p class="kpi-value">
         {% if kpis.completion_rate %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
       </p>
+      {% if kpis.completion_rate %}
+        <div class="kpi-progress-bar">
+          <div class="kpi-progress-fill" style="width: {{ kpis.completion_rate }}%"></div>
+        </div>
+      {% endif %}
       <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
     </div>
-    <div class="kpi-card surface-card page-card">
+
+    {# KPI 3 — Streak (purple: momentum) #}
+    <div class="kpi-card kpi-card--purple surface-card page-card">
       <p class="kpi-label">Streak</p>
       <p class="kpi-value">{{ kpis.streak }} days</p>
-      <p class="kpi-foot">Priority-weighted</p>
+      <p class="kpi-foot">
+        {% if kpis.streak_is_record %}
+          <span class="streak-badge streak-badge--record">
+            <i class="ti ti-trophy" aria-hidden="true"></i>
+            Personal best
+          </span>
+        {% elif kpis.streak > 0 %}
+          <span class="streak-badge streak-badge--active">
+            <i class="ti ti-flame" aria-hidden="true"></i>
+            Active streak
+          </span>
+        {% else %}
+          Priority-weighted
+        {% endif %}
+      </p>
     </div>
-    <div class="kpi-card surface-card page-card">
+
+    {# KPI 4 — Top category (neutral: descriptive) #}
+    <div class="kpi-card kpi-card--neutral surface-card page-card">
       <p class="kpi-label">Top category</p>
-      <p class="kpi-value">
+      <p class="kpi-value kpi-value--sm">
         {% if kpis.top_category %}{{ kpis.top_category.name }}{% else %}--{% endif %}
       </p>
       <p class="kpi-foot">Highest intensity</p>
     </div>
+
   </div>
 
   {% for series in category_daily_series %}
@@ -41,7 +69,7 @@
   <div class="chart-card chart-wide surface-card page-card">
     <div class="chart-header">
       <h2>Heatmap</h2>
-      <span class="muted">Intensity-based Streaks</span>
+      <span class="muted">Intensity-based streaks</span>
     </div>
     <div class="heatmap-grid">
       {% for week in heatmap %}
