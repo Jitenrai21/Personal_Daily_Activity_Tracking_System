@@ -1,15 +1,17 @@
 <section class="dashboard-grid">
   <div class="kpi-grid page-stack">
 
-    {# KPI 1 — Total actual (teal: done/output) #}
+    <!-- KPI 1: Total actual (teal) -->
     <div class="kpi-card kpi-card--teal surface-card page-card">
+      <div class="kpi-icon"><i class="ti ti-clock-hour-4" aria-hidden="true"></i></div>
       <p class="kpi-label">Total actual</p>
       <p class="kpi-value">{{ kpis.total_actual }}</p>
       <p class="kpi-foot">Minutes worked</p>
     </div>
 
-    {# KPI 2 — Completion (amber: planned target) #}
+    <!-- KPI 2: Completion (amber) -->
     <div class="kpi-card kpi-card--amber surface-card page-card">
+      <div class="kpi-icon"><i class="ti ti-target" aria-hidden="true"></i></div>
       <p class="kpi-label">Completion</p>
       <p class="kpi-value">
         {% if kpis.completion_rate %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
@@ -22,8 +24,9 @@
       <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
     </div>
 
-    {# KPI 3 — Streak (purple: momentum) #}
+    <!-- KPI 3: Streak (purple) -->
     <div class="kpi-card kpi-card--purple surface-card page-card">
+      <div class="kpi-icon"><i class="ti ti-flame" aria-hidden="true"></i></div>
       <p class="kpi-label">Streak</p>
       <p class="kpi-value">{{ kpis.streak }} days</p>
       <p class="kpi-foot">
@@ -43,8 +46,9 @@
       </p>
     </div>
 
-    {# KPI 4 — Top category (neutral: descriptive) #}
+    <!-- KPI 4: Top category (neutral) -->
     <div class="kpi-card kpi-card--neutral surface-card page-card">
+      <div class="kpi-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
       <p class="kpi-label">Top category</p>
       <p class="kpi-value kpi-value--sm">
         {% if kpis.top_category %}{{ kpis.top_category.name }}{% else %}--{% endif %}

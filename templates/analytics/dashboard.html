@@ -2,16 +2,27 @@
 
 {% block title %}Dashboard{% endblock %}
 
-{% block content %}
-  {# Tabler icons outline webfont #}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+{% block extra_head %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+{% endblock %}
 
+{% block content %}
   <section class="dashboard-shell fade-in page-shell">
     <header class="dashboard-header page-header surface-card">
       <div>
-        <p class="page-eyebrow">Insights</p>
-        <h1 class="page-title">Your momentum snapshot</h1>
-        <p class="page-subtitle">Compare category momentum and maintain streaks.</p>
+        <span class="dashboard-eyebrow-pill">
+          <i class="ti ti-sparkles" aria-hidden="true"></i>
+          Insights
+        </span>
+        <div class="dashboard-title-row">
+          <div class="dashboard-title-icon">
+            <i class="ti ti-chart-dots-3" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1 class="page-title">Your momentum snapshot</h1>
+            <p class="page-subtitle">Compare category momentum and maintain streaks.</p>
+          </div>
+        </div>
       </div>
       <form
         class="dashboard-filters page-actions"
@@ -120,6 +131,53 @@
       gap: 1.5rem;
     }
 
+    /* ─── Header: eyebrow pill + title icon badge ────────────── */
+    /* Uses the same teal as the "Total actual" KPI card so the
+       header reads as the dashboard's primary accent. */
+    .dashboard-eyebrow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #E1F5EE;
+      border: 1px solid #5DCAA5;
+      color: #085041;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 999px;
+      padding: 3px 10px 3px 7px;
+      margin-bottom: 0.6rem;
+    }
+
+    .dashboard-eyebrow-pill .ti {
+      font-size: 0.8rem;
+      color: #1D9E75;
+    }
+
+    .dashboard-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+    }
+
+    .dashboard-title-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #E1F5EE;
+      border: 1px solid #5DCAA5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dashboard-title-icon .ti {
+      font-size: 22px;
+      color: #1D9E75;
+    }
+
     /* ─── KPI cards ──────────────────────────────────────────── */
     /*
      * Base card — shared structure, no color.
@@ -128,12 +186,30 @@
      */
     .kpi-card {
       border-radius: 12px;
-      padding: 1rem 1.25rem;
+      padding: 1.1rem 1.25rem 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
-      border: 1px solid transparent; /* overridden by modifier */
+      gap: 0;                    /* gaps handled per-element below */
+      border: 1px solid transparent;
       transition: box-shadow 0.15s ease;
+    }
+
+    .kpi-card .kpi-label        { margin-bottom: 0.45rem; } /* label → value */
+    .kpi-card .kpi-value        { margin-bottom: 0.3rem;  } /* value → foot/bar */
+    .kpi-card .kpi-progress-bar { margin-bottom: 0.3rem;  } /* bar → foot */
+
+    /* Icon accent square — sits above the label, mirrors the
+       header title icon badge for visual consistency */
+    .kpi-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.6rem;
+      font-size: 16px;
+      border: 1px solid;
     }
 
     /* Teal — actual / done output */
@@ -141,62 +217,72 @@
       background: #E1F5EE;
       border-color: #5DCAA5;
     }
-    .kpi-card--teal .kpi-label { color: #0F6E56; }
-    .kpi-card--teal .kpi-value { color: #085041; }
-    .kpi-card--teal .kpi-foot  { color: #0F6E56; }
+    .kpi-card--teal .kpi-label { color: #1D9E75; }   /* mid-teal  */
+    .kpi-card--teal .kpi-value { color: #085041; }   /* deep teal — highest contrast */
+    .kpi-card--teal .kpi-foot  { color: #3AB389; }   /* lighter teal — recedes */
+    .kpi-card--teal .kpi-icon  { background: #5DCAA5; border-color: #5DCAA5; color: #085041; }
 
     /* Amber — planned targets / completion */
     .kpi-card--amber {
       background: #FAEEDA;
       border-color: #EF9F27;
     }
-    .kpi-card--amber .kpi-label { color: #854F0B; }
-    .kpi-card--amber .kpi-value { color: #633806; }
-    .kpi-card--amber .kpi-foot  { color: #854F0B; }
+    .kpi-card--amber .kpi-label { color: #C47A10; }  /* mid-amber */
+    .kpi-card--amber .kpi-value { color: #4A2800; }  /* near-black amber — richest tone */
+    .kpi-card--amber .kpi-foot  { color: #A06520; }  /* warm amber-brown — recedes */
+    .kpi-card--amber .kpi-icon  { background: #EF9F27; border-color: #EF9F27; color: #4A2800; }
 
     /* Purple — streaks / momentum */
     .kpi-card--purple {
       background: #EEEDFE;
       border-color: #AFA9EC;
     }
-    .kpi-card--purple .kpi-label { color: #534AB7; }
-    .kpi-card--purple .kpi-value { color: #3C3489; }
-    .kpi-card--purple .kpi-foot  { color: #534AB7; }
+    .kpi-card--purple .kpi-label { color: #6B63CC; }  /* mid-purple */
+    .kpi-card--purple .kpi-value { color: #25206B; }  /* deep indigo — max contrast */
+    .kpi-card--purple .kpi-foot  { color: #7A73C8; }  /* lighter purple — recedes */
+    .kpi-card--purple .kpi-icon  { background: #AFA9EC; border-color: #AFA9EC; color: #25206B; }
 
     /* Neutral — descriptive / top category */
     .kpi-card--neutral {
       background: var(--surface-soft, #f6f7f6);
       border-color: rgba(28, 43, 34, 0.15);
     }
-    .kpi-card--neutral .kpi-label { color: #617167; }
-    .kpi-card--neutral .kpi-value { color: #1c2b22; }
-    .kpi-card--neutral .kpi-foot  { color: #617167; }
+    .kpi-card--neutral .kpi-label { color: #4A5E51; }  /* medium forest */
+    .kpi-card--neutral .kpi-value { color: #1c2b22; }  /* darkest — anchors the card */
+    .kpi-card--neutral .kpi-foot  { color: #617167; }  /* muted — recedes */
+    .kpi-card--neutral .kpi-icon  { background: var(--surface-card, #ffffff); border-color: rgba(28, 43, 34, 0.15); color: #4A5E51; }
 
     /* Typography inside KPI cards */
     .kpi-label {
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.7rem;        /* tight: sits clearly above the value */
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       margin: 0;
+      opacity: 0.75;            /* pulls back so the value leads the eye */
     }
 
     .kpi-value {
-      font-size: 2rem;
-      font-weight: 700;
-      line-height: 1;
+      font-size: 1.75rem;       /* down from 2rem — less domineering */
+      font-weight: 600;         /* down from 700 — value reads bold without crushing label/foot */
+      line-height: 1.05;
       margin: 0;
+      letter-spacing: -0.01em; /* tighten large numerals slightly */
     }
 
-    /* Smaller value for long text like a category name */
+    /* Slightly smaller value for category names that may run long */
     .kpi-value--sm {
-      font-size: 1.35rem;
-      line-height: 1.25;
+      font-size: 1.55rem;       /* close to 1.75rem base — feels like a sibling, not an outlier */
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.005em;
     }
 
     .kpi-foot {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 400;         /* lighter than label so hierarchy is label → value → foot */
       margin: 0;
+      opacity: 0.8;
     }
 
     /* Completion progress bar (inside amber KPI card) */

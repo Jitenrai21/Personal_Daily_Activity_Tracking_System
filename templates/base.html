@@ -7,6 +7,7 @@
     <title>{% block title %}Personal Daily Activity Tracking System{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="icon" type="image/png" href="{% static 'core/logo.png' %}">
+    {% block extra_head %}{% endblock %}
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   </head>
   <body>
