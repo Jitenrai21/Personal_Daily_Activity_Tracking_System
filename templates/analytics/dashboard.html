@@ -10,7 +10,6 @@
   <section class="dashboard-shell fade-in page-shell">
     <header class="dashboard-header page-header surface-card">
       <div>
-        <span class="dashboard-eyebrow-pill">
           <i class="ti ti-sparkles" aria-hidden="true"></i>
           Insights
         </span>
@@ -68,6 +67,8 @@
       align-items: flex-start;
       gap: 2rem;
       flex-wrap: wrap;
+      background: linear-gradient(135deg, #f3fdff 0%, #d6f5fb 50%, #8aecff 100%);
+      border-color: #aee9f5;
     }
 
     .dashboard-filters {
@@ -132,15 +133,16 @@
     }
 
     /* ─── Header: eyebrow pill + title icon badge ────────────── */
-    /* Uses the same teal as the "Total actual" KPI card so the
-       header reads as the dashboard's primary accent. */
+    /* Uses the same forest green as the "Total actual" KPI card
+       and "Actual" bar gradient, so the header reads as the
+       dashboard's primary accent. */
     .dashboard-eyebrow-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #E1F5EE;
-      border: 1px solid #5DCAA5;
-      color: #085041;
+      background: #ffffff;
+      border: 1px solid #8fc98f;
+      color: #1a6b1a;
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -152,7 +154,7 @@
 
     .dashboard-eyebrow-pill .ti {
       font-size: 0.8rem;
-      color: #1D9E75;
+      color: #228B22;
     }
 
     .dashboard-title-row {
@@ -165,17 +167,18 @@
       width: 44px;
       height: 44px;
       border-radius: 12px;
-      background: #E1F5EE;
-      border: 1px solid #5DCAA5;
+      background: linear-gradient(135deg, #4ca64c 0%, #228B22 100%);
+      border: 1px solid #1a6b1a;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(34, 139, 34, 0.25);
     }
 
     .dashboard-title-icon .ti {
       font-size: 22px;
-      color: #1D9E75;
+      color: #ffffff;
     }
 
     /* ─── KPI cards ──────────────────────────────────────────── */
@@ -212,45 +215,45 @@
       border: 1px solid;
     }
 
-    /* Teal — actual / done output */
+    /* Forest green — actual / done output (matches "Actual" bar gradient) */
     .kpi-card--teal {
-      background: #E1F5EE;
-      border-color: #5DCAA5;
+      background: linear-gradient(135deg, #e3f2e3 0%, #c8e0c8 100%);
+      border-color: #8fc98f;
     }
-    .kpi-card--teal .kpi-label { color: #1D9E75; }   /* mid-teal  */
-    .kpi-card--teal .kpi-value { color: #085041; }   /* deep teal — highest contrast */
-    .kpi-card--teal .kpi-foot  { color: #3AB389; }   /* lighter teal — recedes */
-    .kpi-card--teal .kpi-icon  { background: #5DCAA5; border-color: #5DCAA5; color: #085041; }
+    .kpi-card--teal .kpi-label { color: #1a6b1a; }   /* mid-green  */
+    .kpi-card--teal .kpi-value { color: #1F6B1F; }   /* deep green — highest contrast */
+    .kpi-card--teal .kpi-foot  { color: #1a6b1a; }   /* mid-green — recedes */
+    .kpi-card--teal .kpi-icon  { background: #4ca64c; border-color: #4ca64c; color: #1F6B1F; }
 
-    /* Amber — planned targets / completion */
+    /* Amber-yellow — planned targets / completion (matches "Planned" bar gradient) */
     .kpi-card--amber {
-      background: #FAEEDA;
-      border-color: #EF9F27;
+      background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+      border-color: #ffd54f;
     }
-    .kpi-card--amber .kpi-label { color: #C47A10; }  /* mid-amber */
-    .kpi-card--amber .kpi-value { color: #4A2800; }  /* near-black amber — richest tone */
-    .kpi-card--amber .kpi-foot  { color: #A06520; }  /* warm amber-brown — recedes */
-    .kpi-card--amber .kpi-icon  { background: #EF9F27; border-color: #EF9F27; color: #4A2800; }
+    .kpi-card--amber .kpi-label { color: #b8860b; }  /* mid-amber */
+    .kpi-card--amber .kpi-value { color: #8a6500; }  /* deep amber — richest tone */
+    .kpi-card--amber .kpi-foot  { color: #b8860b; }  /* mid-amber — recedes */
+    .kpi-card--amber .kpi-icon  { background: #fbc02d; border-color: #fbc02d; color: #8a6500; }
 
-    /* Purple — streaks / momentum */
+    /* Mauve — streaks / momentum */
     .kpi-card--purple {
-      background: #EEEDFE;
-      border-color: #AFA9EC;
+      background: linear-gradient(135deg, #f3eae9 0%, #ecdcdb 100%);
+      border-color: #d2afb1;
     }
-    .kpi-card--purple .kpi-label { color: #6B63CC; }  /* mid-purple */
-    .kpi-card--purple .kpi-value { color: #25206B; }  /* deep indigo — max contrast */
-    .kpi-card--purple .kpi-foot  { color: #7A73C8; }  /* lighter purple — recedes */
-    .kpi-card--purple .kpi-icon  { background: #AFA9EC; border-color: #AFA9EC; color: #25206B; }
+    .kpi-card--purple .kpi-label { color: #8a4d52; }  /* mid-mauve */
+    .kpi-card--purple .kpi-value { color: #4a2226; }  /* deep mauve — max contrast */
+    .kpi-card--purple .kpi-foot  { color: #8a4d52; }  /* mid-mauve — recedes */
+    .kpi-card--purple .kpi-icon  { background: #c79fa1; border-color: #c79fa1; color: #4a2226; }
 
     /* Neutral — descriptive / top category */
     .kpi-card--neutral {
-      background: var(--surface-soft, #f6f7f6);
-      border-color: rgba(28, 43, 34, 0.15);
+      background: linear-gradient(135deg, #f7f4ee 0%, #efe9df 100%);
+      border-color: var(--border-color, #c0b9af);
     }
-    .kpi-card--neutral .kpi-label { color: #4A5E51; }  /* medium forest */
-    .kpi-card--neutral .kpi-value { color: #1c2b22; }  /* darkest — anchors the card */
-    .kpi-card--neutral .kpi-foot  { color: #617167; }  /* muted — recedes */
-    .kpi-card--neutral .kpi-icon  { background: var(--surface-card, #ffffff); border-color: rgba(28, 43, 34, 0.15); color: #4A5E51; }
+    .kpi-card--neutral .kpi-label { color: var(--accent-color, #6b6057); }
+    .kpi-card--neutral .kpi-value { color: var(--dashboard-ink, #1f1d1a); }
+    .kpi-card--neutral .kpi-foot  { color: var(--accent-color, #6b6057); }
+    .kpi-card--neutral .kpi-icon  { background: var(--main-color, #e2dcd2); border-color: var(--border-color, #c0b9af); color: var(--cta-color, #4a4643); }
 
     /* Typography inside KPI cards */
     .kpi-label {
@@ -285,11 +288,11 @@
       opacity: 0.8;
     }
 
-    /* Completion progress bar (inside amber KPI card) */
+    /* Completion progress bar (inside amber-yellow KPI card) */
     .kpi-progress-bar {
       height: 5px;
       border-radius: 3px;
-      background: rgba(133, 79, 11, 0.18);
+      background: rgba(184, 134, 11, 0.18);
       overflow: hidden;
       margin: 2px 0;
     }
@@ -297,7 +300,7 @@
     .kpi-progress-fill {
       height: 100%;
       border-radius: 3px;
-      background: #EF9F27;
+      background: #fbc02d;
       max-width: 100%;
       transition: width 0.4s ease;
     }
@@ -327,15 +330,15 @@
       font-size: 14px;
     }
 
-    /* Personal best → purple */
+    /* Personal best → mauve */
     .streak-badge--record {
-      background: #EEEDFE;
-      border-color: #AFA9EC;
-      color: #3C3489;
+      background: #f3eae9;
+      border-color: #d2afb1;
+      color: #4a2226;
     }
 
     .streak-badge--record .ti {
-      color: #7F77DD;
+      color: #b3697a;
       font-size: 14px;
     }
 
@@ -507,23 +510,23 @@
       background: var(--surface-soft-hover);
     }
 
-    /* ─── Heatmap — teal intensity ramp ──────────────────────── */
+    /* ─── Heatmap — forest green intensity ramp ──────────────── */
     /*
      * level-0  empty day   (neutral surface)
-     * level-1  low         #9FE1CB  teal-100
-     * level-2  moderate    #5DCAA5  teal-200
-     * level-3  high        #1D9E75  teal-400
-     * level-4  peak        #0F6E56  teal-600
+     * level-1  low         #c8e0c8  green-100
+     * level-2  moderate    #8fc98f  green-200
+     * level-3  high        #4ca64c  green-400
+     * level-4  peak        #228B22  green-600
      */
     .heatmap-cell.level-0 {
-      background: var(--surface-soft, #f6f7f6);
-      border: 1px solid rgba(28, 43, 34, 0.08);
+      background: var(--surface-soft, #f7f4ee);
+      border: 1px solid var(--border-color, #c0b9af);
     }
 
-    .heatmap-cell.level-1 { background: #9FE1CB; border: 1px solid #5DCAA5; }
-    .heatmap-cell.level-2 { background: #5DCAA5; border: 1px solid #1D9E75; }
-    .heatmap-cell.level-3 { background: #1D9E75; border: 1px solid #0F6E56; }
-    .heatmap-cell.level-4 { background: #0F6E56; border: 1px solid #085041; }
+    .heatmap-cell.level-1 { background: #c8e0c8; border: 1px solid #8fc98f; }
+    .heatmap-cell.level-2 { background: #8fc98f; border: 1px solid #4ca64c; }
+    .heatmap-cell.level-3 { background: #4ca64c; border: 1px solid #228B22; }
+    .heatmap-cell.level-4 { background: #228B22; border: 1px solid #1a6b1a; }
 
     /* ─── Empty state ────────────────────────────────────────── */
     .empty-state {
@@ -667,9 +670,17 @@
       if (!categorySeries) return;
 
       const chartPalette = {
-        actual:  "#1D9E75", /* teal-400 — matches KPI card tint */
-        planned: "#EF9F27", /* amber-400 — matches KPI card tint */
+        actual:  { top: "#3CB371", bottom: "#1F6B1F" }, /* forest green gradient */
+        planned: { top: "#FFD54F", bottom: "#F0A500" }, /* amber-yellow gradient */
       };
+
+      function makeBarGradient(ctx, chartArea, colors) {
+        if (!chartArea) return colors.bottom;
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, colors.top);
+        gradient.addColorStop(1, colors.bottom);
+        return gradient;
+      }
 
       categorySeries.forEach((series) => {
         const formattedDailyLabels = series.labels.map(formatDailyLabel);
@@ -681,7 +692,7 @@
               {
                 label: "Actual",
                 data: series.actual,
-                backgroundColor: chartPalette.actual,
+                backgroundColor: (context) => makeBarGradient(context.chart.ctx, context.chart.chartArea, chartPalette.actual),
                 borderRadius: 4,
                 categoryPercentage: 0.72,
                 barPercentage: 0.88,
@@ -690,7 +701,7 @@
               {
                 label: "Planned",
                 data: series.planned,
-                backgroundColor: chartPalette.planned,
+                backgroundColor: (context) => makeBarGradient(context.chart.ctx, context.chart.chartArea, chartPalette.planned),
                 borderRadius: 4,
                 categoryPercentage: 0.72,
                 barPercentage: 0.88,
@@ -715,6 +726,16 @@
                   color: "#617167",
                   usePointStyle: true,
                   pointStyle: "circle",
+                  generateLabels(chart) {
+                    const legendColors = [chartPalette.actual.bottom, chartPalette.planned.bottom];
+                    return chart.data.datasets.map((dataset, i) => ({
+                      text: dataset.label,
+                      fillStyle: legendColors[i],
+                      strokeStyle: legendColors[i],
+                      pointStyle: "circle",
+                      datasetIndex: i,
+                    }));
+                  },
                 },
               },
               tooltip: {
