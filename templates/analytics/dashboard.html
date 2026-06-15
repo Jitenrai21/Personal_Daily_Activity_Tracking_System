@@ -61,20 +61,24 @@
 
   <style>
     /* ─── Dashboard shell layout ─────────────────────────────── */
+    /* Gradient starts at --bg-color (#f0ede6) so the shell edge
+       bleeds seamlessly into the page, then deepens toward
+       --main-color (#e2dcd2) — no visible boundary, just warmth. */
     .dashboard-shell.page-shell {
       border: none;
       outline: none;
       box-shadow: none;
-      background: linear-gradient(160deg, #f7f4ee 0%, #f0ede6 60%, #ece6dc 100%);
+      background: linear-gradient(160deg, #f0ede6 0%, #e8e2d8 45%, #e2dcd2 100%);
       border-radius: 16px;
     }
+
     .dashboard-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 2rem;
       flex-wrap: wrap;
-      background: linear-gradient(120deg, #f5f1ea 0%, #e2dcd2 50%, #e2dcd2 100%);
+      background: linear-gradient(120deg, #f5f1ea 0%, #e2dcd2 50%, #d9e6d4 100%);
       border-color: #cdbfae;
     }
 
@@ -149,7 +153,7 @@
       gap: 6px;
       background: #ffffff;
       border: 1px solid #8fc98f;
-      color: #F1F1DF;
+      color: #1a6b1a;
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -161,7 +165,7 @@
 
     .dashboard-eyebrow-pill .ti {
       font-size: 0.8rem;
-      color: #F1F1DF;
+      color: #228B22;
     }
 
     .dashboard-title-row {
@@ -174,18 +178,18 @@
       width: 44px;
       height: 44px;
       border-radius: 12px;
-      background: linear-gradient(135deg, #e2dcd2 0%, #F1F1DF 100%);
-      border: 1px solid #c0b9af;
+      background: linear-gradient(135deg, #4ca64c 0%, #228B22 100%);
+      border: 1px solid #1a6b1a;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px #c0b9af;
+      box-shadow: 0 2px 6px rgba(34, 139, 34, 0.25);
     }
 
     .dashboard-title-icon .ti {
       font-size: 22px;
-      color: #000000;
+      color: #ffffff;
     }
 
     /* ─── KPI cards ──────────────────────────────────────────── */
@@ -247,10 +251,10 @@
       background: linear-gradient(135deg, #f3eae9 0%, #ecdcdb 100%);
       border-color: #d2afb1;
     }
-    .kpi-card--purple .kpi-label { color: #FF9797; }  /* mid-mauve */
-    .kpi-card--purple .kpi-value { color: #F43A40; }  /* deep mauve — max contrast */
-    .kpi-card--purple .kpi-foot  { color: #FF9797; }  /* mid-mauve — recedes */
-    .kpi-card--purple .kpi-icon  { background: #FFD1D3; border-color: #FFD1D3; color: #4a2226; }
+    .kpi-card--purple .kpi-label { color: #8a4d52; }  /* mid-mauve */
+    .kpi-card--purple .kpi-value { color: #4a2226; }  /* deep mauve — max contrast */
+    .kpi-card--purple .kpi-foot  { color: #8a4d52; }  /* mid-mauve — recedes */
+    .kpi-card--purple .kpi-icon  { background: #c79fa1; border-color: #c79fa1; color: #4a2226; }
 
     /* Neutral — descriptive / top category */
     .kpi-card--neutral {
