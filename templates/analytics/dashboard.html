@@ -61,14 +61,15 @@
 
   <style>
     /* ─── Dashboard shell layout ─────────────────────────────── */
-    /* Gradient starts at --bg-color (#f0ede6) so the shell edge
-       bleeds seamlessly into the page, then deepens toward
-       --main-color (#e2dcd2) — no visible boundary, just warmth. */
-    .dashboard-shell.page-shell {
-      border: none;
-      outline: none;
-      box-shadow: none;
-      background: linear-gradient(160deg, #f0ede6 0%, #e8e2d8 45%, #e2dcd2 100%);
+    /* Double specificity beats base.css's .dashboard-shell rule.
+       Gradient starts exactly at --bg-color (#f0ede6) so the
+       shell edge dissolves into the page — no seam, no border. */
+    .dashboard-shell.page-shell,
+    .dashboard-shell {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: linear-gradient(160deg, #f0ede6 0%, #e8e2d8 45%, #e2dcd2 100%) !important;
       border-radius: 16px;
     }
 
@@ -78,7 +79,7 @@
       align-items: flex-start;
       gap: 2rem;
       flex-wrap: wrap;
-      background: linear-gradient(120deg, #f5f1ea 0%, #e2dcd2 50%, #d9e6d4 100%);
+      background: linear-gradient(120deg, #f5f1ea 0%, #e2dcd2 50%, #e2dcd2 100%);
       border-color: #cdbfae;
     }
 
@@ -153,7 +154,7 @@
       gap: 6px;
       background: #ffffff;
       border: 1px solid #8fc98f;
-      color: #1a6b1a;
+      color: #F1F1DF;
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -165,7 +166,7 @@
 
     .dashboard-eyebrow-pill .ti {
       font-size: 0.8rem;
-      color: #228B22;
+      color: #F1F1DF;
     }
 
     .dashboard-title-row {
@@ -178,18 +179,18 @@
       width: 44px;
       height: 44px;
       border-radius: 12px;
-      background: linear-gradient(135deg, #4ca64c 0%, #228B22 100%);
-      border: 1px solid #1a6b1a;
+      background: linear-gradient(135deg, #e2dcd2 0%, #F1F1DF 100%);
+      border: 1px solid #c0b9af;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(34, 139, 34, 0.25);
+      box-shadow: 0 2px 6px #c0b9af;
     }
 
     .dashboard-title-icon .ti {
       font-size: 22px;
-      color: #ffffff;
+      color: #000000;
     }
 
     /* ─── KPI cards ──────────────────────────────────────────── */
@@ -896,3 +897,4 @@
     });
   </script>
 {% endblock %}
+
