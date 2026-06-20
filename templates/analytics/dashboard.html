@@ -79,8 +79,8 @@
       align-items: flex-start;
       gap: 2rem;
       flex-wrap: wrap;
-      background: linear-gradient(120deg, #f5f1ea 0%, #e2dcd2 50%, #e2dcd2 100%);
-      border-color: #cdbfae;
+      background: linear-gradient(120deg, #e4d9c5 0%, #e2dcd2 50%, #e2dcd2 100%);
+      border-color: #c6af92;
     }
 
     .dashboard-filters {
@@ -228,44 +228,50 @@
     }
 
     /* Forest green — actual / done output (matches "Actual" bar gradient) */
+    /* Muted, shaded toward the app's warm-neutral surface, rather
+       than a bright mint tint. */
     .kpi-card--teal {
-      background: linear-gradient(135deg, #e3f2e3 0%, #a6dea6 100%);
-      border-color: #8fc98f;
+      background: linear-gradient(135deg, #dde8d6 0%, #c0d4b4 100%);
+      border-color: #9bb98c;
     }
-    .kpi-card--teal .kpi-label { color: #1a6b1a; }   /* mid-green  */
-    .kpi-card--teal .kpi-value { color: #176c17; }   /* deep green — highest contrast */
-    .kpi-card--teal .kpi-foot  { color: #1a6b1a; }   /* mid-green — recedes */
-    .kpi-card--teal .kpi-icon  { background: #64bf64; border-color: #4ca64c; color: #1F6B1F; }
+    .kpi-card--teal .kpi-label { color: #3f5c34; }   /* muted mid-green  */
+    .kpi-card--teal .kpi-value { color: #2b4424; }   /* deep, shaded green */
+    .kpi-card--teal .kpi-foot  { color: #3f5c34; }   /* muted mid-green — recedes */
+    .kpi-card--teal .kpi-icon  { background: #6e9460; border-color: #5c7e4f; color: #f7f4ee; }
 
     /* Amber-yellow — planned targets / completion (matches "Planned" bar gradient) */
+    /* Muted ochre tones instead of a bright yellow tint. */
     .kpi-card--amber {
-      background: linear-gradient(135deg, #fff8e1 0%, #ffe28a 100%);
-      border-color: #e6bb2c;
+      background: linear-gradient(135deg, #ebe0c4 0%, #ddc486 100%);
+      border-color: #c4a23e;
     }
-    .kpi-card--amber .kpi-label { color: #b8860b; }  /* mid-amber */
-    .kpi-card--amber .kpi-value { color: #8a6500; }  /* deep amber — richest tone */
-    .kpi-card--amber .kpi-foot  { color: #b8860b; }  /* mid-amber — recedes */
-    .kpi-card--amber .kpi-icon  { background: #f3c552; border-color: #fbc02d; color: #8a6500; }
+    .kpi-card--amber .kpi-label { color: #7a5a0a; }  /* muted mid-amber */
+    .kpi-card--amber .kpi-value { color: #5c4205; }  /* deep, shaded amber */
+    .kpi-card--amber .kpi-foot  { color: #7a5a0a; }  /* muted mid-amber — recedes */
+    .kpi-card--amber .kpi-icon  { background: #b6912e; border-color: #9a7a26; color: #f7f4ee; }
 
     /* Mauve — streaks / momentum */
+    /* Muted, shaded mauve instead of a bright pink tint. */
     .kpi-card--purple {
-      background: linear-gradient(135deg, #f3eae9 0%, #FFBBBB 100%);
-      border-color: #eeb9bb;
+      background: linear-gradient(135deg, #e3d2d1 0%, #ceaba9 100%);
+      border-color: #ab7d7c;
     }
-    .kpi-card--purple .kpi-label { color: #8a4d52; }  /* mid-mauve */
-    .kpi-card--purple .kpi-value { color: #8b242e; }  /* deep mauve — max contrast */
-    .kpi-card--purple .kpi-foot  { color: #8a4d52; }  /* mid-mauve — recedes */
-    .kpi-card--purple .kpi-icon  { background: #FFBBBB; border-color: #c79fa1; color: #a50d1c; }
+    .kpi-card--purple .kpi-label { color: #6e3a3e; }  /* muted mid-mauve */
+    .kpi-card--purple .kpi-value { color: #4a2226; }  /* deep, shaded mauve */
+    .kpi-card--purple .kpi-foot  { color: #6e3a3e; }  /* muted mid-mauve — recedes */
+    .kpi-card--purple .kpi-icon  { background: #9c6669; border-color: #835153; color: #f7f4ee; }
 
     /* Neutral — descriptive / top category */
+    /* Muted bluish-lavender, shaded to match the same dark-leaning
+       saturation as the green/amber/mauve cards. */
     .kpi-card--neutral {
-      background: linear-gradient(135deg, #f8edd6 0%, #ddc9a5 100%);
-      border-color: var(--border-color, #c0b9af);
+      background: linear-gradient(135deg, #d8d6e6 0%, #b7b3cf 100%);
+      border-color: #8d87ad;
     }
-    .kpi-card--neutral .kpi-label { color: #6b6057; }
-    .kpi-card--neutral .kpi-value { color: #615749; }
-    .kpi-card--neutral .kpi-foot  { color: #6b6057; }
-    .kpi-card--neutral .kpi-icon  { background: ddc9a5; border-color: var(--border-color, #c0b9af); color: var(--cta-color, #4a4643); }
+    .kpi-card--neutral .kpi-label { color: #423d63; }   /* muted mid-lavender */
+    .kpi-card--neutral .kpi-value { color: #2c2847; }   /* deep, shaded lavender */
+    .kpi-card--neutral .kpi-foot  { color: #423d63; }   /* muted mid-lavender — recedes */
+    .kpi-card--neutral .kpi-icon  { background: #6d6593; border-color: #5a527c; color: #f7f4ee; }
 
     /* Typography inside KPI cards */
     .kpi-label {
@@ -312,7 +318,7 @@
     .kpi-progress-fill {
       height: 100%;
       border-radius: 3px;
-      background: #fbc02d;
+      background: #be8e15;
       max-width: 100%;
       transition: width 0.4s ease;
     }
@@ -332,13 +338,13 @@
 
     /* Active streak → amber */
     .streak-badge--active {
-      background: #FFBBBB;
-      border-color: #FA0001;
-      color: #633806;
+      background: #ebe0c4;
+      border-color: #c4a23e;
+      color: #9c6669;
     }
-
+ 
     .streak-badge--active .ti {
-      color: #FA0001;
+      color: #9c6669;
       font-size: 14px;
     }
 
