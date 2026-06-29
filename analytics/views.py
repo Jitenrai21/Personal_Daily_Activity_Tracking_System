@@ -423,16 +423,10 @@ def build_heatmap(dates, intensity):
     return weeks
 
 
-def build_kpis(total_actual, total_planned, intensity_values, category_totals):
+def build_kpis(total_actual, total_planned, streak, category_totals):
     completion_rate = None
     if total_planned > 0:
         completion_rate = round(total_actual / total_planned * 100)
-
-    streak = 0
-    for value in reversed(intensity_values):
-        if value <= 0:
-            break
-        streak += 1
 
     top_category = None
     if category_totals:
@@ -446,6 +440,21 @@ def build_kpis(total_actual, total_planned, intensity_values, category_totals):
         "top_category": top_category,
     }
 
+def _compute_global_streak(user, local_today):
+    """
+    Counts consecutive days with positive intensity ending on or before
+    local_today, walking backwards from today through all history.
+    Ignores the dashboard date range filter entirely.
+    """
+    streak = 0
+    current = local_today
+    while True:
+        intensity = compute_daily_intensity(user, current)
+        if intensity <= 0:
+            break
+        streak += 1
+        current -= dt.timedelta(days=1)
+    return streak
 
 def build_context(request):
     user = request.user
@@ -500,10 +509,14 @@ def build_context(request):
     )
 
     heatmap = build_heatmap(series["dates"], intensity_values)
+
+    # Compute streak from full history up to today — never filtered
+    streak = _compute_global_streak(user, local_today)
+
     kpis = build_kpis(
         total_actual=sum(series["actual"]),
         total_planned=sum(series["planned"]),
-        intensity_values=intensity_values,
+        streak=streak,
         category_totals=category_totals,
     )
 
