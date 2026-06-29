@@ -508,7 +508,11 @@ def build_context(request):
         series["dates"], series["actual"], series["planned"]
     )
 
-    heatmap = build_heatmap(series["dates"], intensity_values)
+    heatmap_end = local_today
+    heatmap_start = local_today - dt.timedelta(days=34)
+    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(35)]
+    heatmap_intensity = [compute_daily_intensity(user, d) for d in heatmap_dates]
+    heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
 
     # Compute streak from full history up to today — never filtered
     streak = _compute_global_streak(user, local_today)
