@@ -87,7 +87,9 @@ def pause_timer_session(user):
             return session
 
         now = timezone.now()
-        session.metadata = _timer_metadata(session.metadata, state=TIMER_PAUSED, paused_at=now)
+        session.metadata = _timer_metadata(
+            session.metadata, state=TIMER_PAUSED, paused_at=now
+        )
         session.full_clean()
         session.save(update_fields=["metadata", "updated_at"])
 

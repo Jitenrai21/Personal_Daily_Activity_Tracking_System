@@ -26,7 +26,9 @@ class ActivityForm(forms.ModelForm):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if user is not None:
-            self.fields["category"].queryset = ActivityCategory.objects.filter(user=user)
+            self.fields["category"].queryset = ActivityCategory.objects.filter(
+                user=user
+            )
 
 
 class RecurrenceRuleForm(forms.ModelForm):

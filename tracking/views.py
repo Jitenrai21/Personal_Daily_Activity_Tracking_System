@@ -32,7 +32,9 @@ def get_running_session(user):
 def resolve_selected_date(request, profile):
     tz = ZoneInfo(profile.timezone)
     today_local = timezone.now().astimezone(tz).date()
-    raw_date = (request.POST.get("selected_date") or request.GET.get("selected_date") or "").strip()
+    raw_date = (
+        request.POST.get("selected_date") or request.GET.get("selected_date") or ""
+    ).strip()
 
     if not raw_date:
         return today_local, today_local, False
@@ -54,9 +56,7 @@ def session_list_view(request):
     activity_choices = Activity.objects.filter(user=request.user).select_related(
         "category"
     )
-    activities = Activity.objects.filter(user=request.user).order_by(
-        "title"
-    )
+    activities = Activity.objects.filter(user=request.user).order_by("title")
     sessions = Session.objects.filter(user=request.user).select_related(
         "activity", "category"
     )
@@ -101,9 +101,7 @@ def session_start_view(request):
     activity_id = request.POST.get("activity_id")
     activity = None
     if activity_id:
-        activity = Activity.objects.filter(
-            pk=activity_id, user=request.user
-        ).first()
+        activity = Activity.objects.filter(pk=activity_id, user=request.user).first()
     notes = (request.POST.get("notes") or "").strip()
     planned_block_id = request.POST.get("planned_block_id")
     metadata = None
@@ -131,9 +129,9 @@ def session_start_view(request):
                 "running_session": running_session,
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
-                "activities": Activity.objects.filter(
-                    user=request.user
-                ).order_by("title"),
+                "activities": Activity.objects.filter(user=request.user).order_by(
+                    "title"
+                ),
             },
         )
     return redirect("session_list")
@@ -156,15 +154,15 @@ def session_stop_view(request):
     running_session.end = now
     running_session.end_time = local_now.time().replace(microsecond=0)
     running_session.full_clean()
-    running_session.save(update_fields=["end", "end_time", "duration_minutes", "updated_at"])
+    running_session.save(
+        update_fields=["end", "end_time", "duration_minutes", "updated_at"]
+    )
 
     running_session = get_running_session(request.user)
     activity = None
     activity_id = request.POST.get("activity_id")
     if activity_id:
-        activity = Activity.objects.filter(
-            pk=activity_id, user=request.user
-        ).first()
+        activity = Activity.objects.filter(pk=activity_id, user=request.user).first()
     if request.headers.get("HX-Request"):
         return render(
             request,
@@ -173,9 +171,9 @@ def session_stop_view(request):
                 "running_session": running_session,
                 "target_id": request.POST.get("target_id", "session-toggle"),
                 "activity": activity,
-                "activities": Activity.objects.filter(
-                    user=request.user
-                ).order_by("title"),
+                "activities": Activity.objects.filter(user=request.user).order_by(
+                    "title"
+                ),
             },
         )
     return redirect("session_list")
@@ -213,9 +211,7 @@ def session_log_view(request):
     sessions = sessions.filter(local_date=selected_date)
     sessions = sessions.order_by("-local_date", "-start")
     running_session = get_running_session(request.user)
-    activities = Activity.objects.filter(user=request.user).order_by(
-        "title"
-    )
+    activities = Activity.objects.filter(user=request.user).order_by("title")
     return render(
         request,
         "tracking/session_list.html",
@@ -298,7 +294,9 @@ def session_delete_view(request, pk):
 def session_export_csv_view(request):
     profile = get_user_profile(request.user)
     local_tz = ZoneInfo(profile.timezone)
-    sessions = Session.objects.filter(user=request.user).select_related("activity", "category")
+    sessions = Session.objects.filter(user=request.user).select_related(
+        "activity", "category"
+    )
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = "attachment; filename=sessions.csv"
@@ -353,7 +351,9 @@ def session_export_csv_view(request):
 def session_export_json_view(request):
     profile = get_user_profile(request.user)
     local_tz = ZoneInfo(profile.timezone)
-    sessions = Session.objects.filter(user=request.user).select_related("activity", "category")
+    sessions = Session.objects.filter(user=request.user).select_related(
+        "activity", "category"
+    )
 
     payload = []
     for session in sessions:

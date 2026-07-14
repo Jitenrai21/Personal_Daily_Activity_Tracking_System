@@ -8,7 +8,9 @@ def ensure_paused_seconds_column(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         columns = {
             column.name
-            for column in schema_editor.connection.introspection.get_table_description(cursor, table_name)
+            for column in schema_editor.connection.introspection.get_table_description(
+                cursor, table_name
+            )
         }
 
     if "paused_seconds" not in columns:
@@ -28,7 +30,11 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.SeparateDatabaseAndState(
-            database_operations=[migrations.RunPython(ensure_paused_seconds_column, migrations.RunPython.noop)],
+            database_operations=[
+                migrations.RunPython(
+                    ensure_paused_seconds_column, migrations.RunPython.noop
+                )
+            ],
             state_operations=[
                 migrations.AddField(
                     model_name="session",

@@ -14,9 +14,9 @@ def backfill_schedule_blocks(apps, schema_editor):
             block.category_id = activity.category_id if activity else None
 
         if block.start_time and block.end_time:
-            delta = dt.datetime.combine(block.date, block.end_time) - dt.datetime.combine(
-                block.date, block.start_time
-            )
+            delta = dt.datetime.combine(
+                block.date, block.end_time
+            ) - dt.datetime.combine(block.date, block.start_time)
             block.duration_minutes = int(delta.total_seconds() // 60)
 
         block.save(update_fields=["category", "duration_minutes"])

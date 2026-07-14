@@ -11,9 +11,7 @@ from tracking.models import Session
 @login_required
 def category_list_view(request):
     categories = ActivityCategory.objects.filter(user=request.user).order_by("name")
-    return render(
-        request, "activities/category_list.html", {"categories": categories}
-    )
+    return render(request, "activities/category_list.html", {"categories": categories})
 
 
 @login_required
@@ -61,16 +59,16 @@ def activity_list_view(request):
         .select_related("category")
         .order_by("-updated_at")
     )
-    return render(
-        request, "activities/activity_list.html", {"activities": activities}
-    )
+    return render(request, "activities/activity_list.html", {"activities": activities})
 
 
 @login_required
 def activity_detail_view(request, pk):
     activity = get_object_or_404(Activity, pk=pk, user=request.user)
     running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
+        Session.objects.filter(
+            user=request.user, end__isnull=True, source=Session.SOURCE_TIMER
+        )
         .select_related("activity")
         .first()
     )

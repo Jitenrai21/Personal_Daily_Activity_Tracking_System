@@ -27,13 +27,15 @@ def backfill_session_fields(apps, schema_editor):
             duration = session.end - session.start
             session.duration_minutes = int(duration.total_seconds() // 60)
 
-        session.save(update_fields=[
-            "category",
-            "local_date",
-            "start_time",
-            "end_time",
-            "duration_minutes",
-        ])
+        session.save(
+            update_fields=[
+                "category",
+                "local_date",
+                "start_time",
+                "end_time",
+                "duration_minutes",
+            ]
+        )
 
 
 class Migration(migrations.Migration):
@@ -86,6 +88,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="session",
-            index=models.Index(fields=["user", "local_date"], name="tracking_se_user_id_local_date_idx"),
+            index=models.Index(
+                fields=["user", "local_date"], name="tracking_se_user_id_local_date_idx"
+            ),
         ),
     ]

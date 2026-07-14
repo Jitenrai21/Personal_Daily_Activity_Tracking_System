@@ -64,10 +64,14 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="session",
-            index=models.Index(fields=["user", "start"], name="tracking_se_user_id_e5cd7c_idx"),
+            index=models.Index(
+                fields=["user", "start"], name="tracking_se_user_id_e5cd7c_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="session",
-            index=models.Index(fields=["created_at"], name="tracking_se_created_87f7e2_idx"),
+            index=models.Index(
+                fields=["created_at"], name="tracking_se_created_87f7e2_idx"
+            ),
         ),
     ]

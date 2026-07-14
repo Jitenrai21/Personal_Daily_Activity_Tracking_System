@@ -18,7 +18,9 @@ class Session(models.Model):
     ]
 
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
-    activity = models.ForeignKey(Activity, on_delete=models.SET_NULL, null=True, blank=True)
+    activity = models.ForeignKey(
+        Activity, on_delete=models.SET_NULL, null=True, blank=True
+    )
     category = models.ForeignKey(
         ActivityCategory, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -98,13 +100,17 @@ class Session(models.Model):
             return 0
 
         effective_end = self.end or self.paused_at or timezone.now()
-        elapsed = (effective_end - self.start).total_seconds() - (self.paused_seconds or 0)
+        elapsed = (effective_end - self.start).total_seconds() - (
+            self.paused_seconds or 0
+        )
         return max(0, int(elapsed))
 
     def save(self, *args, **kwargs):
         if self.duration_minutes is None:
             if self.start and self.end:
-                seconds = (self.end - self.start).total_seconds() - (self.paused_seconds or 0)
+                seconds = (self.end - self.start).total_seconds() - (
+                    self.paused_seconds or 0
+                )
                 self.duration_minutes = max(0, int(seconds // 60))
             elif self.local_date and self.start_time and self.end_time:
                 start_dt = dt.datetime.combine(self.local_date, self.start_time)
@@ -116,7 +122,9 @@ class Session(models.Model):
 
     @property
     def is_running(self) -> bool:
-        return self.end is None and self.source == self.SOURCE_TIMER and not self.is_paused
+        return (
+            self.end is None and self.source == self.SOURCE_TIMER and not self.is_paused
+        )
 
     def __str__(self) -> str:
         label = self.activity.title if self.activity else "Unassigned"

@@ -46,6 +46,7 @@ def test_planner_category_crud_and_scope(client):
     assert delete.status_code == 302
     assert not ActivityCategory.objects.filter(pk=own.pk).exists()
 
+
 @pytest.mark.django_db
 def test_planner_activity_crud_and_scope(client):
     user = User.objects.create_user(username="u1", password="Pass12345")

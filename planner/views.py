@@ -10,7 +10,12 @@ from activities.models import Activity, ActivityCategory
 from planner.forms import PlannerActivityForm, PlannerCategoryForm, ScheduleBlockForm
 from planner.models import ScheduleBlock
 from tracking.models import Session
-from tracking.services import pause_timer_session, resume_timer_session, start_timer_session, stop_timer_session
+from tracking.services import (
+    pause_timer_session,
+    resume_timer_session,
+    start_timer_session,
+    stop_timer_session,
+)
 
 
 def _parse_date(value):
@@ -25,7 +30,9 @@ def _parse_date(value):
             return None
 
 
-def _planner_context(user, date, schedule_form=None, category_form=None, activity_form=None):
+def _planner_context(
+    user, date, schedule_form=None, category_form=None, activity_form=None
+):
     blocks = ScheduleBlock.objects.filter(user=user, date=date).select_related(
         "activity", "category"
     )
@@ -35,7 +42,9 @@ def _planner_context(user, date, schedule_form=None, category_form=None, activit
         .first()
     )
     categories = ActivityCategory.objects.filter(user=user).order_by("name")
-    activities = Activity.objects.filter(user=user).select_related("category").order_by("title")
+    activities = (
+        Activity.objects.filter(user=user).select_related("category").order_by("title")
+    )
     activity_choices = activities
     return {
         "date": date,
@@ -52,7 +61,9 @@ def _planner_context(user, date, schedule_form=None, category_form=None, activit
 
 def _planner_timer_row_response(request, block):
     running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
+        Session.objects.filter(
+            user=request.user, end__isnull=True, source=Session.SOURCE_TIMER
+        )
         .select_related("activity")
         .first()
     )
@@ -88,7 +99,9 @@ def daily_plan_view(request):
     date_str = request.GET.get("date")
     date = _parse_date(date_str) or dt.date.today()
 
-    return render(request, "planner/daily_plan.html", _planner_context(request.user, date))
+    return render(
+        request, "planner/daily_plan.html", _planner_context(request.user, date)
+    )
 
 
 @login_required
@@ -102,7 +115,9 @@ def schedule_block_create_view(request):
         block.full_clean()
         block.save()
         running_session = (
-            Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
+            Session.objects.filter(
+                user=request.user, end__isnull=True, source=Session.SOURCE_TIMER
+            )
             .select_related("activity")
             .first()
         )
@@ -141,7 +156,9 @@ def schedule_block_start_timer_view(request, pk):
     metadata = {
         "planned_block_id": block.pk,
         "planned_date": block.date.isoformat(),
-        "planned_start_time": block.start_time.isoformat() if block.start_time else None,
+        "planned_start_time": block.start_time.isoformat()
+        if block.start_time
+        else None,
         "planned_end_time": block.end_time.isoformat() if block.end_time else None,
         "planned_duration_minutes": block.duration_minutes,
     }

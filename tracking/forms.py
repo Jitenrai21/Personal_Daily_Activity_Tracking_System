@@ -33,14 +33,18 @@ class SessionLogForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user is not None:
             self.instance.user = self.user
-            self.fields["category"].queryset = ActivityCategory.objects.filter(user=self.user)
+            self.fields["category"].queryset = ActivityCategory.objects.filter(
+                user=self.user
+            )
             activity_qs = Activity.objects.filter(user=self.user)
             if self.is_bound:
                 raw_category = self.data.get(self.add_prefix("category"))
                 if raw_category:
                     activity_qs = activity_qs.filter(category_id=raw_category)
             elif self.initial.get("category"):
-                activity_qs = activity_qs.filter(category_id=self.initial.get("category"))
+                activity_qs = activity_qs.filter(
+                    category_id=self.initial.get("category")
+                )
             self.fields["activity"].queryset = activity_qs
             if not self.is_bound and not self.initial.get("local_date"):
                 tz_name = (
@@ -51,7 +55,11 @@ class SessionLogForm(forms.ModelForm):
                 )
                 tz = ZoneInfo(tz_name)
                 self.initial["local_date"] = dt.datetime.now(tz).date()
-        if self.instance and self.instance.activity_id and not self.instance.category_id:
+        if (
+            self.instance
+            and self.instance.activity_id
+            and not self.instance.category_id
+        ):
             self.initial.setdefault("category", self.instance.activity.category_id)
 
     def clean(self):

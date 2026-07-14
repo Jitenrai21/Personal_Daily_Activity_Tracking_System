@@ -244,7 +244,9 @@ def test_planner_stop_timer_restores_start_ui(client):
     )
 
     client.login(username="u1", password="Pass12345")
-    client.post(reverse("schedule_start_timer", args=[block.pk]), HTTP_HX_REQUEST="true")
+    client.post(
+        reverse("schedule_start_timer", args=[block.pk]), HTTP_HX_REQUEST="true"
+    )
 
     response = client.post(
         reverse("schedule_stop_timer", args=[block.pk]),

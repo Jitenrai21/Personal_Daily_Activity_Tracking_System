@@ -39,7 +39,11 @@ def _session_minutes_by_category(user, local_date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        seconds = max(
+            0,
+            (overlap_end - overlap_start).total_seconds()
+            - (session.paused_seconds or 0),
+        )
         minutes = int(seconds // 60)
         if minutes <= 0:
             continue
@@ -49,7 +53,9 @@ def _session_minutes_by_category(user, local_date):
             category_name = session.category.name
         elif session.activity and session.activity.category:
             category_name = session.activity.category.name
-        category_minutes[category_name] = category_minutes.get(category_name, 0) + minutes
+        category_minutes[category_name] = (
+            category_minutes.get(category_name, 0) + minutes
+        )
         total_minutes += minutes
 
         local_start = overlap_start.astimezone(tz)
@@ -70,7 +76,9 @@ def _session_minutes_by_category(user, local_date):
             category_name = session.category.name
         elif session.activity and session.activity.category:
             category_name = session.activity.category.name
-        category_minutes[category_name] = category_minutes.get(category_name, 0) + minutes
+        category_minutes[category_name] = (
+            category_minutes.get(category_name, 0) + minutes
+        )
         total_minutes += minutes
 
     return (
@@ -93,8 +101,8 @@ def _planned_minutes(user, local_date):
 
 def compute_daily_score(user, local_date):
     aggregate = update_daily(user, local_date)
-    category_minutes, total_minutes, late_minutes, sessions_count = _session_minutes_by_category(
-        user, local_date
+    category_minutes, total_minutes, late_minutes, sessions_count = (
+        _session_minutes_by_category(user, local_date)
     )
     planned_minutes = aggregate.planned_minutes
 
@@ -122,7 +130,9 @@ def compute_daily_score(user, local_date):
     overload_penalty = 0.0
     overload_threshold = max(daily_focus * 2, 180)
     if total_minutes > overload_threshold:
-        overload_penalty = ((total_minutes - overload_threshold) / overload_threshold) * 40
+        overload_penalty = (
+            (total_minutes - overload_threshold) / overload_threshold
+        ) * 40
     recovery = clamp(100 - late_penalty - overload_penalty)
 
     composite = round((0.45 * discipline) + (0.30 * balance) + (0.25 * recovery), 2)

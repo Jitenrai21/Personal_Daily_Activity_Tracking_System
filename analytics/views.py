@@ -131,7 +131,11 @@ def build_daily_series(user, start_date, end_date, category=None, activity=None)
             for session in sessions:
                 overlap_start = max(session.start, start_utc)
                 overlap_end = min(session.end, end_utc)
-                seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+                seconds = max(
+                    0,
+                    (overlap_end - overlap_start).total_seconds()
+                    - (session.paused_seconds or 0),
+                )
                 total_minutes += int(seconds // 60)
             totals[date] = total_minutes
             sessions_count[date] = sessions.count()
@@ -167,7 +171,11 @@ def build_daily_series(user, start_date, end_date, category=None, activity=None)
             for session in sessions:
                 overlap_start = max(session.start, start_utc)
                 overlap_end = min(session.end, end_utc)
-                seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+                seconds = max(
+                    0,
+                    (overlap_end - overlap_start).total_seconds()
+                    - (session.paused_seconds or 0),
+                )
                 total_minutes += int(seconds // 60)
             totals[date] = total_minutes
 
@@ -244,8 +252,8 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
     def get_bucket(category_id, category_name):
         bucket = category_map.get(category_id)
         if bucket is None:
-          bucket = make_bucket(category_id, category_name)
-          category_map[category_id] = bucket
+            bucket = make_bucket(category_id, category_name)
+            category_map[category_id] = bucket
         return bucket
 
     def add_activity_minutes(bucket, date, activity, kind, minutes):
@@ -275,8 +283,7 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
         entry[kind] += minutes
 
     category_map = {
-        category.pk: make_bucket(category.pk, category.name)
-        for category in categories
+        category.pk: make_bucket(category.pk, category.name) for category in categories
     }
     session_rows = (
         Session.objects.filter(
@@ -290,7 +297,9 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
     )
 
     for session in session_rows:
-        category = session.category or (session.activity.category if session.activity else None)
+        category = session.category or (
+            session.activity.category if session.activity else None
+        )
         category_id = session.resolved_category_id
         date = session.local_date
         minutes = session.duration_minutes or 0
@@ -308,7 +317,9 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
         .order_by("date")
     )
     for block in blocks:
-        category = block.category or (block.activity.category if block.activity else None)
+        category = block.category or (
+            block.activity.category if block.activity else None
+        )
         category_id = category.pk if category else None
         minutes = 0
         if block.start_time and block.end_time:
@@ -357,9 +368,7 @@ def aggregate_weekly(dates, actual, planned):
     buckets = {}
     for date, actual_value, planned_value in zip(dates, actual, planned):
         week_start = date - dt.timedelta(days=date.weekday())
-        bucket = buckets.setdefault(
-            week_start, {"actual": 0, "planned": 0}
-        )
+        bucket = buckets.setdefault(week_start, {"actual": 0, "planned": 0})
         bucket["actual"] += actual_value
         bucket["planned"] += planned_value
 
@@ -378,8 +387,7 @@ def aggregate_monthly(dates, actual, planned):
     buckets = {}
     for date, actual_value, planned_value in zip(dates, actual, planned):
         key = dt.date(date.year, date.month, 1)
-        bucket = buckets.setdefault(key, {"actual": 0, "planned": 0}
-        )
+        bucket = buckets.setdefault(key, {"actual": 0, "planned": 0})
         bucket["actual"] += actual_value
         bucket["planned"] += planned_value
 
@@ -419,11 +427,13 @@ def build_heatmap(dates, intensity):
         week = []
         for _ in range(7):
             value = total_map.get(current, 0)
-            week.append({
-                "date": current.isoformat(),
-                "value": value,
-                "level": _intensity_level(value),
-            })
+            week.append(
+                {
+                    "date": current.isoformat(),
+                    "value": value,
+                    "level": _intensity_level(value),
+                }
+            )
             current += dt.timedelta(days=1)
         weeks.append(week)
 
@@ -447,6 +457,7 @@ def build_kpis(total_actual, total_planned, streak, category_totals):
         "top_category": top_category,
     }
 
+
 def _compute_global_streak(user, local_today):
     """
     Counts consecutive days with positive intensity ending on or before
@@ -463,16 +474,19 @@ def _compute_global_streak(user, local_today):
         current -= dt.timedelta(days=1)
     return streak
 
+
 def build_context(request):
     user = request.user
     days = parse_range(request)
     tz = get_user_timezone(user)
     local_today = timezone.now().astimezone(tz).date()
 
-    custom_start_date, custom_end_date, custom_range_active = _resolve_dashboard_date_range(
-        request,
-        local_today,
-        days,
+    custom_start_date, custom_end_date, custom_range_active = (
+        _resolve_dashboard_date_range(
+            request,
+            local_today,
+            days,
+        )
     )
 
     year_options = build_year_options(user, tz, local_today)
@@ -515,7 +529,9 @@ def build_context(request):
     )
 
     heatmap_start = local_today - dt.timedelta(days=NUM_HEATMAP_WEEKS * 7 - 1)
-    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(NUM_HEATMAP_WEEKS * 7)]
+    heatmap_dates = [
+        heatmap_start + dt.timedelta(days=i) for i in range(NUM_HEATMAP_WEEKS * 7)
+    ]
     heatmap_intensity = [compute_daily_intensity(user, d) for d in heatmap_dates]
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
 
@@ -576,7 +592,7 @@ def dashboard_partial_view(request):
     response = render(request, "analytics/partials/dashboard_content.html", context)
     query = request.GET.urlencode()
     response["HX-Push-Url"] = (
-        f"{reverse('dashboard')}?{query}" if query else reverse('dashboard')
+        f"{reverse('dashboard')}?{query}" if query else reverse("dashboard")
     )
     return response
 
@@ -674,7 +690,9 @@ def scores_daily_api_view(request):
             }
         )
 
-    return JsonResponse({"start": start.isoformat(), "end": end.isoformat(), "items": payload})
+    return JsonResponse(
+        {"start": start.isoformat(), "end": end.isoformat(), "items": payload}
+    )
 
 
 @login_required
@@ -811,7 +829,9 @@ def reflections_history_api_view(request):
             }
         )
 
-    return JsonResponse({"start": start.isoformat(), "end": end.isoformat(), "items": items})
+    return JsonResponse(
+        {"start": start.isoformat(), "end": end.isoformat(), "items": items}
+    )
 
 
 @login_required

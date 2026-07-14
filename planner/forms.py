@@ -12,7 +12,9 @@ class PlannerCategoryForm(forms.ModelForm):
         model = ActivityCategory
         fields = ("name", "description")
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional description"}),
+            "description": forms.Textarea(
+                attrs={"rows": 2, "placeholder": "Optional description"}
+            ),
         }
 
 
@@ -28,7 +30,9 @@ class PlannerActivityForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if self.user:
-            self.fields["category"].queryset = ActivityCategory.objects.filter(user=self.user)
+            self.fields["category"].queryset = ActivityCategory.objects.filter(
+                user=self.user
+            )
 
 
 class ScheduleBlockForm(forms.ModelForm):
@@ -55,14 +59,18 @@ class ScheduleBlockForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user:
             self.instance.user = self.user
-            self.fields["category"].queryset = ActivityCategory.objects.filter(user=self.user)
+            self.fields["category"].queryset = ActivityCategory.objects.filter(
+                user=self.user
+            )
             activity_qs = Activity.objects.filter(user=self.user)
             if self.is_bound:
                 raw_category = self.data.get(self.add_prefix("category"))
                 if raw_category:
                     activity_qs = activity_qs.filter(category_id=raw_category)
             elif self.initial.get("category"):
-                activity_qs = activity_qs.filter(category_id=self.initial.get("category"))
+                activity_qs = activity_qs.filter(
+                    category_id=self.initial.get("category")
+                )
             self.fields["activity"].queryset = activity_qs
             if not self.is_bound and not self.initial.get("date"):
                 self.initial["date"] = dt.date.today()

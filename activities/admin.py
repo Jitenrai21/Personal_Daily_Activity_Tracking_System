@@ -18,5 +18,5 @@ class ActivityAdmin(admin.ModelAdmin):
 
 @admin.register(RecurrenceRule)
 class RecurrenceRuleAdmin(admin.ModelAdmin):
-	list_display = ("activity", "frequency", "interval", "start_date", "end_date")
-	list_filter = ("frequency",)
+    list_display = ("activity", "frequency", "interval", "start_date", "end_date")
+    list_filter = ("frequency",)

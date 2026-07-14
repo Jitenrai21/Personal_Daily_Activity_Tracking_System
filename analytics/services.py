@@ -24,7 +24,9 @@ def get_day_bounds_utc(user, date):
     tz = get_user_timezone(user)
     local_start = dt.datetime.combine(date, dt.time.min, tzinfo=tz)
     local_end = local_start + dt.timedelta(days=1)
-    return local_start.astimezone(dt.timezone.utc), local_end.astimezone(dt.timezone.utc)
+    return local_start.astimezone(dt.timezone.utc), local_end.astimezone(
+        dt.timezone.utc
+    )
 
 
 def compute_daily(user, date):
@@ -53,7 +55,11 @@ def compute_daily(user, date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        seconds = max(
+            0,
+            (overlap_end - overlap_start).total_seconds()
+            - (session.paused_seconds or 0),
+        )
         total_minutes += int(seconds // 60)
 
     for session in duration_only_sessions:
@@ -148,11 +154,17 @@ def compute_category_totals(user, start_date, end_date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        seconds = max(
+            0,
+            (overlap_end - overlap_start).total_seconds()
+            - (session.paused_seconds or 0),
+        )
         minutes = int(seconds // 60)
         if minutes <= 0:
             continue
-        category = session.category or (session.activity.category if session.activity else None)
+        category = session.category or (
+            session.activity.category if session.activity else None
+        )
         category_id = category.pk if category else None
         priority = session.activity.priority if session.activity else 1
         bucket = category_map.setdefault(
@@ -180,7 +192,9 @@ def compute_category_totals(user, start_date, end_date):
         minutes = session.duration_minutes or 0
         if minutes <= 0:
             continue
-        category = session.category or (session.activity.category if session.activity else None)
+        category = session.category or (
+            session.activity.category if session.activity else None
+        )
         category_id = category.pk if category else None
         priority = session.activity.priority if session.activity else 1
         bucket = category_map.setdefault(
@@ -196,9 +210,9 @@ def compute_category_totals(user, start_date, end_date):
         bucket["actual_minutes"] += minutes
         bucket["intensity_score"] += minutes * max(1, priority)
 
-    blocks = ScheduleBlock.objects.filter(user=user, date__range=(start_date, end_date)).select_related(
-        "activity", "category"
-    )
+    blocks = ScheduleBlock.objects.filter(
+        user=user, date__range=(start_date, end_date)
+    ).select_related("activity", "category")
     for block in blocks:
         minutes = 0
         if block.start_time and block.end_time:
@@ -209,7 +223,9 @@ def compute_category_totals(user, start_date, end_date):
             minutes = int(block.duration_minutes)
         if minutes <= 0:
             continue
-        category = block.category or (block.activity.category if block.activity else None)
+        category = block.category or (
+            block.activity.category if block.activity else None
+        )
         category_id = category.pk if category else None
         bucket = category_map.setdefault(
             category_id,
@@ -244,7 +260,11 @@ def compute_daily_intensity(user, date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        seconds = max(
+            0,
+            (overlap_end - overlap_start).total_seconds()
+            - (session.paused_seconds or 0),
+        )
         minutes = int(seconds // 60)
         if minutes <= 0:
             continue

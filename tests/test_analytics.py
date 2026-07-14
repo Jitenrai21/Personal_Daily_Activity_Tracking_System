@@ -9,7 +9,12 @@ from django.utils import timezone
 from activities.models import Activity, ActivityCategory
 from analytics.models import AggregatedDaily
 from analytics import views as analytics_views
-from analytics.services import compute_category_totals, compute_daily, compute_daily_intensity, update_daily
+from analytics.services import (
+    compute_category_totals,
+    compute_daily,
+    compute_daily_intensity,
+    update_daily,
+)
 from planner.models import ScheduleBlock
 from tracking.models import Session
 from users.models import UserProfile
@@ -193,7 +198,9 @@ def test_dashboard_filters_by_from_and_to_dates(monkeypatch, client):
     profile.timezone = "UTC"
     profile.save(update_fields=["timezone"])
     category = ActivityCategory.objects.create(user=user, name="Work")
-    activity = Activity.objects.create(user=user, title="Focus", category=category, priority=2)
+    activity = Activity.objects.create(
+        user=user, title="Focus", category=category, priority=2
+    )
 
     fixed_now = dt.datetime(2026, 6, 2, 12, 0, tzinfo=dt.timezone.utc)
     monkeypatch.setattr(analytics_views.timezone, "now", lambda: fixed_now)

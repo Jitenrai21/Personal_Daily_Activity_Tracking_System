@@ -25,7 +25,9 @@ class ScheduleBlock(models.Model):
 
     def clean(self) -> None:
         if self.end_time and not self.start_time:
-            raise ValidationError({"start_time": "Start time is required when end time is provided."})
+            raise ValidationError(
+                {"start_time": "Start time is required when end time is provided."}
+            )
         if self.start_time and self.end_time and self.end_time <= self.start_time:
             raise ValidationError({"end_time": "End time must be after start time."})
 
