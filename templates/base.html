@@ -12,7 +12,7 @@
   </head>
   <body>
     <div class="page">
-      <header class="site-header">
+      <header class="site-header page__header">
         <a class="brand-link" href="{% url 'dashboard' %}">
           <span class="brand-mark">
             <img src="{% static 'core/logo_navbar.png' %}" alt="PDATS" class="brand-logo">
@@ -28,9 +28,9 @@
             <a class="nav-link" href="{% url 'planner_day' %}">Planner</a>
             <a class="nav-link" href="{% url 'session_list' %}">Tracking</a>
             <a class="nav-link" href="{% url 'profile' %}">Profile</a>
-            <form method="post" action="{% url 'logout' %}">
+            <form method="post" action="{% url 'logout' %}" class="inline--sm">
               {% csrf_token %}
-              <button class="btn btn-secondary" type="submit">Log out</button>
+              <button class="btn btn--secondary btn--sm" type="submit">Log out</button>
             </form>
           {% else %}
             <a class="nav-link" href="{% url 'login' %}">Log in</a>
@@ -39,9 +39,9 @@
         </nav>
       </header>
 
-      <main class="content">
+      <main class="page__main">
         {% if messages %}
-          <div class="messages">
+          <div class="messages stack--sm">
             {% for message in messages %}
               <div class="message">{{ message }}</div>
             {% endfor %}
@@ -50,7 +50,8 @@
 
         {% block content %}{% endblock %}
       </main>
-      <footer class="site-footer">
+
+      <footer class="site-footer page__footer">
         <div class="footer-inner">
           <div class="brand-footer">
             <span class="brand-mark">
@@ -77,24 +78,16 @@
         const timers = document.querySelectorAll(".session-toggle[data-session-start], .session-toggle[data-session-state]");
         timers.forEach((node) => {
           const start = node.getAttribute("data-session-start");
-          if (!start) {
-            return;
-          }
+          if (!start) return;
           const startTime = Date.parse(start);
-          if (Number.isNaN(startTime)) {
-            return;
-          }
+          if (Number.isNaN(startTime)) return;
           const pausedSeconds = Number.parseInt(node.getAttribute("data-session-paused-seconds") || "0", 10) || 0;
           const pausedAt = node.getAttribute("data-session-paused-at");
           const effectiveEnd = pausedAt ? Date.parse(pausedAt) : Date.now();
-          if (Number.isNaN(effectiveEnd)) {
-            return;
-          }
+          if (Number.isNaN(effectiveEnd)) return;
           const elapsedSeconds = Math.max(0, Math.floor((effectiveEnd - startTime) / 1000) - pausedSeconds);
           const label = node.querySelector("[data-session-elapsed]");
-          if (label) {
-            label.textContent = formatElapsed(elapsedSeconds);
-          }
+          if (label) label.textContent = formatElapsed(elapsedSeconds);
         });
       }
 
@@ -109,5 +102,3 @@
         }
       });
     </script>
-  </body>
-</html>

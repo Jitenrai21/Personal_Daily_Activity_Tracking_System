@@ -509,8 +509,8 @@ def build_context(request):
     )
 
     heatmap_end = local_today
-    heatmap_start = local_today - dt.timedelta(days=34)
-    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(35)]
+    heatmap_start = local_today - dt.timedelta(days=41)
+    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(42)]
     heatmap_intensity = [compute_daily_intensity(user, d) for d in heatmap_dates]
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
 

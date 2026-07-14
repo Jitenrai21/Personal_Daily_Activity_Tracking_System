@@ -317,13 +317,13 @@
 
     .planner-card-hint {
       margin: 0;
-      color: #617167;
+      color: var(--accent-color);
       font-size: 0.9rem;
     }
 
     .planner-chip {
       background: rgba(28, 43, 34, 0.08);
-      color: #1c2b22;
+      color: var(--dashboard-ink);
       border-radius: 999px;
       padding: 0.2rem 0.7rem;
       font-size: 0.75rem;
@@ -337,7 +337,6 @@
       margin-top: 1rem;
     }
 
-    /* New styles for improved manage sections layout */
     .manage-section {
       display: grid;
       grid-template-columns: 1fr;
@@ -355,7 +354,7 @@
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #1c2b22;
+      color: var(--dashboard-ink);
       padding-bottom: 0.5rem;
       border-bottom: 1px solid rgba(28, 43, 34, 0.1);
     }
@@ -373,29 +372,33 @@
       overflow-x: auto;
     }
 
-    /* Grid column templates */
+    /* ─── Grid column templates ─── */
     .mgmt-cat-grid {
-      grid-template-columns: 1.5fr 2fr 5rem;
+      grid-template-columns: 1.5fr 2fr 6rem;
     }
 
     .mgmt-act-grid {
-      grid-template-columns: 1.5fr 1.2fr 5rem 1.5fr 5rem;
+      grid-template-columns: 1.5fr 1.2fr 4rem 1.5fr 6rem;
     }
 
-    /* Header row */
+    /* ─── Header row ─── */
     .mgmt-table-header {
       display: grid;
       gap: 0.75rem;
       padding: 0.6rem 0.875rem;
       border-bottom: 2px solid rgba(28, 43, 34, 0.1);
+      position: sticky;
+      top: 0;
+      background: var(--surface-soft);
+      z-index: 1;
     }
 
     .mgmt-col {
       font-size: 0.75rem;
       font-weight: 600;
-      color: #617167;
+      color: var(--accent-color);
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
     }
 
     .mgmt-col-center {
@@ -406,7 +409,7 @@
       text-align: center;
     }
 
-    /* Body */
+    /* ─── Body ─── */
     .mgmt-table-body {
       display: flex;
       flex-direction: column;
@@ -414,7 +417,7 @@
       padding-top: 0.625rem;
     }
 
-    /* Data rows */
+    /* ─── Data rows ─── */
     .mgmt-row {
       display: grid;
       gap: 0.75rem;
@@ -431,7 +434,7 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
-    /* Cells */
+    /* ─── Cells ─── */
     .mgmt-cell {
       display: flex;
       align-items: center;
@@ -451,22 +454,23 @@
       display: flex;
     }
 
-    /* Inputs inside rows */
+    /* ─── Inputs inside rows ─── */
     .mgmt-row input[type="text"],
     .mgmt-row input[type="number"],
     .mgmt-row select {
       width: 100%;
-      padding: 0.4rem 0.625rem;
-      border: 1px solid rgba(28, 43, 34, 0.15);
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
       background: var(--surface-soft);
-      font-size: 0.85rem;
-      color: #1c2b22;
-      transition: border-color 0.15s ease, background 0.15s ease;
+      font-family: inherit;
+      font-size: 0.875rem;
+      color: var(--text-color);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .mgmt-row input[type="number"] {
-      width: 4rem;
+      max-width: 4rem;
       text-align: center;
     }
 
@@ -474,17 +478,18 @@
     .mgmt-row input[type="number"]:focus,
     .mgmt-row select:focus {
       outline: none;
-      border-color: #1c2b22;
+      border-color: var(--cta-color);
+      box-shadow: 0 0 0 3px rgba(74, 70, 67, 0.12);
       background: var(--surface-soft);
     }
 
-    /* Icon buttons */
+    /* ─── Icon buttons ─── */
     .btn-icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2rem;
-      height: 2rem;
+      width: 2.25rem;
+      height: 2.25rem;
       border-radius: 6px;
       border: 1px solid transparent;
       background: transparent;
@@ -494,7 +499,7 @@
     }
 
     .btn-icon-save {
-      color: #617167;
+      color: var(--accent-color);
       border-color: rgba(28, 43, 34, 0.15);
     }
 
@@ -505,7 +510,7 @@
     }
 
     .btn-icon-delete {
-      color: #617167;
+      color: var(--accent-color);
       border-color: rgba(28, 43, 34, 0.15);
     }
 
@@ -515,19 +520,107 @@
       color: #c0392b;
     }
 
-    /* Empty state */
+    /* ─── Empty state ─── */
     .mgmt-empty {
       padding: 2.5rem;
       text-align: center;
       font-size: 0.85rem;
-      color: #617167;
+      color: var(--accent-color);
       font-style: italic;
     }
 
-    /* Responsive layout for larger screens */
+    /* ═══════════════════════════════════════════════════
+       Responsive: card-style tables on narrow screens
+       ═══════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .mgmt-table-header {
+        display: none;
+      }
+
+      .mgmt-cat-grid,
+      .mgmt-act-grid {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+      }
+
+      .mgmt-row {
+        padding: 0.875rem 1rem;
+        border-left: 3px solid var(--border-color);
+      }
+
+      .mgmt-cell {
+        display: grid;
+        grid-template-columns: 7rem 1fr;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .mgmt-cell::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--accent-color);
+        flex-shrink: 0;
+      }
+
+      .mgmt-cell-center {
+        justify-content: normal;
+      }
+
+      .mgmt-cell-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid rgba(28, 43, 34, 0.08);
+        margin-top: 0.3rem;
+        grid-column: 1 / -1;
+      }
+
+      .mgmt-cell-actions::before {
+        display: none;
+      }
+
+      .mgmt-row input[type="number"] {
+        max-width: 100%;
+      }
+
+      .btn-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+
+      /* Revert form actions to stacked on small screens */
+      .manage-form-section .session-form-grid {
+        gap: 0.75rem;
+      }
+
+      .manage-form-section .session-form-row {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+      }
+
+      .manage-form-section .form-label {
+        padding-top: 0;
+      }
+    }
+
+    /* ─── Responsive layout for medium+ screens ─── */
     @media (min-width: 900px) {
       .manage-section {
         grid-template-columns: 1fr 2fr;
+      }
+    }
+
+    /* Allow action icons more room on compact grids */
+    @media (min-width: 769px) and (max-width: 1100px) {
+      .mgmt-cat-grid {
+        grid-template-columns: 1.2fr 1.5fr 6rem;
+      }
+      .mgmt-act-grid {
+        grid-template-columns: 1.2fr 1fr 4rem 1.2fr 6rem;
       }
     }
 

@@ -4,12 +4,132 @@
 
 {% block extra_head %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --color-chart-actual-top: #3CB371;
+      --color-chart-actual-bottom: #1F6B1F;
+      --color-chart-planned-top: #FFD54F;
+      --color-chart-planned-bottom: #F0A500;
+    }
+
+    .dashboard-eyebrow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-color);
+      background: var(--surface-soft);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      margin-bottom: 0.65rem;
+    }
+
+    .dashboard-title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .dashboard-title-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 10px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+      font-size: 1.2rem;
+      color: var(--accent-color);
+    }
+
+    .dashboard-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      background: var(--surface-soft);
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      width: auto;
+      margin-left: auto;
+    }
+
+    .dashboard-filters .filter-group {
+      min-width: 130px;
+      flex: 1 1 auto;
+    }
+
+    .dashboard-filters .filter-group .field__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent-color);
+      padding-top: 0.55rem;
+    }
+
+    .dashboard-filters .filter-group input {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      font-family: inherit;
+      font-size: 0.875rem;
+      color: var(--text-color);
+    }
+
+    .dashboard-filters .filter-group input:focus {
+      outline: none;
+      border-color: var(--cta-color);
+      box-shadow: 0 0 0 3px rgba(74, 70, 67, 0.12);
+    }
+
+    .dashboard-filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      padding-bottom: 1px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-filters {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .dashboard-filter-actions {
+        width: 100%;
+      }
+
+      .dashboard-filter-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .dashboard-filters .filter-group {
+        min-width: 110px;
+        flex: 1 1 28%;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-  <section class="dashboard-shell fade-in page-shell">
-    <header class="dashboard-header page-header surface-card">
+  <section class="section fade-in">
+    <header class="section__header">
       <div>
+        <span class="dashboard-eyebrow-pill">
           <i class="ti ti-sparkles" aria-hidden="true"></i>
           Insights
         </span>
@@ -23,681 +143,32 @@
           </div>
         </div>
       </div>
-      <form
-        class="dashboard-filters page-actions"
-        method="get"
-        action="{% url 'dashboard' %}"
-        hx-get="{% url 'dashboard_partial' %}"
-        hx-target="#dashboard-pane"
-        hx-swap="innerHTML"
-      >
-        <div class="filter-group">
-          <label for="from_date" class="label">From date</label>
+      <form class="dashboard-filters section__actions" method="get" action="{% url 'dashboard' %}"
+            hx-get="{% url 'dashboard_partial' %}" hx-target="#dashboard-pane" hx-swap="innerHTML">
+        <div class="filter-group field-row field-row--split">
+          <label class="field__label" for="from_date">From date</label>
           <input id="from_date" name="from_date" type="date" value="{{ from_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
         </div>
-        <div class="filter-group">
-          <label for="to_date" class="label">To date</label>
+        <div class="filter-group field-row field-row--split">
+          <label class="field__label" for="to_date">To date</label>
           <input id="to_date" name="to_date" type="date" value="{{ to_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
         </div>
-        <div class="dashboard-filter-actions">
-          <button class="btn" type="submit">Apply</button>
-          <button
-            class="btn btn-secondary"
-            type="button"
-            data-dashboard-reset
-            data-default-from="{{ from_date_value }}"
-            data-default-to="{{ to_date_value }}"
-          >
+        <div class="dashboard-filter-actions inline">
+          <button class="btn btn--primary btn--md" type="submit">Apply</button>
+          <button class="btn btn--secondary btn--md" type="button"
+                  data-dashboard-reset
+                  data-default-from="{{ from_date_value }}"
+                  data-default-to="{{ to_date_value }}">
             Reset
           </button>
         </div>
       </form>
     </header>
 
-    <div id="dashboard-pane" class="dashboard-content page-stack">
+    <div id="dashboard-pane" class="stack">
       {% include 'analytics/partials/dashboard_content.html' %}
     </div>
   </section>
-
-  <style>
-    /* ─── Dashboard shell layout ─────────────────────────────── */
-    /* Double specificity beats base.css's .dashboard-shell rule.
-       Gradient starts exactly at --bg-color (#f0ede6) so the
-       shell edge dissolves into the page — no seam, no border. */
-    .dashboard-shell.page-shell,
-    .dashboard-shell {
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-      background: linear-gradient(160deg, #f0ede6 0%, #e8e2d8 45%, #e2dcd2 100%) !important;
-      border-radius: 16px;
-    }
-
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 2rem;
-      flex-wrap: wrap;
-      background: linear-gradient(120deg, #e4d9c5 0%, #e2dcd2 50%, #e2dcd2 100%);
-      border-color: #c6af92;
-    }
-
-    .dashboard-filters {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      min-width: 160px;
-    }
-
-    .filter-group .label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #617167;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .filter-group input[type="date"] {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid rgba(28, 43, 34, 0.15);
-      border-radius: 6px;
-      background: var(--surface-soft);
-      font-size: 0.9rem;
-      transition: border-color 0.2s ease;
-      font: inherit;
-      height: 38px;
-    }
-
-    .filter-group input[type="date"]:focus {
-      outline: none;
-      border-color: #1c2b22;
-    }
-
-    .filter-group input[type="date"]:hover {
-      border-color: rgba(28, 43, 34, 0.25);
-    }
-
-    .dashboard-filter-actions {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .dashboard-filters .btn {
-      align-self: flex-end;
-      padding: 0.5rem 1.25rem;
-    }
-
-    /* ─── Dashboard content grid ─────────────────────────────── */
-    .dashboard-content {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
-    /* ─── Header: eyebrow pill + title icon badge ────────────── */
-    /* Uses the same forest green as the "Total actual" KPI card
-       and "Actual" bar gradient, so the header reads as the
-       dashboard's primary accent. */
-    .dashboard-eyebrow-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #ffffff;
-      border: 1px solid #8fc98f;
-      color: #F1F1DF;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      border-radius: 999px;
-      padding: 3px 10px 3px 7px;
-      margin-bottom: 0.6rem;
-    }
-
-    .dashboard-eyebrow-pill .ti {
-      font-size: 0.8rem;
-      color: #F1F1DF;
-    }
-
-    .dashboard-title-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.875rem;
-    }
-
-    .dashboard-title-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #e2dcd2 0%, #F1F1DF 100%);
-      border: 1px solid #c0b9af;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 2px 6px #c0b9af;
-    }
-
-    .dashboard-title-icon .ti {
-      font-size: 22px;
-      color: #000000;
-    }
-
-    /* ─── KPI cards ──────────────────────────────────────────── */
-    /*
-     * Base card — shared structure, no color.
-     * Each modifier (--teal, --amber, --purple, --neutral) applies
-     * its own background, border, and text colors.
-     */
-    .kpi-card {
-      border-radius: 12px;
-      padding: 1.1rem 1.25rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0;                    /* gaps handled per-element below */
-      border: 1px solid transparent;
-      transition: box-shadow 0.15s ease;
-    }
-
-    .kpi-card .kpi-label        { margin-bottom: 0.45rem; } /* label → value */
-    .kpi-card .kpi-value        { margin-bottom: 0.3rem;  } /* value → foot/bar */
-    .kpi-card .kpi-progress-bar { margin-bottom: 0.3rem;  } /* bar → foot */
-
-    /* Icon accent square — sits above the label, mirrors the
-       header title icon badge for visual consistency */
-    .kpi-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 0.6rem;
-      font-size: 16px;
-      border: 1px solid;
-    }
-
-    /* Forest green — actual / done output (matches "Actual" bar gradient) */
-    /* Muted, shaded toward the app's warm-neutral surface, rather
-       than a bright mint tint. */
-    .kpi-card--teal {
-      background: linear-gradient(135deg, #dde8d6 0%, #c0d4b4 100%);
-      border-color: #9bb98c;
-    }
-    .kpi-card--teal .kpi-label { color: #3f5c34; }   /* muted mid-green  */
-    .kpi-card--teal .kpi-value { color: #2b4424; }   /* deep, shaded green */
-    .kpi-card--teal .kpi-foot  { color: #3f5c34; }   /* muted mid-green — recedes */
-    .kpi-card--teal .kpi-icon  { background: #6e9460; border-color: #5c7e4f; color: #f7f4ee; }
-
-    /* Amber-yellow — planned targets / completion (matches "Planned" bar gradient) */
-    /* Muted ochre tones instead of a bright yellow tint. */
-    .kpi-card--amber {
-      background: linear-gradient(135deg, #ebe0c4 0%, #ddc486 100%);
-      border-color: #c4a23e;
-    }
-    .kpi-card--amber .kpi-label { color: #7a5a0a; }  /* muted mid-amber */
-    .kpi-card--amber .kpi-value { color: #5c4205; }  /* deep, shaded amber */
-    .kpi-card--amber .kpi-foot  { color: #7a5a0a; }  /* muted mid-amber — recedes */
-    .kpi-card--amber .kpi-icon  { background: #b6912e; border-color: #9a7a26; color: #f7f4ee; }
-
-    /* Mauve — streaks / momentum */
-    /* Muted, shaded mauve instead of a bright pink tint. */
-    .kpi-card--purple {
-      background: linear-gradient(135deg, #e3d2d1 0%, #ceaba9 100%);
-      border-color: #ab7d7c;
-    }
-    .kpi-card--purple .kpi-label { color: #6e3a3e; }  /* muted mid-mauve */
-    .kpi-card--purple .kpi-value { color: #4a2226; }  /* deep, shaded mauve */
-    .kpi-card--purple .kpi-foot  { color: #6e3a3e; }  /* muted mid-mauve — recedes */
-    .kpi-card--purple .kpi-icon  { background: #9c6669; border-color: #835153; color: #f7f4ee; }
-
-    /* Neutral — descriptive / top category */
-    /* Muted bluish-lavender, shaded to match the same dark-leaning
-       saturation as the green/amber/mauve cards. */
-    .kpi-card--neutral {
-      background: linear-gradient(135deg, #d8d6e6 0%, #b7b3cf 100%);
-      border-color: #8d87ad;
-    }
-    .kpi-card--neutral .kpi-label { color: #423d63; }   /* muted mid-lavender */
-    .kpi-card--neutral .kpi-value { color: #2c2847; }   /* deep, shaded lavender */
-    .kpi-card--neutral .kpi-foot  { color: #423d63; }   /* muted mid-lavender — recedes */
-    .kpi-card--neutral .kpi-icon  { background: #6d6593; border-color: #5a527c; color: #f7f4ee; }
-
-    /* Typography inside KPI cards */
-    .kpi-label {
-      font-size: 0.7rem;        /* tight: sits clearly above the value */
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin: 0;
-      opacity: 0.75;            /* pulls back so the value leads the eye */
-    }
-
-    .kpi-value {
-      font-size: 1.75rem;       /* down from 2rem — less domineering */
-      font-weight: 600;         /* down from 700 — value reads bold without crushing label/foot */
-      line-height: 1.05;
-      margin: 0;
-      letter-spacing: -0.01em; /* tighten large numerals slightly */
-    }
-
-    /* Slightly smaller value for category names that may run long */
-    .kpi-value--sm {
-      font-size: 1.55rem;       /* close to 1.75rem base — feels like a sibling, not an outlier */
-      font-weight: 600;
-      line-height: 1.2;
-      letter-spacing: -0.005em;
-    }
-
-    .kpi-foot {
-      font-size: 0.78rem;
-      font-weight: 400;         /* lighter than label so hierarchy is label → value → foot */
-      margin: 0;
-      opacity: 0.8;
-    }
-
-    /* Completion progress bar (inside amber-yellow KPI card) */
-    .kpi-progress-bar {
-      height: 5px;
-      border-radius: 3px;
-      background: rgba(184, 134, 11, 0.18);
-      overflow: hidden;
-      margin: 2px 0;
-    }
-
-    .kpi-progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      background: #be8e15;
-      max-width: 100%;
-      transition: width 0.4s ease;
-    }
-
-    /* ─── Streak badge (inside purple KPI foot) ──────────────── */
-    .streak-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      border-radius: 999px;
-      padding: 3px 10px 3px 8px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      border: 1px solid;
-      line-height: 1;
-    }
-
-    /* Active streak → amber */
-    .streak-badge--active {
-      background: #ebe0c4;
-      border-color: #c4a23e;
-      color: #9c6669;
-    }
- 
-    .streak-badge--active .ti {
-      color: #9c6669;
-      font-size: 14px;
-    }
-
-    /* Personal best → mauve */
-    .streak-badge--record {
-      background: #f3eae9;
-      border-color: #d2afb1;
-      color: #4a2226;
-    }
-
-    .streak-badge--record .ti {
-      color: #b3697a;
-      font-size: 14px;
-    }
-
-    /* ─── Stats grid (legacy, kept for compatibility) ─────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .stat-card {
-      background: var(--surface-soft);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .stat-label {
-      font-size: 0.85rem;
-      color: #617167;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1c2b22;
-      line-height: 1;
-    }
-
-    .stat-subtitle {
-      font-size: 0.85rem;
-      color: #617167;
-    }
-
-    /* ─── Chart containers ───────────────────────────────────── */
-    .chart-frame {
-      position: relative;
-      width: 100%;
-      height: 300px;
-      margin-top: 1rem;
-    }
-
-    .chart-frame canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .dashboard-chart-frame {
-      flex: 0 0 300px;
-      min-height: 300px;
-      height: 300px;
-      overflow: hidden;
-    }
-
-    /* ─── Card shared styles ─────────────────────────────────── */
-    .dashboard-card {
-      background: var(--surface-card, #ffffff);
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .dashboard-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
-    }
-
-    .dashboard-card-header h2 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: #1c2b22;
-    }
-
-    .dashboard-card-header h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1c2b22;
-    }
-
-    .dashboard-chip {
-      background: rgba(28, 43, 34, 0.08);
-      color: #1c2b22;
-      border-radius: 999px;
-      padding: 0.2rem 0.7rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    /* ─── Category sections ──────────────────────────────────── */
-    .category-sections {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
-    .category-section {
-      background: var(--surface-soft);
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .category-section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
-    }
-
-    .category-section-header h3 {
-      margin: 0;
-      font-size: 1.1rem;
-      color: #1c2b22;
-    }
-
-    /* ─── Table ──────────────────────────────────────────────── */
-    .dashboard-table-wrap {
-      background: var(--surface-soft);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1rem;
-    }
-
-    .dashboard-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .dashboard-table thead th {
-      background: transparent;
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      color: #617167;
-      padding: 0.75rem 0.875rem;
-      text-align: left;
-      border-bottom: 2px solid rgba(28, 43, 34, 0.1);
-    }
-
-    .dashboard-table thead th:last-child { text-align: right; }
-
-    .dashboard-table tbody td {
-      padding: 0.875rem;
-      vertical-align: middle;
-      border-bottom: 1px solid rgba(28, 43, 34, 0.06);
-      background: var(--surface-soft);
-    }
-
-    .dashboard-table tbody td:last-child { text-align: right; }
-    .dashboard-table tbody tr:last-child td { border-bottom: none; }
-
-    .dashboard-table tbody tr:hover td {
-      background: var(--surface-soft-hover);
-    }
-
-    /* ─── Heatmap — base grid layout ─────────────────────────── */
-    .heatmap-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .heatmap-row {
-      display: flex;
-      gap: 4px;
-      width: 100%;
-    }
-
-    .heatmap-cell {
-      flex: 1 1 0;
-      aspect-ratio: 1 / 1;
-      min-width: 0;
-      max-height: 22px;
-      border-radius: 4px;
-      border: none;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-    }
-
-    .heatmap-cell:hover {
-      transform: scale(1.18);
-      box-shadow: 0 0 0 1px rgba(34, 139, 34, 0.35);
-    }
-
-    /* ─── Heatmap — forest green intensity ramp ──────────────── */
-    /*
-     * level-0  empty day   (neutral surface)
-     * level-1  low         #c8e0c8  green-100
-     * level-2  moderate    #8fc98f  green-200
-     * level-3  high        #4ca64c  green-400
-     * level-4  peak        #228B22  green-600
-     */
-    .heatmap-cell.level-0 {
-      background: var(--surface-soft, #c8e0c8);
-    }
-
-    .heatmap-cell.level-1 { background: #c8e0c8; }
-    .heatmap-cell.level-2 { background: #8fc98f; }
-    .heatmap-cell.level-3 { background: #4ca64c; }
-    .heatmap-cell.level-4 { background: #228B22; }
-
-    /* ─── Heatmap — "Less → More" legend ─────────────────────── */
-    .heatmap-legend {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: var(--accent-color, #6b6057);
-      margin-top: 0.75rem;
-    }
-
-    .heatmap-legend .heatmap-cell {
-      flex: 0 0 auto;
-      width: 12px;
-      height: 12px;
-      aspect-ratio: unset;
-      max-height: none;
-    }
-
-    .heatmap-legend .heatmap-cell:hover {
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* ─── Empty state ────────────────────────────────────────── */
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      color: #617167;
-    }
-
-    .empty-state-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.3;
-    }
-
-    .empty-state-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #1c2b22;
-    }
-
-    .empty-state-message { font-size: 0.9rem; }
-
-    /* ─── Misc badges ────────────────────────────────────────── */
-    .metric-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.25rem 0.65rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .metric-badge.positive { background: rgba(63, 143, 107, 0.1); color: #3f8f6b; }
-    .metric-badge.neutral  { background: rgba(97, 113, 103, 0.1); color: #617167; }
-    .metric-badge.negative { background: rgba(235, 87, 87, 0.1);  color: #eb5757; }
-
-    .priority-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 0.5rem;
-    }
-
-    .priority-indicator.high   { background: #eb5757; }
-    .priority-indicator.medium { background: #f2c94c; }
-    .priority-indicator.low    { background: #3f8f6b; }
-
-    /* ─── Responsive ─────────────────────────────────────────── */
-    @media (min-width: 768px) {
-      .dashboard-content { gap: 2rem; }
-    }
-
-    @media (min-width: 1024px) {
-      .category-sections { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (min-width: 1400px) {
-      .category-sections { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-header {
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-
-      .dashboard-filters { width: 100%; }
-
-      .filter-group {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .dashboard-filters .btn { width: 100%; }
-
-      .chart-frame { height: 300px; }
-
-      .dashboard-chart-frame {
-        flex-basis: 300px;
-        min-height: 300px;
-        height: 300px;
-      }
-    }
-
-    /* ─── Loading / animation ────────────────────────────────── */
-    .dashboard-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem 2rem;
-      color: #617167;
-    }
-
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" defer></script>
   <script>
@@ -737,9 +208,10 @@
       const categorySeries = loadJson("category-daily-series");
       if (!categorySeries) return;
 
+      const style = getComputedStyle(document.documentElement);
       const chartPalette = {
-        actual:  { top: "#3CB371", bottom: "#1F6B1F" }, /* forest green gradient */
-        planned: { top: "#FFD54F", bottom: "#F0A500" }, /* amber-yellow gradient */
+        actual:  { top: style.getPropertyValue('--color-chart-actual-top').trim() || "#3CB371", bottom: style.getPropertyValue('--color-chart-actual-bottom').trim() || "#1F6B1F" },
+        planned: { top: style.getPropertyValue('--color-chart-planned-top').trim() || "#FFD54F", bottom: style.getPropertyValue('--color-chart-planned-bottom').trim() || "#F0A500" },
       };
 
       function makeBarGradient(ctx, chartArea, colors) {
@@ -903,4 +375,3 @@
     });
   </script>
 {% endblock %}
-
