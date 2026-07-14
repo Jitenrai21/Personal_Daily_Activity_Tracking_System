@@ -11,7 +11,7 @@ def test_dashboard_view_requires_login(client):
 
 @pytest.mark.django_db
 def test_dashboard_view_renders_for_user(client):
-    user = User.objects.create_user(username="u1", password="Pass12345")
+    User.objects.create_user(username="u1", password="Pass12345")
     client.login(username="u1", password="Pass12345")
     response = client.get(reverse("dashboard"))
     assert response.status_code == 200
@@ -20,7 +20,7 @@ def test_dashboard_view_renders_for_user(client):
 
 @pytest.mark.django_db
 def test_dashboard_api_endpoints(client):
-    user = User.objects.create_user(username="u2", password="Pass12345")
+    User.objects.create_user(username="u2", password="Pass12345")
     client.login(username="u2", password="Pass12345")
 
     daily = client.get(reverse("metrics_daily"))

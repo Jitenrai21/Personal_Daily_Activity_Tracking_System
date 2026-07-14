@@ -70,7 +70,7 @@ def activity_list_view(request):
 def activity_detail_view(request, pk):
     activity = get_object_or_404(Activity, pk=pk, user=request.user)
     running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True)
+        Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
         .select_related("activity")
         .first()
     )

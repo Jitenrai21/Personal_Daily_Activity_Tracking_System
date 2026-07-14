@@ -39,7 +39,8 @@ def _session_minutes_by_category(user, local_date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        minutes = int(max(0, (overlap_end - overlap_start).total_seconds()) // 60)
+        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        minutes = int(seconds // 60)
         if minutes <= 0:
             continue
 

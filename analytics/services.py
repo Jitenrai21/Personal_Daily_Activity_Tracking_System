@@ -53,7 +53,7 @@ def compute_daily(user, date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        seconds = max(0, (overlap_end - overlap_start).total_seconds())
+        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
         total_minutes += int(seconds // 60)
 
     for session in duration_only_sessions:
@@ -148,7 +148,8 @@ def compute_category_totals(user, start_date, end_date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        minutes = int(max(0, (overlap_end - overlap_start).total_seconds()) // 60)
+        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        minutes = int(seconds // 60)
         if minutes <= 0:
             continue
         category = session.category or (session.activity.category if session.activity else None)
@@ -243,7 +244,8 @@ def compute_daily_intensity(user, date):
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
-        minutes = int(max(0, (overlap_end - overlap_start).total_seconds()) // 60)
+        seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+        minutes = int(seconds // 60)
         if minutes <= 0:
             continue
         priority = session.activity.priority if session.activity else 1

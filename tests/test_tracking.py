@@ -179,7 +179,7 @@ def test_end_before_start_rejected(client):
 
 @pytest.mark.django_db
 def test_single_active_session_guard(client):
-    user = User.objects.create_user(username="u1", password="Pass12345")
+    User.objects.create_user(username="u1", password="Pass12345")
 
     client.login(username="u1", password="Pass12345")
     first = client.post(
@@ -200,7 +200,6 @@ def test_single_active_session_guard(client):
 @pytest.mark.django_db
 def test_session_user_isolation(client):
     user1 = User.objects.create_user(username="u1", password="Pass12345")
-    user2 = User.objects.create_user(username="u2", password="Pass12345")
 
     session = Session.objects.create(
         user=user1,

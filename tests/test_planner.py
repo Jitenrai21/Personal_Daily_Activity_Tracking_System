@@ -93,9 +93,8 @@ def test_planner_end_before_start_rejected():
 @pytest.mark.django_db
 def test_schedule_user_isolation(client):
     user1 = User.objects.create_user(username="u1", password="Pass12345")
-    user2 = User.objects.create_user(username="u2", password="Pass12345")
+    User.objects.create_user(username="u2", password="Pass12345")
     category1 = ActivityCategory.objects.create(user=user1, name="Work")
-    category2 = ActivityCategory.objects.create(user=user2, name="Play")
 
     activity1 = Activity.objects.create(
         user=user1,

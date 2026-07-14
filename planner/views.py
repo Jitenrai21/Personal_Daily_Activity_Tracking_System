@@ -30,7 +30,7 @@ def _planner_context(user, date, schedule_form=None, category_form=None, activit
         "activity", "category"
     )
     running_session = (
-        Session.objects.filter(user=user, end__isnull=True)
+        Session.objects.filter(user=user, end__isnull=True, source=Session.SOURCE_TIMER)
         .select_related("activity")
         .first()
     )
@@ -52,7 +52,7 @@ def _planner_context(user, date, schedule_form=None, category_form=None, activit
 
 def _planner_timer_row_response(request, block):
     running_session = (
-        Session.objects.filter(user=request.user, end__isnull=True)
+        Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
         .select_related("activity")
         .first()
     )
@@ -70,7 +70,7 @@ def _planner_timer_row_response(request, block):
 
 def _block_timer_session(user, block):
     session = (
-        Session.objects.filter(user=user, end__isnull=True)
+        Session.objects.filter(user=user, end__isnull=True, source=Session.SOURCE_TIMER)
         .select_related("activity")
         .first()
     )
@@ -102,7 +102,7 @@ def schedule_block_create_view(request):
         block.full_clean()
         block.save()
         running_session = (
-            Session.objects.filter(user=request.user, end__isnull=True)
+            Session.objects.filter(user=request.user, end__isnull=True, source=Session.SOURCE_TIMER)
             .select_related("activity")
             .first()
         )

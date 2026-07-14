@@ -1,5 +1,3 @@
-import datetime as dt
-
 from planner.models import ScheduleBlock, WeeklyRoutine
 from users.models import UserProfile
 

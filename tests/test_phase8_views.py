@@ -34,7 +34,7 @@ def test_scores_daily_api_returns_range(client):
 
 @pytest.mark.django_db
 def test_reflection_history_page_renders(client):
-    user = User.objects.create_user(username="history-user", password="Pass12345")
+    User.objects.create_user(username="history-user", password="Pass12345")
     client.login(username="history-user", password="Pass12345")
 
     response = client.get(reverse("reflection_history"))

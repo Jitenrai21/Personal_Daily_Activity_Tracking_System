@@ -23,7 +23,7 @@ def get_user_profile(user):
 
 def get_running_session(user):
     return (
-        Session.objects.filter(user=user, end__isnull=True)
+        Session.objects.filter(user=user, end__isnull=True, source=Session.SOURCE_TIMER)
         .select_related("activity")
         .first()
     )

@@ -727,40 +727,6 @@ textarea {
   min-height: 220px;
 }
 
-.heatmap-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.heatmap-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
-}
-
-.heatmap-cell {
-  background: #e5f3ea;
-  border-radius: 4px;
-  height: 20px;
-}
-
-.heatmap-cell.level-1 {
-  background: #c8e6d6;
-}
-
-.heatmap-cell.level-2 {
-  background: #8fc7ad;
-}
-
-.heatmap-cell.level-3 {
-  background: #5ba786;
-}
-
-.heatmap-cell.level-4 {
-  background: #3f8f6b;
-}
-
 @media (max-width: 900px) {
   .dashboard-header {
     align-items: flex-start;
@@ -1479,12 +1445,12 @@ textarea {
 .heatmap-grid {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .heatmap-row {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   width: 100%;
 }
 
@@ -1492,22 +1458,24 @@ textarea {
   flex: 1 1 0;
   aspect-ratio: 1 / 1;
   min-width: 0;
-  max-height: 22px;
-  border-radius: 4px;
+  max-height: 20px;
+  border-radius: 3px;
   border: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
 .heatmap-cell:hover {
-  transform: scale(1.18);
-  box-shadow: 0 0 0 1px rgba(34, 139, 34, 0.35);
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1.5px rgba(27, 107, 52, 0.3);
 }
 
-.heatmap-cell--0 { background: var(--surface-soft); }
-.heatmap-cell--1 { background: #c8e0c8; }
-.heatmap-cell--2 { background: #8fc98f; }
-.heatmap-cell--3 { background: #4ca64c; }
-.heatmap-cell--4 { background: #228b22; }
+.heatmap-cell.level-0 { background: var(--bg-color); }
+.heatmap-cell.level-1 { background: #e2e8d7; }
+.heatmap-cell.level-2 { background: #a8c9a0; }
+.heatmap-cell.level-3 { background: #5da35d; }
+.heatmap-cell.level-4 { background: #1b6b34; }
+
+.heatmap-cell.level-0:hover { box-shadow: 0 0 0 1.5px rgba(44, 42, 39, 0.12); }
 
 .heatmap-legend {
   display: flex;

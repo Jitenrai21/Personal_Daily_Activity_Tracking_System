@@ -3,7 +3,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.db.models.functions import Coalesce
 from django.shortcuts import render
 from django.urls import reverse
@@ -25,6 +25,7 @@ from tracking.models import Session
 
 
 RANGE_OPTIONS = [7, 30, 90]
+NUM_HEATMAP_WEEKS = 6
 
 
 def parse_range(request):
@@ -130,9 +131,8 @@ def build_daily_series(user, start_date, end_date, category=None, activity=None)
             for session in sessions:
                 overlap_start = max(session.start, start_utc)
                 overlap_end = min(session.end, end_utc)
-                total_minutes += int(
-                    max(0, (overlap_end - overlap_start).total_seconds()) // 60
-                )
+                seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+                total_minutes += int(seconds // 60)
             totals[date] = total_minutes
             sessions_count[date] = sessions.count()
 
@@ -167,9 +167,8 @@ def build_daily_series(user, start_date, end_date, category=None, activity=None)
             for session in sessions:
                 overlap_start = max(session.start, start_utc)
                 overlap_end = min(session.end, end_utc)
-                total_minutes += int(
-                    max(0, (overlap_end - overlap_start).total_seconds()) // 60
-                )
+                seconds = max(0, (overlap_end - overlap_start).total_seconds() - (session.paused_seconds or 0))
+                total_minutes += int(seconds // 60)
             totals[date] = total_minutes
 
             duration_only_sessions = Session.objects.filter(
@@ -395,27 +394,35 @@ def aggregate_monthly(dates, actual, planned):
     return labels, actual_values, planned_values
 
 
+def _intensity_level(value):
+    if value == 0:
+        return 0
+    if value <= 300:
+        return 1
+    if value <= 500:
+        return 2
+    if value <= 700:
+        return 3
+    return 4
+
+
 def build_heatmap(dates, intensity):
     total_map = {date: value for date, value in zip(dates, intensity)}
     if not total_map:
         return []
 
-    max_value = max(total_map.values()) or 1
     weeks = []
-    start_date = dates[0]
-    offset = start_date.weekday()
-    current = start_date - dt.timedelta(days=offset)
+    current = dates[0]
     last = dates[-1]
 
     while current <= last:
         week = []
         for _ in range(7):
             value = total_map.get(current, 0)
-            level = int((value / max_value) * 4) if value else 0
             week.append({
                 "date": current.isoformat(),
                 "value": value,
-                "level": level,
+                "level": _intensity_level(value),
             })
             current += dt.timedelta(days=1)
         weeks.append(week)
@@ -488,7 +495,6 @@ def build_context(request):
 
     series = build_daily_series(user, start_date, end_date)
 
-    intensity_values = [compute_daily_intensity(user, date) for date in series["dates"]]
     category_totals = compute_category_totals(user, start_date, end_date)
     category_chart_rows = [
         row
@@ -508,9 +514,8 @@ def build_context(request):
         series["dates"], series["actual"], series["planned"]
     )
 
-    heatmap_end = local_today
-    heatmap_start = local_today - dt.timedelta(days=41)
-    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(42)]
+    heatmap_start = local_today - dt.timedelta(days=NUM_HEATMAP_WEEKS * 7 - 1)
+    heatmap_dates = [heatmap_start + dt.timedelta(days=i) for i in range(NUM_HEATMAP_WEEKS * 7)]
     heatmap_intensity = [compute_daily_intensity(user, d) for d in heatmap_dates]
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
 

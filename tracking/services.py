@@ -40,7 +40,7 @@ def _parse_paused_at(session):
 def _get_active_timer_session(user):
     return (
         Session.objects.select_for_update()
-        .filter(user=user, end__isnull=True)
+        .filter(user=user, end__isnull=True, source=Session.SOURCE_TIMER)
         .first()
     )
 
