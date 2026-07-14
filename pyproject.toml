@@ -1,0 +1,11 @@
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.format]
+preview = true
+
+[tool.black]
+line-length = 88
