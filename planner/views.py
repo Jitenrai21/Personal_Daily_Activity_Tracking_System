@@ -156,9 +156,9 @@ def schedule_block_start_timer_view(request, pk):
     metadata = {
         "planned_block_id": block.pk,
         "planned_date": block.date.isoformat(),
-        "planned_start_time": block.start_time.isoformat()
-        if block.start_time
-        else None,
+        "planned_start_time": (
+            block.start_time.isoformat() if block.start_time else None
+        ),
         "planned_end_time": block.end_time.isoformat() if block.end_time else None,
         "planned_duration_minutes": block.duration_minutes,
     }

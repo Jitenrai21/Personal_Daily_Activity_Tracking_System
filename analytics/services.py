@@ -5,8 +5,8 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
-from analytics.models import AggregatedDaily
 from activities.models import ActivityCategory
+from analytics.models import AggregatedDaily
 from planner.models import ScheduleBlock
 from tracking.models import Session
 from users.models import UserProfile

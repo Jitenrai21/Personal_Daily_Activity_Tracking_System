@@ -7,8 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
-from analytics.models import AggregatedDaily
 from analytics import views as analytics_views
+from analytics.models import AggregatedDaily
 from analytics.services import (
     compute_category_totals,
     compute_daily,

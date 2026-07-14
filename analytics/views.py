@@ -2,9 +2,9 @@ import datetime as dt
 import json
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, JsonResponse
 from django.db.models import Q
 from django.db.models.functions import Coalesce
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -22,7 +22,6 @@ from analytics.services import (
 )
 from planner.models import ScheduleBlock
 from tracking.models import Session
-
 
 RANGE_OPTIONS = [7, 30, 90]
 NUM_HEATMAP_WEEKS = 6

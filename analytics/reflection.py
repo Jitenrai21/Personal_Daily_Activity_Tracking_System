@@ -1,6 +1,5 @@
 from analytics.models import DailyReflection
 
-
 DEFAULT_PROMPTS = {
     "low_recovery": "What helped or hurt your recovery today, and what is one small adjustment for tonight?",
     "low_balance": "Which area got too little attention today, and how will you rebalance tomorrow?",

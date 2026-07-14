@@ -1,5 +1,4 @@
 import datetime as dt
-
 from zoneinfo import ZoneInfo
 
 from django.db import transaction
@@ -8,7 +7,6 @@ from django.utils import timezone
 from activities.models import Activity
 from tracking.models import Session
 from users.models import UserProfile
-
 
 TIMER_STATE_KEY = "timer_state"
 PAUSED_AT_KEY = "paused_at"

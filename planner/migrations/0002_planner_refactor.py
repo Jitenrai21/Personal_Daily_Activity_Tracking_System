@@ -1,7 +1,7 @@
 import datetime as dt
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 def backfill_schedule_blocks(apps, schema_editor):
