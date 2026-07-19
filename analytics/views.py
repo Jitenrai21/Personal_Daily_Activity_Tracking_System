@@ -284,8 +284,7 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
         category.pk: make_bucket(category.pk, category.name) for category in categories
     }
     session_rows = (
-        Session.objects
-        .filter(
+        Session.objects.filter(
             user=user,
             local_date__range=(start_date, end_date),
             duration_minutes__isnull=False,
@@ -311,8 +310,7 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
             add_activity_minutes(bucket, date, session.activity, "actual", minutes)
 
     blocks = (
-        ScheduleBlock.objects
-        .filter(user=user, date__range=(start_date, end_date))
+        ScheduleBlock.objects.filter(user=user, date__range=(start_date, end_date))
         .select_related("activity", "category")
         .order_by("date")
     )
@@ -349,15 +347,17 @@ def build_category_daily_series(user, start_date, end_date, dates, labels):
                 reverse=True,
             )
             activity_breakdown.append(day_entries)
-        series.append({
-            "id": bucket["id"],
-            "key": bucket["key"],
-            "name": bucket["name"],
-            "labels": labels,
-            "actual": [bucket["actual"][date] for date in dates],
-            "planned": [bucket["planned"][date] for date in dates],
-            "activity_breakdown": activity_breakdown,
-        })
+        series.append(
+            {
+                "id": bucket["id"],
+                "key": bucket["key"],
+                "name": bucket["name"],
+                "labels": labels,
+                "actual": [bucket["actual"][date] for date in dates],
+                "planned": [bucket["planned"][date] for date in dates],
+                "activity_breakdown": activity_breakdown,
+            }
+        )
 
     return series
 
@@ -426,11 +426,13 @@ def build_heatmap(dates, intensity):
         week = []
         for _ in range(7):
             value = total_map.get(current, 0)
-            week.append({
-                "date": current.isoformat(),
-                "value": value,
-                "level": _intensity_level(value),
-            })
+            week.append(
+                {
+                    "date": current.isoformat(),
+                    "value": value,
+                    "level": _intensity_level(value),
+                }
+            )
             current += dt.timedelta(days=1)
         weeks.append(week)
 
@@ -446,21 +448,25 @@ def build_heatmap(dates, intensity):
                     span += 1
                 else:
                     break
-            month_labels.append({
-                "label": mid_date.strftime("%b"),
-                "week_index": week_idx,
-                "span": span,
-                "month": month,
-            })
+            month_labels.append(
+                {
+                    "label": mid_date.strftime("%b"),
+                    "week_index": week_idx,
+                    "span": span,
+                    "month": month,
+                }
+            )
 
     day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     weekday_rows = []
     for day_idx in range(7):
         cells = [week[day_idx] for week in weeks]
-        weekday_rows.append({
-            "label": day_names[day_idx],
-            "cells": cells,
-        })
+        weekday_rows.append(
+            {
+                "label": day_names[day_idx],
+                "cells": cells,
+            }
+        )
 
     return {
         "weeks": weeks,
@@ -652,31 +658,37 @@ def dashboard_partial_view(request):
 @login_required
 def metrics_daily_view(request):
     context = build_context(request)
-    return JsonResponse({
-        "labels": context["daily_labels"],
-        "actual": context["daily_actual"],
-        "planned": context["daily_planned"],
-    })
+    return JsonResponse(
+        {
+            "labels": context["daily_labels"],
+            "actual": context["daily_actual"],
+            "planned": context["daily_planned"],
+        }
+    )
 
 
 @login_required
 def metrics_weekly_view(request):
     context = build_context(request)
-    return JsonResponse({
-        "labels": context["weekly_labels"],
-        "actual": context["weekly_actual"],
-        "planned": context["weekly_planned"],
-    })
+    return JsonResponse(
+        {
+            "labels": context["weekly_labels"],
+            "actual": context["weekly_actual"],
+            "planned": context["weekly_planned"],
+        }
+    )
 
 
 @login_required
 def metrics_monthly_view(request):
     context = build_context(request)
-    return JsonResponse({
-        "labels": context["monthly_labels"],
-        "actual": context["monthly_actual"],
-        "planned": context["monthly_planned"],
-    })
+    return JsonResponse(
+        {
+            "labels": context["monthly_labels"],
+            "actual": context["monthly_actual"],
+            "planned": context["monthly_planned"],
+        }
+    )
 
 
 @login_required
@@ -726,19 +738,23 @@ def scores_daily_api_view(request):
     payload = []
     for local_date in dates:
         score = row_map.get(local_date)
-        payload.append({
-            "local_date": local_date.isoformat(),
-            "discipline_score": score.discipline_score if score else None,
-            "balance_score": score.balance_score if score else None,
-            "recovery_score": score.recovery_score if score else None,
-            "composite_score": score.composite_score if score else None,
-        })
+        payload.append(
+            {
+                "local_date": local_date.isoformat(),
+                "discipline_score": score.discipline_score if score else None,
+                "balance_score": score.balance_score if score else None,
+                "recovery_score": score.recovery_score if score else None,
+                "composite_score": score.composite_score if score else None,
+            }
+        )
 
-    return JsonResponse({
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "items": payload,
-    })
+    return JsonResponse(
+        {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "items": payload,
+        }
+    )
 
 
 @login_required
@@ -750,23 +766,25 @@ def score_detail_api_view(request, date):
     score = upsert_daily_score(request.user, local_date)
     reflection = ensure_daily_reflection(score)
 
-    return JsonResponse({
-        "local_date": local_date.isoformat(),
-        "discipline_score": score.discipline_score,
-        "balance_score": score.balance_score,
-        "recovery_score": score.recovery_score,
-        "composite_score": score.composite_score,
-        "version": score.version,
-        "computed_at": score.computed_at.isoformat(),
-        "explanation": score.explanation_json,
-        "reflection": {
-            "id": reflection.pk,
-            "prompt_text": reflection.prompt_text,
-            "answer_text": reflection.answer_text,
-            "mood": reflection.mood,
-            "tags": reflection.tags,
-        },
-    })
+    return JsonResponse(
+        {
+            "local_date": local_date.isoformat(),
+            "discipline_score": score.discipline_score,
+            "balance_score": score.balance_score,
+            "recovery_score": score.recovery_score,
+            "composite_score": score.composite_score,
+            "version": score.version,
+            "computed_at": score.computed_at.isoformat(),
+            "explanation": score.explanation_json,
+            "reflection": {
+                "id": reflection.pk,
+                "prompt_text": reflection.prompt_text,
+                "answer_text": reflection.answer_text,
+                "mood": reflection.mood,
+                "tags": reflection.tags,
+            },
+        }
+    )
 
 
 @login_required
@@ -799,14 +817,16 @@ def reflections_create_api_view(request):
             pass
 
     reflection.save()
-    return JsonResponse({
-        "id": reflection.pk,
-        "local_date": reflection.local_date.isoformat(),
-        "prompt_text": reflection.prompt_text,
-        "answer_text": reflection.answer_text,
-        "mood": reflection.mood,
-        "tags": reflection.tags,
-    })
+    return JsonResponse(
+        {
+            "id": reflection.pk,
+            "local_date": reflection.local_date.isoformat(),
+            "prompt_text": reflection.prompt_text,
+            "answer_text": reflection.answer_text,
+            "mood": reflection.mood,
+            "tags": reflection.tags,
+        }
+    )
 
 
 @login_required
@@ -833,14 +853,16 @@ def reflections_update_api_view(request, pk):
         reflection.tags = payload["tags"]
 
     reflection.save()
-    return JsonResponse({
-        "id": reflection.pk,
-        "local_date": reflection.local_date.isoformat(),
-        "prompt_text": reflection.prompt_text,
-        "answer_text": reflection.answer_text,
-        "mood": reflection.mood,
-        "tags": reflection.tags,
-    })
+    return JsonResponse(
+        {
+            "id": reflection.pk,
+            "local_date": reflection.local_date.isoformat(),
+            "prompt_text": reflection.prompt_text,
+            "answer_text": reflection.answer_text,
+            "mood": reflection.mood,
+            "tags": reflection.tags,
+        }
+    )
 
 
 @login_required
@@ -857,21 +879,25 @@ def reflections_history_api_view(request):
             user=request.user,
             local_date=reflection.local_date,
         ).first()
-        items.append({
-            "id": reflection.pk,
-            "local_date": reflection.local_date.isoformat(),
-            "prompt_text": reflection.prompt_text,
-            "answer_text": reflection.answer_text,
-            "mood": reflection.mood,
-            "tags": reflection.tags,
-            "composite_score": score.composite_score if score else None,
-        })
+        items.append(
+            {
+                "id": reflection.pk,
+                "local_date": reflection.local_date.isoformat(),
+                "prompt_text": reflection.prompt_text,
+                "answer_text": reflection.answer_text,
+                "mood": reflection.mood,
+                "tags": reflection.tags,
+                "composite_score": score.composite_score if score else None,
+            }
+        )
 
-    return JsonResponse({
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "items": items,
-    })
+    return JsonResponse(
+        {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "items": items,
+        }
+    )
 
 
 @login_required
@@ -891,14 +917,16 @@ def reflection_history_view(request):
         )
     }
     for reflection in reflections:
-        entries.append({
-            "local_date": reflection.local_date,
-            "prompt_text": reflection.prompt_text,
-            "answer_text": reflection.answer_text,
-            "mood": reflection.mood,
-            "tags": reflection.tags,
-            "score": score_map.get(reflection.local_date),
-        })
+        entries.append(
+            {
+                "local_date": reflection.local_date,
+                "prompt_text": reflection.prompt_text,
+                "answer_text": reflection.answer_text,
+                "mood": reflection.mood,
+                "tags": reflection.tags,
+                "score": score_map.get(reflection.local_date),
+            }
+        )
 
     return render(
         request,
