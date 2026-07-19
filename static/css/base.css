@@ -1268,7 +1268,12 @@ textarea {
   flex-direction: column;
   gap: 0;
   border: 1px solid transparent;
-  transition: box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .kpi-card__icon {
@@ -1441,62 +1446,136 @@ textarea {
   overflow: hidden;
 }
 
-/* ─── Heatmap (enhanced) ─── */
-.heatmap-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+/* ─── Contribution Heatmap (GitHub/LeetCode style) ─── */
+.contribution-heatmap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-2) 0 var(--space-1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
 
-.heatmap-row {
-  display: flex;
+.contribution-heatmap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.contribution-heatmap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contribution-heatmap::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.heatmap-grid {
+  display: grid;
   gap: 3px;
   width: 100%;
 }
 
+.month-label {
+  font-size: 0.6rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  align-self: end;
+  padding-bottom: 2px;
+}
+
+.day-label {
+  font-size: 0.55rem;
+  color: var(--accent-color);
+  font-weight: 500;
+  line-height: 1;
+  align-self: center;
+  text-align: right;
+  padding-right: 4px;
+}
+
 .heatmap-cell {
-  flex: 1 1 0;
-  aspect-ratio: 1 / 1;
-  min-width: 0;
-  max-height: 20px;
-  border-radius: 3px;
-  border: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  aspect-ratio: 1;
+  min-width: 6px;
+  max-width: 20px;
+  border-radius: 2px;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .heatmap-cell:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 1.5px rgba(27, 107, 52, 0.3);
+  transform: scale(1.25);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 2;
 }
 
-.heatmap-cell.level-0 { background: var(--bg-color); }
-.heatmap-cell.level-1 { background: #e2e8d7; }
-.heatmap-cell.level-2 { background: #a8c9a0; }
-.heatmap-cell.level-3 { background: #5da35d; }
-.heatmap-cell.level-4 { background: #1b6b34; }
+.heatmap-cell.level-0 { background: var(--surface-soft); }
+.heatmap-cell.level-1 { background: #9be9a8; }
+.heatmap-cell.level-2 { background: #40c463; }
+.heatmap-cell.level-3 { background: #30a14e; }
+.heatmap-cell.level-4 { background: #216e39; }
 
-.heatmap-cell.level-0:hover { box-shadow: 0 0 0 1.5px rgba(44, 42, 39, 0.12); }
+.heatmap-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
 
 .heatmap-legend {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 3px;
+  font-size: 0.65rem;
   color: var(--accent-color);
-  margin-top: var(--space-3);
 }
 
 .heatmap-legend .heatmap-cell {
-  flex: 0 0 auto;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   aspect-ratio: unset;
-  max-height: none;
+  min-width: unset;
+  max-width: unset;
+  cursor: default;
 }
 
 .heatmap-legend .heatmap-cell:hover {
+  outline: none;
   transform: none;
-  box-shadow: none;
+}
+
+.heatmap-years {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.year-btn {
+  padding: 3px 9px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.year-btn:hover {
+  background: var(--surface-soft-hover);
+  border-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+.year-btn.active {
+  background: var(--text-color);
+  color: var(--bg-color);
+  border-color: var(--text-color);
 }
 
 /* ─── Auth Shell (replaces .auth-shell, .auth-card) ─── */

@@ -73,28 +73,50 @@
   <div class="chart-card chart-wide surface-card page-card">
     <div class="chart-header">
       <h2>Heatmap</h2>
-      <span class="muted">Intensity-based streaks</span>
+      <span class="muted">{{ heatmap_total }} pts in
+        {% if selected_heatmap_year %}{{ selected_heatmap_year }}{% else %}the last year{% endif %}</span>
     </div>
-    <div class="heatmap-grid">
-      {% for week in heatmap %}
-        <div class="heatmap-row">
-          {% for cell in week %}
-            <div
-              class="heatmap-cell level-{{ cell.level }}"
-              title="{{ cell.date }} • {{ cell.value }} pts"
-            ></div>
+    <div class="contribution-heatmap">
+      <div class="heatmap-grid"
+           style="grid-template-columns: 34px repeat({{ heatmap.num_weeks }}, 1fr);">
+        {% for ml in heatmap.month_labels %}
+          <span class="month-label"
+                style="grid-column: {{ ml.week_index|add:2 }} / span {{ ml.span }}; grid-row: 1;">{{ ml.label }}</span>
+        {% endfor %}
+        {% for day_row in heatmap.weekday_rows %}
+          {% if day_row.label %}
+            <span class="day-label"
+                  style="grid-row: {{ forloop.counter|add:1 }}; grid-column: 1;">{{ day_row.label }}</span>
+          {% endif %}
+          {% for cell in day_row.cells %}
+            <div class="heatmap-cell level-{{ cell.level }}"
+                 style="grid-column: {{ forloop.counter|add:1 }}; grid-row: {{ forloop.parentloop.counter|add:1 }};"
+                 data-date="{{ cell.date }}"
+                 data-value="{{ cell.value }}"
+              title="{{ cell.date }} — {{ cell.value }} pts">
+            </div>
           {% endfor %}
+        {% endfor %}
+      </div>
+      <div class="heatmap-footer">
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <span class="heatmap-cell level-0"></span>
+          <span class="heatmap-cell level-1"></span>
+          <span class="heatmap-cell level-2"></span>
+          <span class="heatmap-cell level-3"></span>
+          <span class="heatmap-cell level-4"></span>
+          <span>More</span>
         </div>
-      {% endfor %}
-    </div>
-    <div class="heatmap-legend">
-      <span>Less</span>
-      <div class="heatmap-cell level-0"></div>
-      <div class="heatmap-cell level-1"></div>
-      <div class="heatmap-cell level-2"></div>
-      <div class="heatmap-cell level-3"></div>
-      <div class="heatmap-cell level-4"></div>
-      <span>More</span>
+        <div class="heatmap-years">
+          {% for y in year_options %}
+            <button class="year-btn {% if y == selected_heatmap_year %}active{% endif %}"
+                    data-year="{{ y }}">{{ y }}</button>
+          {% endfor %}
+          <button class="year-btn {% if not selected_heatmap_year %}active{% endif %}"
+                  data-year="latest">Last year</button>
+        </div>
+      </div>
     </div>
   </div>
 </section>

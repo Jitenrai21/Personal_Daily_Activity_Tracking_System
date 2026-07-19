@@ -390,5 +390,14 @@
         }
       }
     });
+
+    document.body.addEventListener("click", (event) => {
+      const btn = event.target.closest(".year-btn");
+      if (!btn) return;
+      const year = btn.dataset.year;
+      const params = new URLSearchParams(window.location.search);
+      params.set("heatmap_year", year);
+      htmx.ajax("GET", `{% url 'dashboard_partial' %}?${params.toString()}`, { target: "#dashboard-pane", swap: "innerHTML" });
+    });
   </script>
 {% endblock %}

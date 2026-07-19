@@ -24,7 +24,6 @@ from planner.models import ScheduleBlock
 from tracking.models import Session
 
 RANGE_OPTIONS = [7, 30, 90]
-NUM_HEATMAP_WEEKS = 6
 
 
 def parse_range(request):
@@ -416,27 +415,70 @@ def _intensity_level(value):
 def build_heatmap(dates, intensity):
     total_map = {date: value for date, value in zip(dates, intensity)}
     if not total_map:
-        return []
+        return {"weeks": [], "month_labels": [], "weekday_rows": [], "num_weeks": 0}
+
+    start = dates[0]
+    last = dates[-1]
+    current = start - dt.timedelta(days=start.weekday())
 
     weeks = []
-    current = dates[0]
-    last = dates[-1]
-
     while current <= last:
         week = []
         for _ in range(7):
             value = total_map.get(current, 0)
-            week.append(
-                {
-                    "date": current.isoformat(),
-                    "value": value,
-                    "level": _intensity_level(value),
-                }
-            )
+            week.append({
+                "date": current.isoformat(),
+                "value": value,
+                "level": _intensity_level(value),
+            })
             current += dt.timedelta(days=1)
         weeks.append(week)
 
-    return weeks
+    month_labels = []
+    for week_idx, week in enumerate(weeks):
+        mid_date = dt.date.fromisoformat(week[3]["date"])
+        month = mid_date.month
+        if not month_labels or month_labels[-1]["month"] != month:
+            span = 1
+            for n in range(week_idx + 1, len(weeks)):
+                nd = dt.date.fromisoformat(weeks[n][3]["date"])
+                if nd.month == month:
+                    span += 1
+                else:
+                    break
+            month_labels.append({
+                "label": mid_date.strftime("%b"),
+                "week_index": week_idx,
+                "span": span,
+                "month": month,
+            })
+
+    day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    weekday_rows = []
+    for day_idx in range(7):
+        cells = [week[day_idx] for week in weeks]
+        weekday_rows.append({
+            "label": day_names[day_idx],
+            "cells": cells,
+        })
+
+    return {
+        "weeks": weeks,
+        "month_labels": month_labels,
+        "weekday_rows": weekday_rows,
+        "num_weeks": len(weeks),
+    }
+
+
+def parse_heatmap_year(request, year_options):
+    raw = request.GET.get("heatmap_year", "").strip()
+    if not raw or raw == "latest":
+        return None
+    if raw.isdigit():
+        year = int(raw)
+        if year in year_options:
+            return year
+    return None
 
 
 def build_kpis(total_actual, total_planned, streak, category_totals):
@@ -527,12 +569,21 @@ def build_context(request):
         series["dates"], series["actual"], series["planned"]
     )
 
-    heatmap_start = local_today - dt.timedelta(days=NUM_HEATMAP_WEEKS * 7 - 1)
+    selected_heatmap_year = parse_heatmap_year(request, year_options)
+    if selected_heatmap_year is None:
+        heatmap_end = local_today
+        heatmap_start = heatmap_end - dt.timedelta(days=364)
+    else:
+        heatmap_start = dt.date(selected_heatmap_year, 1, 1)
+        heatmap_end = dt.date(selected_heatmap_year, 12, 31)
+
     heatmap_dates = [
-        heatmap_start + dt.timedelta(days=i) for i in range(NUM_HEATMAP_WEEKS * 7)
+        heatmap_start + dt.timedelta(days=i)
+        for i in range((heatmap_end - heatmap_start).days + 1)
     ]
     heatmap_intensity = [compute_daily_intensity(user, d) for d in heatmap_dates]
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
+    heatmap_total = sum(cell["value"] for week in heatmap["weeks"] for cell in week)
 
     # Compute streak from full history up to today — never filtered
     streak = _compute_global_streak(user, local_today)
@@ -574,6 +625,8 @@ def build_context(request):
         "category_planned": category_planned,
         "category_daily_series": category_daily_series,
         "heatmap": heatmap,
+        "heatmap_total": heatmap_total,
+        "selected_heatmap_year": selected_heatmap_year,
         "kpis": kpis,
         "local_today": local_today,
     }
@@ -635,7 +688,7 @@ def metrics_monthly_view(request):
 @login_required
 def metrics_heatmap_view(request):
     context = build_context(request)
-    return JsonResponse({"weeks": context["heatmap"]})
+    return JsonResponse(context["heatmap"])
 
 
 def _parse_date(raw_value):
