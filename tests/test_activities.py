@@ -59,7 +59,7 @@ def test_planner_activity_crud_and_scope(client):
         {
             "title": "Run",
             "category": cat.pk,
-            "priority": 2,
+            "weight": 2,
             "notes": "Morning",
         },
     )
@@ -72,7 +72,7 @@ def test_planner_activity_crud_and_scope(client):
         {
             "title": "Run fast",
             "category": cat.pk,
-            "priority": 1,
+            "weight": 1,
             "notes": "Track pace",
         },
     )
@@ -87,7 +87,7 @@ def test_planner_activity_crud_and_scope(client):
         {
             "title": "Steal",
             "category": cat.pk,
-            "priority": 1,
+            "weight": 1,
             "notes": "",
         },
     )
@@ -98,7 +98,7 @@ def test_planner_activity_crud_and_scope(client):
         user=other,
         title="Game",
         category=own_cat,
-        priority=3,
+        weight=3,
     )
     delete = client.post(reverse("planner_activity_delete", args=[own_activity.pk]))
     assert delete.status_code == 302

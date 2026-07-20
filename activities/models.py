@@ -24,7 +24,7 @@ class Activity(models.Model):
         ActivityCategory, on_delete=models.PROTECT, related_name="activities"
     )
     title = models.CharField(max_length=200)
-    priority = models.PositiveSmallIntegerField(default=3)
+    weight = models.PositiveSmallIntegerField(default=3)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

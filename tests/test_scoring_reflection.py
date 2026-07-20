@@ -27,7 +27,7 @@ def test_daily_score_is_normalized_and_persisted():
         user=user,
         title="Build",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     local_date = dt.date(2026, 1, 10)

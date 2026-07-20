@@ -31,7 +31,7 @@ def test_compute_daily_splits_midnight_session():
         user=user,
         title="Late shift",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     tz = ZoneInfo("Asia/Kathmandu")
@@ -84,7 +84,7 @@ def test_update_daily_creates_record():
 
 
 @pytest.mark.django_db
-def test_category_totals_weighted_by_priority():
+def test_category_totals_weighted_by_weight():
     user = User.objects.create_user(username="u3", password="Pass12345")
     category = ActivityCategory.objects.create(user=user, name="Deep")
     low_category = ActivityCategory.objects.create(user=user, name="Light")
@@ -92,13 +92,13 @@ def test_category_totals_weighted_by_priority():
         user=user,
         title="Deep work",
         category=category,
-        priority=3,
+        weight=3,
     )
     low = Activity.objects.create(
         user=user,
         title="Email",
         category=low_category,
-        priority=1,
+        weight=1,
     )
 
     start = timezone.now()
@@ -128,14 +128,14 @@ def test_category_totals_weighted_by_priority():
 
 
 @pytest.mark.django_db
-def test_daily_intensity_uses_priority():
+def test_daily_intensity_uses_weight():
     user = User.objects.create_user(username="u4", password="Pass12345")
     category = ActivityCategory.objects.create(user=user, name="Focus")
     activity = Activity.objects.create(
         user=user,
         title="Study",
         category=category,
-        priority=2,
+        weight=2,
     )
     start = timezone.now()
     Session.objects.create(
@@ -199,7 +199,7 @@ def test_dashboard_filters_by_from_and_to_dates(monkeypatch, client):
     profile.save(update_fields=["timezone"])
     category = ActivityCategory.objects.create(user=user, name="Work")
     activity = Activity.objects.create(
-        user=user, title="Focus", category=category, priority=2
+        user=user, title="Focus", category=category, weight=2
     )
 
     fixed_now = dt.datetime(2026, 6, 2, 12, 0, tzinfo=dt.timezone.utc)

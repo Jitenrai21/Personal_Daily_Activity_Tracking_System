@@ -15,7 +15,7 @@ class ActivityForm(forms.ModelForm):
         fields = (
             "category",
             "title",
-            "priority",
+            "weight",
             "notes",
         )
         widgets = {

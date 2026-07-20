@@ -1211,8 +1211,8 @@ textarea {
   color: var(--accent-color);
 }
 
-/* ─── Priority Indicator (keeps existing .priority-indicator) ─── */
-.priority-indicator {
+/* ─── Weight Indicator ─── */
+.weight-indicator {
   display: inline-block;
   width: 8px;
   height: 8px;
@@ -1220,9 +1220,9 @@ textarea {
   margin-right: var(--space-2);
 }
 
-.priority-indicator--high { background: var(--color-danger); }
-.priority-indicator--medium { background: var(--color-warning); }
-.priority-indicator--low { background: var(--color-success); }
+.weight-indicator--high { background: var(--color-danger); }
+.weight-indicator--medium { background: var(--color-warning); }
+.weight-indicator--low { background: var(--color-success); }
 
 /* ─── Timer Display (for live timer rows) ─── */
 .timer-display {
@@ -1577,7 +1577,6 @@ textarea {
   color: var(--bg-color);
   border-color: var(--text-color);
 }
-
 /* ─── Auth Shell (replaces .auth-shell, .auth-card) ─── */
 .auth-shell {
   min-height: 100vh;

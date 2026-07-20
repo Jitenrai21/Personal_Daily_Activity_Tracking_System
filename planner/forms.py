@@ -21,7 +21,7 @@ class PlannerCategoryForm(forms.ModelForm):
 class PlannerActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
-        fields = ("category", "title", "priority", "notes")
+        fields = ("category", "title", "weight", "notes")
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
         }

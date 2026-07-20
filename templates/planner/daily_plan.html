@@ -152,7 +152,7 @@
                     <div class="mgmt-col mgmt-col-actions">Actions</div>
                   </div>
                   <div class="mgmt-table-body">
-                    {% for category in categories %}
+                    {% for category in categories|slice:":5" %}
                       <div class="mgmt-row mgmt-cat-grid">
                         <div class="mgmt-cell" data-label="Name">
                           <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
@@ -185,6 +185,51 @@
                       </div>
                     {% endfor %}
                   </div>
+                  {% with extra_cats=categories|slice:"5:" %}
+                  {% if extra_cats %}
+                    <div class="collapse-extra" id="cat-extra">
+                      {% for category in extra_cats %}
+                        <div class="mgmt-row mgmt-cat-grid">
+                          <div class="mgmt-cell" data-label="Name">
+                            <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Description">
+                            <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                            <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                            <form method="post" action="{% url 'planner_category_delete' category.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="collapse-bar">
+                      <button class="collapse-btn" data-extra="cat-extra">
+                        <span class="chevron">&#9660;</span>
+                        <span class="txt-closed">Show all <span class="count">{{ categories|length }}</span></span>
+                        <span class="txt-open">Show less</span>
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% endwith %}
                 </div>
               {% else %}
                 <div class="mgmt-empty">No categories yet.</div>
@@ -216,8 +261,8 @@
                   <div class="form-control">{{ activity_form.title }}</div>
                 </div>
                 <div class="session-form-row">
-                  <label class="form-label" for="{{ activity_form.priority.id_for_label }}">Priority</label>
-                  <div class="form-control">{{ activity_form.priority }}</div>
+                  <label class="form-label" for="{{ activity_form.weight.id_for_label }}">Weight</label>
+                  <div class="form-control">{{ activity_form.weight }}</div>
                 </div>
                 <div class="session-form-row">
                   <label class="form-label" for="{{ activity_form.notes.id_for_label }}">Notes</label>
@@ -238,12 +283,12 @@
                   <div class="mgmt-table-header mgmt-act-grid">
                     <div class="mgmt-col">Title</div>
                     <div class="mgmt-col">Category</div>
-                    <div class="mgmt-col mgmt-col-center">Priority</div>
+                    <div class="mgmt-col mgmt-col-center">Weight</div>
                     <div class="mgmt-col">Notes</div>
                     <div class="mgmt-col mgmt-col-actions">Actions</div>
                   </div>
                   <div class="mgmt-table-body">
-                    {% for item in activities %}
+                    {% for item in activities|slice:":5" %}
                       <div class="mgmt-row mgmt-act-grid">
                         <div class="mgmt-cell" data-label="Title">
                           <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
@@ -256,7 +301,7 @@
                           </select>
                         </div>
                         <div class="mgmt-cell mgmt-cell-center" data-label="Priority">
-                          <input type="number" name="priority" min="1" max="5" value="{{ item.priority }}" required form="activity-form-{{ item.pk }}">
+                          <input type="number" name="weight" min="1" max="5" value="{{ item.weight }}" required form="activity-form-{{ item.pk }}">
                         </div>
                         <div class="mgmt-cell" data-label="Notes">
                           <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
@@ -286,6 +331,61 @@
                       </div>
                     {% endfor %}
                   </div>
+                  {% with extra_acts=activities|slice:"5:" %}
+                  {% if extra_acts %}
+                    <div class="collapse-extra" id="act-extra">
+                      {% for item in extra_acts %}
+                        <div class="mgmt-row mgmt-act-grid">
+                          <div class="mgmt-cell" data-label="Title">
+                            <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Category">
+                            <select name="category" form="activity-form-{{ item.pk }}">
+                              {% for category in categories %}
+                                <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-center" data-label="Priority">
+                            <input type="number" name="weight" min="1" max="5" value="{{ item.weight }}" required form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Notes">
+                            <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                            <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                            <form method="post" action="{% url 'planner_activity_delete' item.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="collapse-bar">
+                      <button class="collapse-btn" data-extra="act-extra">
+                        <span class="chevron">&#9660;</span>
+                        <span class="txt-closed">Show all <span class="count">{{ activities|length }}</span></span>
+                        <span class="txt-open">Show less</span>
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% endwith %}
                 </div>
               {% else %}
                 <div class="mgmt-empty">No activities yet.</div>
@@ -482,6 +582,54 @@
       box-shadow: 0 0 0 3px rgba(74, 70, 67, 0.12);
       background: var(--surface-soft);
     }
+
+    /* ─── Collapse panel ─── */
+    .collapse-extra {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.35s ease;
+    }
+    .collapse-extra.open {
+      max-height: 2000px;
+    }
+    .collapse-bar {
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0 0;
+      border-top: 1px dashed var(--border-color);
+      margin-top: 0.5rem;
+    }
+    .collapse-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+    .collapse-btn:hover {
+      color: var(--text-color);
+    }
+    .collapse-btn .chevron {
+      font-size: 0.55rem;
+      transition: transform 0.25s ease;
+    }
+    .collapse-btn.open .chevron {
+      transform: rotate(180deg);
+    }
+    .collapse-btn .count {
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    .collapse-btn .txt-open { display: none; }
+    .collapse-btn.open .txt-closed { display: none; }
+    .collapse-btn.open .txt-open { display: inline; }
 
     /* ─── Icon buttons ─── */
     .btn-icon {
@@ -694,5 +842,15 @@
       categoryField.addEventListener("change", filterActivities);
       filterActivities();
     }
+
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.collapse-btn');
+      if (!btn) return;
+      var extra = document.getElementById(btn.dataset.extra);
+      if (!extra) return;
+      var isOpen = extra.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      extra.style.maxHeight = isOpen ? extra.scrollHeight + 'px' : '0';
+    });
   </script>
 {% endblock %}

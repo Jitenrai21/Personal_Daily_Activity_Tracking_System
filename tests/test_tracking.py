@@ -18,7 +18,7 @@ def test_session_duration_minutes():
         user=user,
         title="Deep work",
         category=category,
-        priority=1,
+        weight=1,
     )
     start = timezone.now()
     end = start + dt.timedelta(minutes=45)
@@ -44,7 +44,7 @@ def test_session_duration_minutes_respects_pause_time():
         user=user,
         title="Deep work",
         category=category,
-        priority=1,
+        weight=1,
     )
     start = timezone.now()
     end = start + dt.timedelta(minutes=45)
@@ -71,7 +71,7 @@ def test_start_stop_timer_flow(client):
         user=user,
         title="Stretch",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     client.login(username="u1", password="Pass12345")
@@ -102,7 +102,7 @@ def test_manual_session_log(client):
         user=user,
         title="Read",
         category=category,
-        priority=2,
+        weight=2,
     )
 
     client.login(username="u1", password="Pass12345")
@@ -130,7 +130,7 @@ def test_duration_only_session_log(client):
         user=user,
         title="Read",
         category=category,
-        priority=2,
+        weight=2,
     )
 
     client.login(username="u1", password="Pass12345")
@@ -159,7 +159,7 @@ def test_end_before_start_rejected(client):
         user=user,
         title="Read",
         category=category,
-        priority=2,
+        weight=2,
     )
 
     client.login(username="u1", password="Pass12345")

@@ -166,7 +166,7 @@ def compute_category_totals(user, start_date, end_date):
             session.activity.category if session.activity else None
         )
         category_id = category.pk if category else None
-        priority = session.activity.priority if session.activity else 1
+        weight = session.activity.weight if session.activity else 1
         bucket = category_map.setdefault(
             category_id,
             {
@@ -178,7 +178,7 @@ def compute_category_totals(user, start_date, end_date):
             },
         )
         bucket["actual_minutes"] += minutes
-        bucket["intensity_score"] += minutes * max(1, priority)
+        bucket["intensity_score"] += minutes * max(1, weight)
 
     duration_only_sessions = Session.objects.filter(
         user=user,
@@ -196,7 +196,7 @@ def compute_category_totals(user, start_date, end_date):
             session.activity.category if session.activity else None
         )
         category_id = category.pk if category else None
-        priority = session.activity.priority if session.activity else 1
+        weight = session.activity.weight if session.activity else 1
         bucket = category_map.setdefault(
             category_id,
             {
@@ -208,7 +208,7 @@ def compute_category_totals(user, start_date, end_date):
             },
         )
         bucket["actual_minutes"] += minutes
-        bucket["intensity_score"] += minutes * max(1, priority)
+        bucket["intensity_score"] += minutes * max(1, weight)
 
     blocks = ScheduleBlock.objects.filter(
         user=user, date__range=(start_date, end_date)
@@ -268,8 +268,8 @@ def compute_daily_intensity(user, date):
         minutes = int(seconds // 60)
         if minutes <= 0:
             continue
-        priority = session.activity.priority if session.activity else 1
-        intensity += minutes * max(1, priority)
+        weight = session.activity.weight if session.activity else 1
+        intensity += minutes * max(1, weight)
 
     duration_only_sessions = Session.objects.filter(
         user=user,
@@ -282,7 +282,7 @@ def compute_daily_intensity(user, date):
         minutes = session.duration_minutes or 0
         if minutes <= 0:
             continue
-        priority = session.activity.priority if session.activity else 1
-        intensity += minutes * max(1, priority)
+        weight = session.activity.weight if session.activity else 1
+        intensity += minutes * max(1, weight)
 
     return intensity

@@ -19,7 +19,7 @@ def test_planner_auto_duration_from_times():
         user=user,
         title="Study",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     form = ScheduleBlockForm(
@@ -47,7 +47,7 @@ def test_planner_duration_only_block():
         user=user,
         title="Stretch",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     form = ScheduleBlockForm(
@@ -74,7 +74,7 @@ def test_planner_end_before_start_rejected():
         user=user,
         title="Read",
         category=category,
-        priority=1,
+        weight=1,
     )
 
     form = ScheduleBlockForm(
@@ -100,7 +100,7 @@ def test_schedule_user_isolation(client):
         user=user1,
         title="Task",
         category=category1,
-        priority=1,
+        weight=1,
     )
 
     ScheduleBlock.objects.create(
@@ -139,7 +139,7 @@ def test_planner_start_timer_creates_session(client):
         user=user,
         title="Build",
         category=category,
-        priority=1,
+        weight=1,
     )
     block = ScheduleBlock.objects.create(
         user=user,
@@ -169,7 +169,7 @@ def test_planner_pause_resume_timer_flow(client, monkeypatch):
         user=user,
         title="Build",
         category=category,
-        priority=1,
+        weight=1,
     )
     block = ScheduleBlock.objects.create(
         user=user,
@@ -232,7 +232,7 @@ def test_planner_stop_timer_restores_start_ui(client):
         user=user,
         title="Build",
         category=category,
-        priority=1,
+        weight=1,
     )
     block = ScheduleBlock.objects.create(
         user=user,

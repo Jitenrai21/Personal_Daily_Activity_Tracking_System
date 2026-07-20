@@ -11,9 +11,9 @@ class ActivityCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = ("title", "user", "category", "priority")
+    list_display = ("title", "user", "category", "weight")
     search_fields = ("title", "user__username", "user__email")
-    list_filter = ("priority",)
+    list_filter = ("weight",)
 
 
 @admin.register(RecurrenceRule)
