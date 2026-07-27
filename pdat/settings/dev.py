@@ -1,7 +1,6 @@
-# ruff: noqa: F403,F405
-from .base import *
+from .base import *  # noqa: F403
 
 DEBUG = True
 
-if not ALLOWED_HOSTS:
+if not ALLOWED_HOSTS:  # noqa: F405
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]

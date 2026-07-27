@@ -3,8 +3,7 @@
 Import core settings from base and override minimal values here.
 """
 
-# ruff: noqa: F403,F405
-from .base import *
+from .base import *  # noqa: F403
 
 DEBUG = False
 
