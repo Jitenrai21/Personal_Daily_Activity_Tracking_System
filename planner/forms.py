@@ -73,7 +73,7 @@ class ScheduleBlockForm(forms.ModelForm):
                 )
             self.fields["activity"].queryset = activity_qs
             if not self.is_bound and not self.initial.get("date"):
-                self.initial["date"] = dt.date.today()
+                self.initial["date"] = dt.datetime.now(dt.timezone.utc).date()
         if (
             self.instance
             and self.instance.activity_id

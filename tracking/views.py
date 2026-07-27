@@ -108,7 +108,7 @@ def session_start_view(request):
     if planned_block_id:
         metadata = {"planned_block_id": planned_block_id}
 
-    session, running = start_timer_session(
+    _, running = start_timer_session(
         user=request.user,
         activity=activity,
         notes=notes,

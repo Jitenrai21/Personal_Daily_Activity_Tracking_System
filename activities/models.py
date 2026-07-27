@@ -60,9 +60,8 @@ class RecurrenceRule(models.Model):
         if self.interval < 1:
             raise ValidationError({"interval": "Interval must be >= 1."})
 
-        if self.frequency == self.FREQ_WEEKLY:
-            if not self.weekdays:
-                raise ValidationError({"weekdays": "Weekdays are required."})
+        if self.frequency == self.FREQ_WEEKLY and not self.weekdays:
+            raise ValidationError({"weekdays": "Weekdays are required."})
 
         if self.end_date and self.end_date < self.start_date:
             raise ValidationError({"end_date": "End date cannot be before start date."})

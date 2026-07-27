@@ -550,9 +550,7 @@ def build_context(request):
             end_date = dt.date(selected_year, 12, 31)
 
         start_date = end_date - dt.timedelta(days=days - 1)
-        year_start = dt.date(selected_year, 1, 1)
-        if start_date < year_start:
-            start_date = year_start
+        start_date = max(start_date, dt.date(selected_year, 1, 1))
 
     series = build_daily_series(user, start_date, end_date)
 

@@ -3,7 +3,6 @@ import datetime as dt
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
 from analytics.models import DailyReflection, DailyScore
@@ -31,8 +30,8 @@ def test_daily_score_is_normalized_and_persisted():
     )
 
     local_date = dt.date(2026, 1, 10)
-    start = timezone.make_aware(dt.datetime(2026, 1, 10, 9, 0), dt.timezone.utc)
-    end = timezone.make_aware(dt.datetime(2026, 1, 10, 10, 0), dt.timezone.utc)
+    start = dt.datetime(2026, 1, 10, 9, 0, tzinfo=dt.timezone.utc)
+    end = dt.datetime(2026, 1, 10, 10, 0, tzinfo=dt.timezone.utc)
 
     Session.objects.create(
         user=user,

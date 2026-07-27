@@ -3,7 +3,6 @@ import datetime as dt
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
 
 from activities.models import Activity, ActivityCategory
 from planner.forms import ScheduleBlockForm
@@ -180,10 +179,10 @@ def test_planner_pause_resume_timer_flow(client, monkeypatch):
         end_time=dt.time(10, 0),
     )
 
-    start_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 0), dt.timezone.utc)
-    pause_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 15), dt.timezone.utc)
-    resume_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 25), dt.timezone.utc)
-    stop_time = timezone.make_aware(dt.datetime(2026, 1, 4, 9, 55), dt.timezone.utc)
+    start_time = dt.datetime(2026, 1, 4, 9, 0, tzinfo=dt.timezone.utc)
+    pause_time = dt.datetime(2026, 1, 4, 9, 15, tzinfo=dt.timezone.utc)
+    resume_time = dt.datetime(2026, 1, 4, 9, 25, tzinfo=dt.timezone.utc)
+    stop_time = dt.datetime(2026, 1, 4, 9, 55, tzinfo=dt.timezone.utc)
 
     client.login(username="u1", password="Pass12345")
     monkeypatch.setattr("tracking.services.timezone.now", lambda: start_time)
