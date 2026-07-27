@@ -19,7 +19,20 @@
       <div class="planner-card planner-card-wide surface-card page-card">
         <div class="planner-card-header">
           <h2>Today's blocks</h2>
-          <span class="page-chip">{{ date }}</span>
+          <div class="planner-card-header-actions">
+            <span class="page-chip">{{ date }}</span>
+            <form method="post" action="{% url 'schedule_copy_previous' %}" hx-post="{% url 'schedule_copy_previous' %}" hx-target="#schedule-list" hx-swap="innerHTML" class="copy-form">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <button class="btn btn-secondary btn-copy" type="submit" title="Copy from yesterday">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 4H4C2.89543 4 2 4.89543 2 6V12C2 13.1046 2.89543 14 4 14H12C13.1046 14 14 13.1046 14 12V6C14 4.89543 13.1046 4 12 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Copy from yesterday
+              </button>
+            </form>
+          </div>
         </div>
         <div id="schedule-list" class="planner-list">
           {% include 'planner/partials/schedule_list.html' %}
@@ -405,14 +418,62 @@
     .planner-card-header {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 1rem;
       margin-bottom: 1.2rem;
+      flex-wrap: wrap;
     }
 
     .planner-card-header h2 {
       margin: 0;
       font-size: 1.2rem;
+    }
+
+    .planner-card-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .copy-form {
+      display: inline-flex;
+      margin: 0;
+    }
+
+    .copy-form .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      background: transparent;
+      border: 1px solid rgba(28, 43, 34, 0.15);
+      color: #617167;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .copy-form .btn-copy:hover {
+      background: rgba(63, 143, 107, 0.08);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
+    }
+
+    .copy-form .btn-copy svg {
+      flex-shrink: 0;
+    }
+
+    .btn-edit {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .btn-edit:hover {
+      background: rgba(63, 143, 107, 0.08);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
     }
 
     .planner-card-hint {

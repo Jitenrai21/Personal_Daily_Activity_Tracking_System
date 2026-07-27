@@ -1448,24 +1448,9 @@ textarea {
 
 /* ─── Contribution Heatmap (GitHub/LeetCode style) ─── */
 .contribution-heatmap {
-  overflow-x: auto;
+  overflow-x: clip;
   overflow-y: hidden;
   padding: var(--space-2) 0 var(--space-1);
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
-}
-
-.contribution-heatmap::-webkit-scrollbar {
-  height: 6px;
-}
-
-.contribution-heatmap::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.contribution-heatmap::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
 }
 
 .heatmap-grid {

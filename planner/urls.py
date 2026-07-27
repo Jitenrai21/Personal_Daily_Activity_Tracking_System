@@ -5,7 +5,11 @@ from planner import views
 urlpatterns = [
     path("", views.daily_plan_view, name="planner_day"),
     path("create/", views.schedule_block_create_view, name="schedule_create"),
+    path("copy-previous/", views.copy_previous_day_plan_view, name="schedule_copy_previous"),
     path("<int:pk>/delete/", views.schedule_block_delete_view, name="schedule_delete"),
+    path("<int:pk>/edit/", views.schedule_block_edit_form_view, name="schedule_edit_form"),
+    path("<int:pk>/update/", views.schedule_block_update_view, name="schedule_update"),
+    path("<int:pk>/row/", views.schedule_block_row_view, name="schedule_row"),
     path(
         "<int:pk>/start/",
         views.schedule_block_start_timer_view,
