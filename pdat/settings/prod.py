@@ -3,7 +3,7 @@
 Import core settings from base and override minimal values here.
 """
 
-from .base import *  # noqa: F403
+from .base import *
 
 DEBUG = False
 

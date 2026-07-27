@@ -4,6 +4,9 @@ profile = "black"
 [tool.ruff]
 line-length = 88
 
+[tool.ruff.lint]
+ignore = ["F403", "F405"]
+
 [tool.ruff.format]
 preview = true
 
