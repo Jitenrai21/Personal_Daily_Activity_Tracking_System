@@ -8,7 +8,7 @@ class ActivityCategory(models.Model):
     description = models.TextField(blank=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["user", "name"], name="unique_category_per_user"
             )
@@ -30,7 +30,7 @@ class Activity(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at"]
+        ordering = ["-updated_at"]  # noqa: RUF012
 
     def __str__(self) -> str:
         return self.title
@@ -40,7 +40,7 @@ class RecurrenceRule(models.Model):
     FREQ_DAILY = "daily"
     FREQ_WEEKLY = "weekly"
     FREQ_MONTHLY = "monthly"
-    FREQ_CHOICES = [
+    FREQ_CHOICES = [  # noqa: RUF012
         (FREQ_DAILY, "Daily"),
         (FREQ_WEEKLY, "Weekly"),
         (FREQ_MONTHLY, "Monthly"),

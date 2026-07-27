@@ -11,7 +11,7 @@ class Session(models.Model):
     SOURCE_TIMER = "timer"
     SOURCE_MANUAL = "manual"
     SOURCE_IMPORT = "import"
-    SOURCE_CHOICES = [
+    SOURCE_CHOICES = [  # noqa: RUF012
         (SOURCE_TIMER, "Timer"),
         (SOURCE_MANUAL, "Manual"),
         (SOURCE_IMPORT, "Import"),
@@ -38,8 +38,8 @@ class Session(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-local_date", "-start"]
-        indexes = [
+        ordering = ["-local_date", "-start"]  # noqa: RUF012
+        indexes = [  # noqa: RUF012
             models.Index(fields=["user", "start"]),
             models.Index(fields=["user", "local_date"]),
             models.Index(fields=["created_at"]),

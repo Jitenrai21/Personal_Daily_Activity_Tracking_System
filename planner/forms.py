@@ -11,7 +11,7 @@ class PlannerCategoryForm(forms.ModelForm):
     class Meta:
         model = ActivityCategory
         fields = ("name", "description")
-        widgets = {
+        widgets = {  # noqa: RUF012
             "description": forms.Textarea(
                 attrs={"rows": 2, "placeholder": "Optional description"}
             ),
@@ -22,7 +22,7 @@ class PlannerActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
         fields = ("category", "title", "weight", "notes")
-        widgets = {
+        widgets = {  # noqa: RUF012
             "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
         }
 
@@ -47,7 +47,7 @@ class ScheduleBlockForm(forms.ModelForm):
             "duration_minutes",
             "notes",
         )
-        widgets = {
+        widgets = {  # noqa: RUF012
             "date": forms.DateInput(attrs={"type": "date"}),
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),

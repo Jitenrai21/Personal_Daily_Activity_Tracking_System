@@ -24,11 +24,11 @@ def ensure_paused_seconds_column(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = [  # noqa: RUF012
         ("tracking", "0003_alter_session_options_and_more"),
     ]
 
-    operations = [
+    operations = [  # noqa: RUF012
         migrations.SeparateDatabaseAndState(
             database_operations=[
                 migrations.RunPython(

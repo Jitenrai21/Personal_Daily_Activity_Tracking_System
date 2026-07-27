@@ -11,12 +11,12 @@ class AggregatedDaily(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["user", "date"], name="unique_daily_per_user"
             )
         ]
-        ordering = ["-date"]
+        ordering = ["-date"]  # noqa: RUF012
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.date}"
@@ -34,19 +34,19 @@ class DailyScore(models.Model):
     explanation_json = models.JSONField(default=dict, blank=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["user", "local_date"], name="unique_daily_score_per_user"
             )
         ]
-        ordering = ["-local_date"]
+        ordering = ["-local_date"]  # noqa: RUF012
 
     def __str__(self) -> str:
         return f"{self.user.username} score {self.local_date}"
 
 
 class DailyReflection(models.Model):
-    MOOD_CHOICES = [
+    MOOD_CHOICES = [  # noqa: RUF012
         ("great", "Great"),
         ("good", "Good"),
         ("neutral", "Neutral"),
@@ -63,13 +63,13 @@ class DailyReflection(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        constraints = [
+        constraints = [  # noqa: RUF012
             models.UniqueConstraint(
                 fields=["user", "local_date"],
                 name="unique_daily_reflection_per_user",
             )
         ]
-        ordering = ["-local_date"]
+        ordering = ["-local_date"]  # noqa: RUF012
 
     def __str__(self) -> str:
         return f"{self.user.username} reflection {self.local_date}"

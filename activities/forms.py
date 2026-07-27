@@ -18,7 +18,7 @@ class ActivityForm(forms.ModelForm):
             "weight",
             "notes",
         )
-        widgets = {
+        widgets = {  # noqa: RUF012
             "notes": forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}),
         }
 

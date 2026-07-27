@@ -24,7 +24,7 @@ class ProfileForm(forms.ModelForm):
             "daily_focus_minutes",
             "weekly_goal_minutes",
         )
-        widgets = {
+        widgets = {  # noqa: RUF012
             "wake_time": forms.TimeInput(attrs={"type": "time"}),
             "sleep_time": forms.TimeInput(attrs={"type": "time"}),
         }

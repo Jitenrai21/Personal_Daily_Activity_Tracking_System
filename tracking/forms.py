@@ -21,7 +21,7 @@ class SessionLogForm(forms.ModelForm):
             "duration_minutes",
             "notes",
         )
-        widgets = {
+        widgets = {  # noqa: RUF012
             "local_date": forms.DateInput(attrs={"type": "date"}),
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),

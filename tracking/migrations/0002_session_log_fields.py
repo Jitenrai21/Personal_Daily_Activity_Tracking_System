@@ -39,12 +39,12 @@ def backfill_session_fields(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = [  # noqa: RUF012
         ("activities", "0001_initial"),
         ("tracking", "0001_initial"),
     ]
 
-    operations = [
+    operations = [  # noqa: RUF012
         migrations.AddField(
             model_name="session",
             name="category",

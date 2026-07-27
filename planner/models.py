@@ -21,7 +21,7 @@ class ScheduleBlock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["date", "start_time"]
+        ordering = ["date", "start_time"]  # noqa: RUF012
 
     def clean(self) -> None:
         if self.end_time and not self.start_time:
