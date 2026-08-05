@@ -31,6 +31,32 @@ A Django application for tracking daily personal activities, planning schedules,
 - Daily reflections with mood tagging and text prompts
 - Signal-driven automatic recomputation on session/plan changes
 
+## Snapshots
+
+### Daily planner
+
+Plan the day by adding activity blocks, editing them inline, and copying yesterday's schedule.
+
+<p align="center">
+  <img src="snapshots/planner.png" alt="Daily planner" width="700">
+</p>
+
+### Session tracking
+
+Track time with timer-based sessions, manual logging, and export.
+
+<p align="center">
+  <img src="snapshots/tracking.png" alt="Session tracking" width="700">
+</p>
+
+### Analytics dashboard
+
+Review KPIs, daily scores, charts, and yearly heatmap.
+
+<p align="center">
+  <img src="snapshots/dashboard.png" alt="Analytics dashboard" width="700">
+</p>
+
 ## Architecture
 
 ### Project structure
