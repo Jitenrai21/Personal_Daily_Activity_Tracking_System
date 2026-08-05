@@ -25,7 +25,11 @@ def _parse_date(value):
         return dt.date.fromisoformat(value)
     except ValueError:
         try:
-            return dt.datetime.strptime(value, "%B %d, %Y").replace(tzinfo=dt.timezone.utc).date()
+            return (
+                dt.datetime.strptime(value, "%B %d, %Y")
+                .replace(tzinfo=dt.timezone.utc)
+                .date()
+            )
         except ValueError:
             return None
 
@@ -107,7 +111,9 @@ def daily_plan_view(request):
 @login_required
 @require_POST
 def schedule_block_create_view(request):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     form = ScheduleBlockForm(request.POST, user=request.user)
     if form.is_valid():
         block = form.save(commit=False)
@@ -219,7 +225,9 @@ def schedule_block_stop_timer_view(request, pk):
 @login_required
 @require_POST
 def planner_category_create_view(request):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     form = PlannerCategoryForm(request.POST)
     if form.is_valid():
         category = form.save(commit=False)
@@ -234,7 +242,9 @@ def planner_category_create_view(request):
 @login_required
 @require_POST
 def planner_category_update_view(request, pk):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     category = get_object_or_404(ActivityCategory, pk=pk, user=request.user)
     form = PlannerCategoryForm(request.POST, instance=category)
     if form.is_valid():
@@ -245,7 +255,9 @@ def planner_category_update_view(request, pk):
 @login_required
 @require_POST
 def planner_category_delete_view(request, pk):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     category = get_object_or_404(ActivityCategory, pk=pk, user=request.user)
     category.delete()
     return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
@@ -254,7 +266,9 @@ def planner_category_delete_view(request, pk):
 @login_required
 @require_POST
 def planner_activity_create_view(request):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     form = PlannerActivityForm(request.POST, user=request.user)
     if form.is_valid():
         activity = form.save(commit=False)
@@ -269,7 +283,9 @@ def planner_activity_create_view(request):
 @login_required
 @require_POST
 def planner_activity_update_view(request, pk):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     activity = get_object_or_404(Activity, pk=pk, user=request.user)
     form = PlannerActivityForm(request.POST, instance=activity, user=request.user)
     if form.is_valid():
@@ -282,7 +298,9 @@ def planner_activity_update_view(request, pk):
 @login_required
 @require_POST
 def planner_activity_delete_view(request, pk):
-    date = _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    date = (
+        _parse_date(request.POST.get("date")) or dt.datetime.now(dt.timezone.utc).date()
+    )
     activity = get_object_or_404(Activity, pk=pk, user=request.user)
     activity.delete()
     return redirect(f"{reverse('planner_day')}?date={date.isoformat()}")
