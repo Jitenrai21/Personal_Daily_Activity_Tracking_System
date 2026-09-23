@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Activities{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Activities</h1>
+      <div class="card-actions">
+        <a class="btn" href="{% url 'activity_create' %}">New activity</a>
+        <a class="btn btn-secondary" href="{% url 'category_list' %}">Categories</a>
+      </div>
+    </div>
+    {% if activities %}
+      <div class="table">
+        <div class="table-row table-head">
+          <div>Title</div>
+          <div>Category</div>
+          <div>Target</div>
+          <div>Status</div>
+          <div></div>
+        </div>
+        {% for activity in activities %}
+          {% include 'activities/partials/activity_row.html' %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">No activities yet. Create your first one.</p>
+    {% endif %}
+  </section>
+{% endblock %}

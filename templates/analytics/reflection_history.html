@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Reflection history{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Reflection history</h1>
+      <div class="card-actions">
+        <a class="btn btn-secondary" href="{% url 'dashboard' %}">Back to dashboard</a>
+      </div>
+    </div>
+
+    <div class="list">
+      {% for item in entries %}
+        <article class="list-item">
+          <div>
+            <strong>{{ item.local_date }}</strong>
+            <div class="muted">Composite: {{ item.score.composite_score }} | Mood: {{ item.mood }}</div>
+            <p>{{ item.answer_text|default:"No reflection answer yet." }}</p>
+          </div>
+        </article>
+      {% empty %}
+        <p class="muted">No reflection entries yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

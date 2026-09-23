@@ -1,0 +1,12 @@
+<div class="planner-item" id="routine-{{ routine.pk }}">
+  <div>
+    <strong>{{ routine.activity.title }}</strong>
+    <div class="planner-meta">Weekday {{ routine.weekday }} | {{ routine.start_time }} - {{ routine.end_time }}</div>
+  </div>
+  <div class="planner-actions">
+    <form method="post" action="{% url 'routine_delete' routine.pk %}" hx-post="{% url 'routine_delete' routine.pk %}" hx-target="#routine-{{ routine.pk }}" hx-swap="outerHTML">
+      {% csrf_token %}
+      <button class="btn btn-secondary" type="submit">Remove</button>
+    </form>
+  </div>
+</div>

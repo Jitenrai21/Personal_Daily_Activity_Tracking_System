@@ -1,0 +1,917 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily planner{% endblock %}
+
+{% block content %}
+  <section class="planner-shell page-shell">
+    <header class="planner-hero page-header surface-card">
+      <div>
+        <p class="page-eyebrow">Daily planner</p>
+        <h1 class="page-title">Shape today with intent</h1>
+        <p class="page-subtitle">Draft a focused schedule, then organize the day.</p>
+      </div>
+      <div class="page-actions">
+        <span class="page-chip">Schedule for {{ date }}</span>
+      </div>
+    </header>
+
+    <div class="planner-stack page-stack">
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Today's blocks</h2>
+          <div class="planner-card-header-actions">
+            <span class="page-chip">{{ date }}</span>
+            <form method="post" action="{% url 'schedule_copy_previous' %}" hx-post="{% url 'schedule_copy_previous' %}" hx-target="#schedule-list" hx-swap="innerHTML" class="copy-form">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <button class="btn btn-secondary btn-copy" type="submit" title="Copy from yesterday">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 4H4C2.89543 4 2 4.89543 2 6V12C2 13.1046 2.89543 14 4 14H12C13.1046 14 14 13.1046 14 12V6C14 4.89543 13.1046 4 12 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Copy from yesterday
+              </button>
+            </form>
+          </div>
+        </div>
+        <div id="schedule-list" class="planner-list">
+          {% include 'planner/partials/schedule_list.html' %}
+        </div>
+      </div>
+
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Add a block</h2>
+          <p class="planner-card-hint">Start with a category, then pick the activity.</p>
+        </div>
+        <form method="post" action="{% url 'schedule_create' %}" hx-post="{% url 'schedule_create' %}" hx-target="#schedule-list" hx-swap="beforeend">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="form-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="session-form-grid">
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+              <div class="form-control">
+                {{ form.category }}
+                {% if form.category.errors %}
+                  <div class="form-error">{{ form.category.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.activity.id_for_label }}">Activity</label>
+              <div class="form-control">
+                <select id="{{ form.activity.id_for_label }}" name="{{ form.activity.name }}">
+                  <option value="">Select activity</option>
+                  {% for item in activity_choices %}
+                    <option value="{{ item.pk }}" data-category="{{ item.category_id }}" {% if form.activity.value == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
+                  {% endfor %}
+                </select>
+                {% if form.activity.errors %}
+                  <div class="form-error">{{ form.activity.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+              <div class="form-control">
+                {{ form.date }}
+                {% if form.date.errors %}
+                  <div class="form-error">{{ form.date.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.start_time.id_for_label }}">Start time (optional)</label>
+              <div class="form-control">
+                {{ form.start_time }}
+                {% if form.start_time.errors %}
+                  <div class="form-error">{{ form.start_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.end_time.id_for_label }}">End time (optional)</label>
+              <div class="form-control">
+                {{ form.end_time }}
+                {% if form.end_time.errors %}
+                  <div class="form-error">{{ form.end_time.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.duration_minutes.id_for_label }}">Duration (minutes)</label>
+              <div class="form-control">
+                {{ form.duration_minutes }}
+                <div class="form-help" data-duration-preview>Duration will auto-fill when start/end are set.</div>
+                {% if form.duration_minutes.errors %}
+                  <div class="form-error">{{ form.duration_minutes.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="session-form-row">
+              <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+              <div class="form-control">
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                  <div class="form-error">{{ form.notes.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Add block</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Manage categories</h2>
+          <span class="planner-chip">{{ categories|length }}</span>
+        </div>
+        
+        <div class="manage-section">
+          <div class="manage-form-section">
+            <h3 class="manage-subsection-title">Add new category</h3>
+            <form method="post" action="{% url 'planner_category_create' %}">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <div class="session-form-grid">
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ category_form.name.id_for_label }}">Category name</label>
+                  <div class="form-control">{{ category_form.name }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ category_form.description.id_for_label }}">Description</label>
+                  <div class="form-control">{{ category_form.description }}</div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Add category</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="manage-list-section">
+            <h3 class="manage-subsection-title">Existing categories</h3>
+            <div class="mgmt-table-wrap">
+              {% if categories %}
+                <div class="mgmt-table">
+                  <div class="mgmt-table-header mgmt-cat-grid">
+                    <div class="mgmt-col">Name</div>
+                    <div class="mgmt-col">Description</div>
+                    <div class="mgmt-col mgmt-col-actions">Actions</div>
+                  </div>
+                  <div class="mgmt-table-body">
+                    {% for category in categories|slice:":5" %}
+                      <div class="mgmt-row mgmt-cat-grid">
+                        <div class="mgmt-cell" data-label="Name">
+                          <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Description">
+                          <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                          <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                          <form method="post" action="{% url 'planner_category_delete' category.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% with extra_cats=categories|slice:"5:" %}
+                  {% if extra_cats %}
+                    <div class="collapse-extra" id="cat-extra">
+                      {% for category in extra_cats %}
+                        <div class="mgmt-row mgmt-cat-grid">
+                          <div class="mgmt-cell" data-label="Name">
+                            <input type="text" name="name" value="{{ category.name }}" maxlength="100" required form="category-form-{{ category.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Description">
+                            <input type="text" name="description" value="{{ category.description }}" form="category-form-{{ category.pk }}">
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                            <form id="category-form-{{ category.pk }}" method="post" action="{% url 'planner_category_update' category.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                            <form method="post" action="{% url 'planner_category_delete' category.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="collapse-bar">
+                      <button class="collapse-btn" data-extra="cat-extra">
+                        <span class="chevron">&#9660;</span>
+                        <span class="txt-closed">Show all <span class="count">{{ categories|length }}</span></span>
+                        <span class="txt-open">Show less</span>
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% endwith %}
+                </div>
+              {% else %}
+                <div class="mgmt-empty">No categories yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="planner-card planner-card-wide surface-card page-card">
+        <div class="planner-card-header">
+          <h2>Manage activities</h2>
+          <span class="planner-chip">{{ activities|length }}</span>
+        </div>
+        
+        <div class="manage-section">
+          <div class="manage-form-section">
+            <h3 class="manage-subsection-title">Add new activity</h3>
+            <form method="post" action="{% url 'planner_activity_create' %}">
+              {% csrf_token %}
+              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+              <div class="session-form-grid">
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.category.id_for_label }}">Category</label>
+                  <div class="form-control">{{ activity_form.category }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.title.id_for_label }}">Title</label>
+                  <div class="form-control">{{ activity_form.title }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.weight.id_for_label }}">Weight</label>
+                  <div class="form-control">{{ activity_form.weight }}</div>
+                </div>
+                <div class="session-form-row">
+                  <label class="form-label" for="{{ activity_form.notes.id_for_label }}">Notes</label>
+                  <div class="form-control">{{ activity_form.notes }}</div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Add activity</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="manage-list-section">
+            <h3 class="manage-subsection-title">Existing activities</h3>
+            <div class="mgmt-table-wrap">
+              {% if activities %}
+                <div class="mgmt-table">
+                  <div class="mgmt-table-header mgmt-act-grid">
+                    <div class="mgmt-col">Title</div>
+                    <div class="mgmt-col">Category</div>
+                    <div class="mgmt-col mgmt-col-center">Weight</div>
+                    <div class="mgmt-col">Notes</div>
+                    <div class="mgmt-col mgmt-col-actions">Actions</div>
+                  </div>
+                  <div class="mgmt-table-body">
+                    {% for item in activities|slice:":5" %}
+                      <div class="mgmt-row mgmt-act-grid">
+                        <div class="mgmt-cell" data-label="Title">
+                          <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Category">
+                          <select name="category" form="activity-form-{{ item.pk }}">
+                            {% for category in categories %}
+                              <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-center" data-label="Priority">
+                          <input type="number" name="weight" min="1" max="5" value="{{ item.weight }}" required form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell" data-label="Notes">
+                          <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
+                        </div>
+                        <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                          <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                          <form method="post" action="{% url 'planner_activity_delete' item.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                            <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  {% with extra_acts=activities|slice:"5:" %}
+                  {% if extra_acts %}
+                    <div class="collapse-extra" id="act-extra">
+                      {% for item in extra_acts %}
+                        <div class="mgmt-row mgmt-act-grid">
+                          <div class="mgmt-cell" data-label="Title">
+                            <input type="text" name="title" value="{{ item.title }}" maxlength="200" required form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Category">
+                            <select name="category" form="activity-form-{{ item.pk }}">
+                              {% for category in categories %}
+                                <option value="{{ category.pk }}" {% if item.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-center" data-label="Priority">
+                            <input type="number" name="weight" min="1" max="5" value="{{ item.weight }}" required form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell" data-label="Notes">
+                            <input type="text" name="notes" value="{{ item.notes }}" form="activity-form-{{ item.pk }}">
+                          </div>
+                          <div class="mgmt-cell mgmt-cell-actions" data-label="Actions">
+                            <form id="activity-form-{{ item.pk }}" method="post" action="{% url 'planner_activity_update' item.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-save" type="submit" title="Save">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13.3333 14H2.66667C2.29848 14 2 13.7015 2 13.3333V2.66667C2 2.29848 2.29848 2 2.66667 2H10.6667L14 5.33333V13.3333C14 13.7015 13.7015 14 13.3333 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M11.3333 14V9.33333H4.66667V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M4.66667 2V5.33333H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                            <form method="post" action="{% url 'planner_activity_delete' item.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+                              <button class="btn-icon btn-icon-delete" type="submit" title="Delete">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.29848 5.63181 2 6 2H10C10.3682 2 10.6667 2.29848 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.7015 12.3682 14 12 14H4C3.63181 14 3.33333 13.7015 3.33333 13.3333V4H12.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="collapse-bar">
+                      <button class="collapse-btn" data-extra="act-extra">
+                        <span class="chevron">&#9660;</span>
+                        <span class="txt-closed">Show all <span class="count">{{ activities|length }}</span></span>
+                        <span class="txt-open">Show less</span>
+                      </button>
+                    </div>
+                  {% endif %}
+                  {% endwith %}
+                </div>
+              {% else %}
+                <div class="mgmt-empty">No activities yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .planner-card-wide {
+      width: 100%;
+    }
+
+    .planner-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .planner-card-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .planner-card-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .copy-form {
+      display: inline-flex;
+      margin: 0;
+    }
+
+    .copy-form .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      background: transparent;
+      border: 1px solid rgba(28, 43, 34, 0.15);
+      color: #617167;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .copy-form .btn-copy:hover {
+      background: rgba(63, 143, 107, 0.08);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
+    }
+
+    .copy-form .btn-copy svg {
+      flex-shrink: 0;
+    }
+
+    .btn-edit {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .btn-edit:hover {
+      background: rgba(63, 143, 107, 0.08);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
+    }
+
+    .planner-card-hint {
+      margin: 0;
+      color: var(--accent-color);
+      font-size: 0.9rem;
+    }
+
+    .planner-chip {
+      background: rgba(28, 43, 34, 0.08);
+      color: var(--dashboard-ink);
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.75rem;
+    }
+
+    .planner-list {
+      margin-top: 1rem;
+    }
+
+    .planner-card .table-wrap {
+      margin-top: 1rem;
+    }
+
+    .manage-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .manage-form-section,
+    .manage-list-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .manage-subsection-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--dashboard-ink);
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(28, 43, 34, 0.1);
+    }
+
+    .manage-form-section form {
+      margin-top: 0.5rem;
+    }
+
+    .manage-list-section .table-wrap,
+    .mgmt-table-wrap {
+      margin-top: 0;
+      background: var(--surface-soft);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    /* ─── Grid column templates ─── */
+    .mgmt-cat-grid {
+      grid-template-columns: 1.5fr 2fr 6rem;
+    }
+
+    .mgmt-act-grid {
+      grid-template-columns: 1.5fr 1.2fr 4rem 1.5fr 6rem;
+    }
+
+    /* ─── Header row ─── */
+    .mgmt-table-header {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.6rem 0.875rem;
+      border-bottom: 2px solid rgba(28, 43, 34, 0.1);
+      position: sticky;
+      top: 0;
+      background: var(--surface-soft);
+      z-index: 1;
+    }
+
+    .mgmt-col {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .mgmt-col-center {
+      text-align: center;
+    }
+
+    .mgmt-col-actions {
+      text-align: center;
+    }
+
+    /* ─── Body ─── */
+    .mgmt-table-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-top: 0.625rem;
+    }
+
+    /* ─── Data rows ─── */
+    .mgmt-row {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.75rem 0.875rem;
+      background: var(--surface-soft);
+      border: 1px solid rgba(28, 43, 34, 0.08);
+      border-radius: 6px;
+      align-items: center;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .mgmt-row:hover {
+      border-color: rgba(28, 43, 34, 0.16);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    /* ─── Cells ─── */
+    .mgmt-cell {
+      display: flex;
+      align-items: center;
+    }
+
+    .mgmt-cell-center {
+      justify-content: center;
+    }
+
+    .mgmt-cell-actions {
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .mgmt-cell-actions form {
+      margin: 0;
+      display: flex;
+    }
+
+    /* ─── Inputs inside rows ─── */
+    .mgmt-row input[type="text"],
+    .mgmt-row input[type="number"],
+    .mgmt-row select {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      font-family: inherit;
+      font-size: 0.875rem;
+      color: var(--text-color);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .mgmt-row input[type="number"] {
+      max-width: 4rem;
+      text-align: center;
+    }
+
+    .mgmt-row input[type="text"]:focus,
+    .mgmt-row input[type="number"]:focus,
+    .mgmt-row select:focus {
+      outline: none;
+      border-color: var(--cta-color);
+      box-shadow: 0 0 0 3px rgba(74, 70, 67, 0.12);
+      background: var(--surface-soft);
+    }
+
+    /* ─── Collapse panel ─── */
+    .collapse-extra {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.35s ease;
+    }
+    .collapse-extra.open {
+      max-height: 2000px;
+    }
+    .collapse-bar {
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0 0;
+      border-top: 1px dashed var(--border-color);
+      margin-top: 0.5rem;
+    }
+    .collapse-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+    .collapse-btn:hover {
+      color: var(--text-color);
+    }
+    .collapse-btn .chevron {
+      font-size: 0.55rem;
+      transition: transform 0.25s ease;
+    }
+    .collapse-btn.open .chevron {
+      transform: rotate(180deg);
+    }
+    .collapse-btn .count {
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    .collapse-btn .txt-open { display: none; }
+    .collapse-btn.open .txt-closed { display: none; }
+    .collapse-btn.open .txt-open { display: inline; }
+
+    /* ─── Icon buttons ─── */
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-icon-save {
+      color: var(--accent-color);
+      border-color: rgba(28, 43, 34, 0.15);
+    }
+
+    .btn-icon-save:hover {
+      background: rgba(63, 143, 107, 0.1);
+      border-color: rgba(63, 143, 107, 0.3);
+      color: #2d6b4f;
+    }
+
+    .btn-icon-delete {
+      color: var(--accent-color);
+      border-color: rgba(28, 43, 34, 0.15);
+    }
+
+    .btn-icon-delete:hover {
+      background: rgba(235, 87, 87, 0.08);
+      border-color: rgba(235, 87, 87, 0.3);
+      color: #c0392b;
+    }
+
+    /* ─── Empty state ─── */
+    .mgmt-empty {
+      padding: 2.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--accent-color);
+      font-style: italic;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Responsive: card-style tables on narrow screens
+       ═══════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .mgmt-table-header {
+        display: none;
+      }
+
+      .mgmt-cat-grid,
+      .mgmt-act-grid {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+      }
+
+      .mgmt-row {
+        padding: 0.875rem 1rem;
+        border-left: 3px solid var(--border-color);
+      }
+
+      .mgmt-cell {
+        display: grid;
+        grid-template-columns: 7rem 1fr;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .mgmt-cell::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--accent-color);
+        flex-shrink: 0;
+      }
+
+      .mgmt-cell-center {
+        justify-content: normal;
+      }
+
+      .mgmt-cell-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid rgba(28, 43, 34, 0.08);
+        margin-top: 0.3rem;
+        grid-column: 1 / -1;
+      }
+
+      .mgmt-cell-actions::before {
+        display: none;
+      }
+
+      .mgmt-row input[type="number"] {
+        max-width: 100%;
+      }
+
+      .btn-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+
+      /* Revert form actions to stacked on small screens */
+      .manage-form-section .session-form-grid {
+        gap: 0.75rem;
+      }
+
+      .manage-form-section .session-form-row {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+      }
+
+      .manage-form-section .form-label {
+        padding-top: 0;
+      }
+    }
+
+    /* ─── Responsive layout for medium+ screens ─── */
+    @media (min-width: 900px) {
+      .manage-section {
+        grid-template-columns: 1fr 2fr;
+      }
+    }
+
+    /* Allow action icons more room on compact grids */
+    @media (min-width: 769px) and (max-width: 1100px) {
+      .mgmt-cat-grid {
+        grid-template-columns: 1.2fr 1.5fr 6rem;
+      }
+      .mgmt-act-grid {
+        grid-template-columns: 1.2fr 1fr 4rem 1.2fr 6rem;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .planner-hero {
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+  <script>
+    const startField = document.getElementById("{{ form.start_time.id_for_label }}");
+    const endField = document.getElementById("{{ form.end_time.id_for_label }}");
+    const durationField = document.getElementById("{{ form.duration_minutes.id_for_label }}");
+    const preview = document.querySelector("[data-duration-preview]");
+    const activityField = document.getElementById("{{ form.activity.id_for_label }}");
+    const categoryField = document.getElementById("{{ form.category.id_for_label }}");
+
+    const updatePreview = () => {
+      if (!startField || !endField || !preview) {
+        return;
+      }
+      const start = startField.value;
+      const end = endField.value;
+      if (!start || !end) {
+        preview.textContent = "Duration will auto-fill when start/end are set.";
+        return;
+      }
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
+      const minutes = (eh * 60 + em) - (sh * 60 + sm);
+      if (minutes > 0) {
+        preview.textContent = `Auto duration: ${minutes} min`;
+        if (durationField) {
+          durationField.value = minutes;
+        }
+      } else {
+        preview.textContent = "End time must be after start time.";
+      }
+    };
+
+    if (startField) startField.addEventListener("change", updatePreview);
+    if (endField) endField.addEventListener("change", updatePreview);
+
+    const filterActivities = () => {
+      if (!activityField || !categoryField) {
+        return;
+      }
+      const selectedCategory = categoryField.value;
+      let hasSelection = false;
+      Array.from(activityField.options).forEach((option) => {
+        if (!option.value) {
+          option.hidden = false;
+          return;
+        }
+        const matches = option.dataset.category === selectedCategory;
+        option.hidden = !matches;
+        if (!matches && option.selected) {
+          option.selected = false;
+        }
+        if (matches && option.selected) {
+          hasSelection = true;
+        }
+      });
+      if (!hasSelection && activityField.value) {
+        activityField.value = "";
+      }
+    };
+
+    if (categoryField) {
+      categoryField.addEventListener("change", filterActivities);
+      filterActivities();
+    }
+
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.collapse-btn');
+      if (!btn) return;
+      var extra = document.getElementById(btn.dataset.extra);
+      if (!extra) return;
+      var isOpen = extra.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      extra.style.maxHeight = isOpen ? extra.scrollHeight + 'px' : '0';
+    });
+  </script>
+{% endblock %}

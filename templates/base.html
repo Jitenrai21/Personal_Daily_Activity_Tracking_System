@@ -1,0 +1,152 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Personal Daily Activity Tracking System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'core/logo.png' %}">
+    {% block extra_head %}{% endblock %}
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header page__header">
+        <a class="brand-link" href="{% url 'dashboard' %}">
+          <span class="brand-mark">
+            <img src="{% static 'core/logo_navbar.png' %}" alt="PDATS" class="brand-logo">
+          </span>
+          <span class="brand-text">
+            <span class="brand-title">Personal Daily Activity Tracking System</span>
+            <span class="brand-subtitle">Plan, track, and reflect</span>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="main-nav">
+          <span class="nav-toggle-icon" aria-hidden="true"></span>
+        </button>
+        <nav class="nav" id="main-nav" aria-label="Main navigation">
+          {% if user.is_authenticated %}
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+            <a class="nav-link" href="{% url 'planner_day' %}">Planner</a>
+            <a class="nav-link" href="{% url 'session_list' %}">Tracking</a>
+            <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+            <form method="post" action="{% url 'logout' %}" class="inline--sm">
+              {% csrf_token %}
+              <button class="btn btn--secondary btn--sm" type="submit">Log out</button>
+            </form>
+          {% else %}
+            <a class="nav-link" href="{% url 'login' %}">Log in</a>
+            <a class="nav-link" href="{% url 'signup' %}">Sign up</a>
+          {% endif %}
+        </nav>
+      </header>
+
+      <main class="page__main">
+        {% if messages %}
+          <div class="messages stack--sm">
+            {% for message in messages %}
+              <div class="message">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="site-footer page__footer">
+        <div class="footer-inner">
+          <div class="brand-footer">
+            <span class="brand-mark">
+              <img src="{% static 'core/logo_navbar.png' %}" alt="PDATS" class="brand-logo">
+            </span>
+            <span class="brand-text">
+              <span class="brand-title">Personal Daily Activity Tracking System</span>
+              <span class="brand-subtitle">Plan, track, reflect, improve.</span>
+            </span>
+          </div>
+
+          <nav class="footer-nav" aria-label="Footer navigation">
+            {% if user.is_authenticated %}
+              <a href="{% url 'dashboard' %}">Dashboard</a>
+              <a href="{% url 'planner_day' %}">Planner</a>
+              <a href="{% url 'session_list' %}">Tracking</a>
+              <a href="{% url 'profile' %}">Profile</a>
+            {% else %}
+              <a href="{% url 'login' %}">Log in</a>
+              <a href="{% url 'signup' %}">Sign up</a>
+            {% endif %}
+          </nav>
+
+          <div class="footer-meta">
+            <p class="footer-note">Stay consistent. Review often.</p>
+            <p class="footer-copy">&copy; {% now "Y" %} PDATS</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script>
+      function formatElapsed(totalSeconds) {
+        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${hours}:${minutes}:${seconds}`;
+      }
+
+      function updateSessionTimers() {
+        const timers = document.querySelectorAll(".session-toggle[data-session-start], .session-toggle[data-session-state]");
+        timers.forEach((node) => {
+          const start = node.getAttribute("data-session-start");
+          if (!start) return;
+          const startTime = Date.parse(start);
+          if (Number.isNaN(startTime)) return;
+          const pausedSeconds = Number.parseInt(node.getAttribute("data-session-paused-seconds") || "0", 10) || 0;
+          const pausedAt = node.getAttribute("data-session-paused-at");
+          const effectiveEnd = pausedAt ? Date.parse(pausedAt) : Date.now();
+          if (Number.isNaN(effectiveEnd)) return;
+          const elapsedSeconds = Math.max(0, Math.floor((effectiveEnd - startTime) / 1000) - pausedSeconds);
+          const label = node.querySelector("[data-session-elapsed]");
+          if (label) label.textContent = formatElapsed(elapsedSeconds);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        updateSessionTimers();
+        window.setInterval(updateSessionTimers, 1000);
+      });
+
+      document.body.addEventListener("htmx:afterSwap", (event) => {
+        if (event.target && event.target.classList && event.target.classList.contains("session-toggle")) {
+          updateSessionTimers();
+        }
+      });
+
+      const navToggle = document.querySelector(".nav-toggle");
+      const mainNav = document.querySelector("#main-nav");
+      const isMobileNav = () => window.matchMedia("(max-width: 720px)").matches;
+
+      function setNavOpen(open) {
+        if (!navToggle || !mainNav) return;
+        mainNav.classList.toggle("is-open", open);
+        navToggle.classList.toggle("is-open", open);
+        navToggle.setAttribute("aria-expanded", String(open));
+      }
+
+      if (navToggle && mainNav) {
+        navToggle.addEventListener("click", () => {
+          setNavOpen(!mainNav.classList.contains("is-open"));
+        });
+        mainNav.addEventListener("click", (event) => {
+          if (event.target.closest("a, button")) setNavOpen(false);
+        });
+        document.addEventListener("click", (event) => {
+          if (!event.target.closest(".site-header")) setNavOpen(false);
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") setNavOpen(false);
+        });
+        window.addEventListener("resize", () => {
+          if (!isMobileNav()) setNavOpen(false);
+        });
+      }
+    </script>

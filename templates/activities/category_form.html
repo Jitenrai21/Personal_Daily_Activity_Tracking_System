@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Category{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h1>Category</h1>
+    <form method="post">
+      {% csrf_token %}
+      {% include 'partials/form_fields.html' with form=form %}
+      <div class="form-actions">
+        <button class="btn" type="submit">Save</button>
+        <a class="btn btn-secondary" href="{% url 'category_list' %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --color-chart-actual-top: #3CB371;
+      --color-chart-actual-bottom: #1F6B1F;
+      --color-chart-planned-top: #FFD54F;
+      --color-chart-planned-bottom: #F0A500;
+    }
+
+    .dashboard-eyebrow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.65rem;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-color);
+      background: var(--surface-soft);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      margin-bottom: 0.6rem;
+    }
+
+    .dashboard-title-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .dashboard-title-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+      font-size: 1.35rem;
+      color: var(--text-color);
+    }
+
+    .section__header .page-title {
+      font-size: 1.65rem;
+      font-weight: 680;
+      line-height: 1.25;
+      letter-spacing: -0.015em;
+      color: var(--dashboard-ink);
+      margin: 0 0 0.2rem;
+    }
+
+    .section__header .page-subtitle {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--accent-color);
+      max-width: 30rem;
+      margin: 0;
+    }
+
+    .dashboard-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      background: var(--surface-soft);
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      width: auto;
+      margin-left: auto;
+    }
+
+    .dashboard-filters .filter-group {
+      min-width: 130px;
+      flex: 1 1 auto;
+    }
+
+    .dashboard-filters .filter-group .field__label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent-color);
+      padding-top: 0.55rem;
+    }
+
+    .dashboard-filters .filter-group input {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      font-family: inherit;
+      font-size: 0.875rem;
+      color: var(--text-color);
+    }
+
+    .dashboard-filters .filter-group input:focus {
+      outline: none;
+      border-color: var(--cta-color);
+      box-shadow: 0 0 0 3px rgba(74, 70, 67, 0.12);
+    }
+
+    .dashboard-filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      padding-bottom: 1px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-filters {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .dashboard-filter-actions {
+        width: 100%;
+      }
+
+      .dashboard-filter-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .dashboard-filters .filter-group {
+        min-width: 110px;
+        flex: 1 1 28%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="section fade-in">
+    <header class="section__header">
+      <div>
+        <span class="dashboard-eyebrow-pill">
+          <i class="ti ti-sparkles" aria-hidden="true"></i>
+          Insights
+        </span>
+        <div class="dashboard-title-row">
+          <div class="dashboard-title-icon">
+            <i class="ti ti-chart-dots-3" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1 class="page-title">Your momentum snapshot</h1>
+            <p class="page-subtitle">Compare category momentum and maintain streaks.</p>
+          </div>
+        </div>
+      </div>
+      <form class="dashboard-filters section__actions" method="get" action="{% url 'dashboard' %}"
+            hx-get="{% url 'dashboard_partial' %}" hx-target="#dashboard-pane" hx-swap="innerHTML">
+        <div class="filter-group field-row field-row--split">
+          <label class="field__label" for="from_date">From date</label>
+          <input id="from_date" name="from_date" type="date" value="{{ from_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
+        </div>
+        <div class="filter-group field-row field-row--split">
+          <label class="field__label" for="to_date">To date</label>
+          <input id="to_date" name="to_date" type="date" value="{{ to_date_value }}" max="{{ local_today|date:'Y-m-d' }}">
+        </div>
+        <div class="dashboard-filter-actions inline">
+          <button class="btn btn--primary btn--md" type="submit">Apply</button>
+          <button class="btn btn--secondary btn--md" type="button"
+                  data-dashboard-reset
+                  data-default-from="{{ from_date_value }}"
+                  data-default-to="{{ to_date_value }}">
+            Reset
+          </button>
+        </div>
+      </form>
+    </header>
+
+    <div id="dashboard-pane" class="stack">
+      {% include 'analytics/partials/dashboard_content.html' %}
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" defer></script>
+  <script>
+    const chartStore = window.dashboardCharts || (window.dashboardCharts = {});
+
+    function destroyDashboardCharts() {
+      Object.keys(chartStore).forEach((id) => {
+        if (chartStore[id]) {
+          chartStore[id].destroy();
+          delete chartStore[id];
+        }
+      });
+    }
+
+    function loadJson(id) {
+      const node = document.getElementById(id);
+      if (!node) return null;
+      return JSON.parse(node.textContent || "null");
+    }
+
+    function renderChart(id, config) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      if (chartStore[id]) chartStore[id].destroy();
+      chartStore[id] = new Chart(canvas, config);
+    }
+
+    function formatDailyLabel(value) {
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    function renderDashboardCharts() {
+      destroyDashboardCharts();
+
+      const categorySeries = loadJson("category-daily-series");
+      if (!categorySeries) return;
+
+      const style = getComputedStyle(document.documentElement);
+      const chartPalette = {
+        actual:  { top: style.getPropertyValue('--color-chart-actual-top').trim() || "#3CB371", bottom: style.getPropertyValue('--color-chart-actual-bottom').trim() || "#1F6B1F" },
+        planned: { top: style.getPropertyValue('--color-chart-planned-top').trim() || "#FFD54F", bottom: style.getPropertyValue('--color-chart-planned-bottom').trim() || "#F0A500" },
+      };
+
+      function makeBarGradient(ctx, chartArea, colors) {
+        if (!chartArea) return colors.bottom;
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, colors.top);
+        gradient.addColorStop(1, colors.bottom);
+        return gradient;
+      }
+
+      categorySeries.forEach((series) => {
+        const formattedDailyLabels = series.labels.map(formatDailyLabel);
+        renderChart(`dailyChart-${series.key}`, {
+          type: "bar",
+          data: {
+            labels: formattedDailyLabels,
+            datasets: [
+              {
+                label: "Actual",
+                data: series.actual,
+                backgroundColor: (context) => makeBarGradient(context.chart.ctx, context.chart.chartArea, chartPalette.actual),
+                borderRadius: 4,
+                categoryPercentage: 0.72,
+                barPercentage: 0.88,
+                maxBarThickness: 24,
+              },
+              {
+                label: "Planned",
+                data: series.planned,
+                backgroundColor: (context) => makeBarGradient(context.chart.ctx, context.chart.chartArea, chartPalette.planned),
+                borderRadius: 4,
+                categoryPercentage: 0.72,
+                barPercentage: 0.88,
+                maxBarThickness: 24,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: "index" },
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+                align: "end",
+                labels: {
+                  boxWidth: 12,
+                  boxHeight: 12,
+                  padding: 15,
+                  font: { size: 11, weight: "600" },
+                  color: "#617167",
+                  usePointStyle: true,
+                  pointStyle: "circle",
+                  generateLabels(chart) {
+                    const legendColors = [chartPalette.actual.bottom, chartPalette.planned.bottom];
+                    return chart.data.datasets.map((dataset, i) => ({
+                      text: dataset.label,
+                      fillStyle: legendColors[i],
+                      strokeStyle: legendColors[i],
+                      pointStyle: "circle",
+                      datasetIndex: i,
+                    }));
+                  },
+                },
+              },
+              tooltip: {
+                backgroundColor: "rgba(28, 43, 34, 0.95)",
+                padding: 12,
+                cornerRadius: 6,
+                titleFont: { size: 12, weight: "600" },
+                bodyFont: { size: 11 },
+                displayColors: true,
+                boxWidth: 8,
+                boxHeight: 8,
+                boxPadding: 4,
+                callbacks: {
+                  title(tooltipItems) {
+                    if (!tooltipItems.length) return series.name;
+                    return `${series.name} • ${tooltipItems[0].label}`;
+                  },
+                  label(context) {
+                    const label = context.dataset.label || "Value";
+                    const value = context.formattedValue || 0;
+                    return `${label}: ${value} min`;
+                  },
+                  afterBody(tooltipItems) {
+                    if (!tooltipItems.length) return [];
+                    const dataIndex = tooltipItems[0].dataIndex;
+                    const breakdown = (series.activity_breakdown && series.activity_breakdown[dataIndex]) || [];
+                    if (!breakdown.length) return ["Activity breakdown: none available"];
+                    const lines = ["Activity breakdown:"];
+                    breakdown.slice(0, 6).forEach((item) => {
+                      const parts = [];
+                      if (item.actual)      parts.push(`actual ${item.actual} min`);
+                      if (item.planned)     parts.push(`planned ${item.planned} min`);
+                      if (item.description) parts.push(item.description);
+                      lines.push(`${item.name}: ${parts.join(" • ")}`);
+                    });
+                    if (breakdown.length > 6) lines.push(`+ ${breakdown.length - 6} more activities`);
+                    return lines;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  autoSkip: true,
+                  maxTicksLimit: 8,
+                  maxRotation: 0,
+                  minRotation: 0,
+                  color: "#617167",
+                  font: { size: 11 },
+                },
+                border: { color: "rgba(28, 43, 34, 0.1)" },
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: "rgba(28, 43, 34, 0.06)", drawBorder: false },
+                ticks: { color: "#617167", font: { size: 11 }, precision: 0 },
+                border: { display: false },
+              },
+            },
+          },
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderDashboardCharts();
+    });
+
+    document.body.addEventListener("htmx:afterSwap", (event) => {
+      if (event.target && event.target.id === "dashboard-pane") {
+        window.requestAnimationFrame(() => { renderDashboardCharts(); });
+      }
+    });
+
+    document.body.addEventListener("htmx:beforeSwap", (event) => {
+      if (event.target && event.target.id === "dashboard-pane") {
+        destroyDashboardCharts();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const filterForm = document.querySelector(".dashboard-filters");
+      if (filterForm) {
+        const resetButton = filterForm.querySelector("[data-dashboard-reset]");
+        if (resetButton) {
+          resetButton.addEventListener("click", () => {
+            const fromField = filterForm.querySelector("#from_date");
+            const toField   = filterForm.querySelector("#to_date");
+            if (fromField) fromField.value = resetButton.dataset.defaultFrom || "";
+            if (toField)   toField.value   = resetButton.dataset.defaultTo   || "";
+            filterForm.requestSubmit();
+          });
+        }
+      }
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const btn = event.target.closest(".year-btn");
+      if (!btn) return;
+      const year = btn.dataset.year;
+      const params = new URLSearchParams(window.location.search);
+      params.set("heatmap_year", year);
+      htmx.ajax("GET", `{% url 'dashboard_partial' %}?${params.toString()}`, { target: "#dashboard-pane", swap: "innerHTML" });
+    });
+  </script>
+{% endblock %}

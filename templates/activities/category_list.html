@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+  <section class="card card-wide">
+    <div class="card-header">
+      <h1>Categories</h1>
+      <div class="card-actions">
+        <a class="btn" href="{% url 'category_create' %}">New category</a>
+        <a class="btn btn-secondary" href="{% url 'activity_list' %}">Back</a>
+      </div>
+    </div>
+    {% if categories %}
+      <ul class="list">
+        {% for category in categories %}
+          <li class="list-item">
+            <div>
+              <strong>{{ category.name }}</strong>
+              <div class="muted">{{ category.description|default:"No description" }}</div>
+            </div>
+            <div class="list-actions">
+              <a class="btn btn-secondary" href="{% url 'category_update' category.pk %}">Edit</a>
+              <a class="btn btn-secondary" href="{% url 'category_delete' category.pk %}">Delete</a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No categories yet. Create one to organize activities.</p>
+    {% endif %}
+  </section>
+{% endblock %}
