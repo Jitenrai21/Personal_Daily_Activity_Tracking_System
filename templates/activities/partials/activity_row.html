@@ -1,4 +1,5 @@
 <div class="table-row" id="activity-{{ activity.pk }}">
+<<<<<<< HEAD
   <div>
     <a href="{% url 'activity_detail' activity.pk %}">{{ activity.title }}</a>
   </div>
@@ -8,6 +9,17 @@
     <span class="pill">{{ activity.is_active|yesno:"Active,Paused" }}</span>
   </div>
   <div class="row-actions">
+=======
+  <div data-label="Title">
+    <a href="{% url 'activity_detail' activity.pk %}">{{ activity.title }}</a>
+  </div>
+  <div data-label="Category">{{ activity.category.name }}</div>
+  <div data-label="Target">{{ activity.target_value }} {{ activity.get_target_type_display }}</div>
+  <div data-label="Status">
+    <span class="pill">{{ activity.is_active|yesno:"Active,Paused" }}</span>
+  </div>
+  <div class="row-actions" data-label="Actions">
+>>>>>>> master
     <form
       method="post"
       action="{% url 'activity_toggle' activity.pk %}"

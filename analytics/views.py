@@ -15,8 +15,16 @@ from analytics.models import AggregatedDaily, DailyReflection, DailyScore
 from analytics.reflection import ensure_daily_reflection
 from analytics.scoring import upsert_daily_score
 from analytics.services import (
+<<<<<<< HEAD
     compute_category_totals,
     compute_daily_intensity,
+=======
+    compute_category_plan_streaks,
+    compute_category_totals,
+    compute_daily_intensity,
+    compute_intensity_streak,
+    compute_plan_streak,
+>>>>>>> master
     get_day_bounds_utc,
     get_user_timezone,
 )
@@ -487,19 +495,27 @@ def parse_heatmap_year(request, year_options):
     return None
 
 
+<<<<<<< HEAD
 def build_kpis(total_actual, total_planned, streak, category_totals):
+=======
+def build_kpis(total_actual, total_planned, intensity_streak, plan_streak):
+>>>>>>> master
     completion_rate = None
     if total_planned > 0:
         completion_rate = round(total_actual / total_planned * 100)
 
+<<<<<<< HEAD
     top_category = None
     if category_totals:
         top_category = max(category_totals, key=lambda item: item["intensity_score"])
 
+=======
+>>>>>>> master
     return {
         "total_actual": total_actual,
         "total_planned": total_planned,
         "completion_rate": completion_rate,
+<<<<<<< HEAD
         "streak": streak,
         "top_category": top_category,
     }
@@ -522,6 +538,17 @@ def _compute_global_streak(user, local_today):
     return streak
 
 
+=======
+        "streak": intensity_streak["days"],
+        "streak_best": intensity_streak["best"],
+        "streak_is_record": intensity_streak["is_record"],
+        "plan_streak": plan_streak["days"],
+        "plan_streak_best": plan_streak["best"],
+        "plan_streak_is_record": plan_streak["is_record"],
+    }
+
+
+>>>>>>> master
 def build_context(request):
     user = request.user
     days = parse_range(request)
@@ -589,14 +616,26 @@ def build_context(request):
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
     heatmap_total = sum(cell["value"] for week in heatmap["weeks"] for cell in week)
 
+<<<<<<< HEAD
     # Compute streak from full history up to today — never filtered
     streak = _compute_global_streak(user, local_today)
+=======
+    # Streaks from full history up to today — never filtered by range
+    intensity_streak = compute_intensity_streak(user, local_today)
+    plan_streak = compute_plan_streak(user, local_today)
+    category_plan_streaks = compute_category_plan_streaks(user, local_today)
+>>>>>>> master
 
     kpis = build_kpis(
         total_actual=sum(series["actual"]),
         total_planned=sum(series["planned"]),
+<<<<<<< HEAD
         streak=streak,
         category_totals=category_totals,
+=======
+        intensity_streak=intensity_streak,
+        plan_streak=plan_streak,
+>>>>>>> master
     )
 
     category_daily_series = build_category_daily_series(
@@ -607,6 +646,21 @@ def build_context(request):
         series["labels"],
     )
 
+<<<<<<< HEAD
+=======
+    streaks_by_category_id = {
+        row["id"]: row for row in category_plan_streaks
+    }
+    for item in category_daily_series:
+        streak_row = streaks_by_category_id.get(item["id"])
+        item["plan_streak"] = streak_row["streak"] if streak_row else 0
+        item["plan_met_days"] = sum(
+            1
+            for actual, planned in zip(item["actual"], item["planned"])
+            if planned > 0 and actual >= planned
+        )
+
+>>>>>>> master
     return {
         "range_days": (end_date - start_date).days + 1,
         "range_options": RANGE_OPTIONS,
@@ -628,6 +682,10 @@ def build_context(request):
         "category_actual": category_actual,
         "category_planned": category_planned,
         "category_daily_series": category_daily_series,
+<<<<<<< HEAD
+=======
+        "category_plan_streaks": category_plan_streaks,
+>>>>>>> master
         "heatmap": heatmap,
         "heatmap_total": heatmap_total,
         "selected_heatmap_year": selected_heatmap_year,

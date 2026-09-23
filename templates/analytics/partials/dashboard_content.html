@@ -24,16 +24,16 @@
       <p class="kpi-foot">Planned {{ kpis.total_planned }}</p>
     </div>
 
-    <!-- KPI 3: Streak (purple) -->
+    <!-- KPI 3: Activity streak (purple) -->
     <div class="kpi-card kpi-card--purple surface-card page-card">
       <div class="kpi-icon"><i class="ti ti-flame" aria-hidden="true"></i></div>
-      <p class="kpi-label">Streak</p>
+      <p class="kpi-label">Activity streak</p>
       <p class="kpi-value">{{ kpis.streak }} days</p>
       <p class="kpi-foot">
         {% if kpis.streak_is_record %}
           <span class="streak-badge streak-badge--record">
             <i class="ti ti-trophy" aria-hidden="true"></i>
-            Personal best
+            Personal best ({{ kpis.streak_best }})
           </span>
         {% elif kpis.streak > 0 %}
           <span class="streak-badge streak-badge--active">
@@ -41,19 +41,31 @@
             Active streak
           </span>
         {% else %}
-          Priority-weighted
+          Track any activity daily
         {% endif %}
       </p>
     </div>
 
-    <!-- KPI 4: Top category (neutral) -->
+    <!-- KPI 4: Plan streak (neutral) — replaces Top category -->
     <div class="kpi-card kpi-card--neutral surface-card page-card">
-      <div class="kpi-icon"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
-      <p class="kpi-label">Top category</p>
-      <p class="kpi-value kpi-value--sm">
-        {% if kpis.top_category %}{{ kpis.top_category.name }}{% else %}--{% endif %}
+      <div class="kpi-icon"><i class="ti ti-calendar-check" aria-hidden="true"></i></div>
+      <p class="kpi-label">Plan streak</p>
+      <p class="kpi-value">{{ kpis.plan_streak }} days</p>
+      <p class="kpi-foot">
+        {% if kpis.plan_streak_is_record %}
+          <span class="streak-badge streak-badge--record">
+            <i class="ti ti-trophy" aria-hidden="true"></i>
+            Personal best ({{ kpis.plan_streak_best }})
+          </span>
+        {% elif kpis.plan_streak > 0 %}
+          <span class="streak-badge streak-badge--active">
+            <i class="ti ti-circle-check" aria-hidden="true"></i>
+            Actual ≥ planned
+          </span>
+        {% else %}
+          Meet planned time daily
+        {% endif %}
       </p>
-      <p class="kpi-foot">Highest intensity</p>
     </div>
 
   </div>
@@ -62,7 +74,20 @@
     <div class="chart-card chart-wide surface-card page-card">
       <div class="chart-header">
         <h2>{{ series.name }} actual vs planned</h2>
-        <span class="pill">{{ range_days }} days</span>
+        <div class="chart-actions">
+          {% if series.plan_streak > 0 %}
+            <span class="streak-badge streak-badge--active" title="Consecutive days this category met its plan">
+              <i class="ti ti-flame" aria-hidden="true"></i>
+              {{ series.plan_streak }}d plan streak
+            </span>
+          {% endif %}
+          {% if series.plan_met_days > 0 %}
+            <span class="pill" title="Days in range where planned time was met">
+              {{ series.plan_met_days }}/{{ range_days }} met
+            </span>
+          {% endif %}
+          <span class="pill">{{ range_days }} days</span>
+        </div>
       </div>
       <div class="chart-frame dashboard-chart-frame">
         <canvas id="dailyChart-{{ series.key }}" aria-label="Daily actual vs planned"></canvas>

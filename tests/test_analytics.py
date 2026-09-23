@@ -10,9 +10,13 @@ from activities.models import Activity, ActivityCategory
 from analytics import views as analytics_views
 from analytics.models import AggregatedDaily
 from analytics.services import (
+    compute_category_plan_streaks,
     compute_category_totals,
     compute_daily,
     compute_daily_intensity,
+    compute_intensity_streak,
+    compute_plan_streak,
+    day_meets_plan,
     update_daily,
 )
 from planner.models import ScheduleBlock
@@ -278,3 +282,147 @@ def test_dashboard_single_boundary_filters(monkeypatch, client):
     assert response.context["daily_labels"][-1] == "2026-06-02"
     assert response.context["from_date_value"] == "2026-05-30"
     assert response.context["to_date_value"] == "2026-06-02"
+
+
+def test_day_meets_plan_rules():
+    assert day_meets_plan(60, 60) is True
+    assert day_meets_plan(90, 60) is True
+    assert day_meets_plan(30, 60) is False
+    assert day_meets_plan(30, 0) is True
+    assert day_meets_plan(0, 0) is False
+    assert day_meets_plan(0, 30) is False
+
+
+def _make_aggregate(user, date, actual, planned):
+    return AggregatedDaily.objects.create(
+        user=user,
+        date=date,
+        total_minutes=actual,
+        planned_minutes=planned,
+        completion_rate=(actual / planned) if planned else None,
+        sessions_count=1 if actual else 0,
+    )
+
+
+@pytest.mark.django_db
+def test_plan_streak_consecutive_days_meet_plan():
+    user = User.objects.create_user(username="ps1", password="Pass12345")
+    today = dt.date(2026, 6, 10)
+    _make_aggregate(user, today, 60, 60)
+    _make_aggregate(user, today - dt.timedelta(days=1), 75, 60)
+    _make_aggregate(user, today - dt.timedelta(days=2), 65, 60)
+    _make_aggregate(user, today - dt.timedelta(days=3), 60, 60)
+
+    result = compute_plan_streak(user, today)
+    assert result["days"] == 4
+    assert result["best"] == 4
+    assert result["is_record"] is True
+
+
+@pytest.mark.django_db
+def test_plan_streak_breaks_when_actual_below_planned():
+    user = User.objects.create_user(username="ps2", password="Pass12345")
+    today = dt.date(2026, 6, 10)
+    _make_aggregate(user, today, 60, 60)
+    _make_aggregate(user, today - dt.timedelta(days=1), 60, 60)
+    _make_aggregate(user, today - dt.timedelta(days=2), 20, 60)
+    _make_aggregate(user, today - dt.timedelta(days=3), 60, 60)
+
+    result = compute_plan_streak(user, today)
+    assert result["days"] == 2
+    assert result["best"] == 2
+
+
+@pytest.mark.django_db
+def test_plan_streak_grace_when_today_incomplete():
+    user = User.objects.create_user(username="ps3", password="Pass12345")
+    today = dt.date(2026, 6, 10)
+    _make_aggregate(user, today, 10, 60)
+    _make_aggregate(user, today - dt.timedelta(days=1), 60, 60)
+    _make_aggregate(user, today - dt.timedelta(days=2), 60, 60)
+
+    result = compute_plan_streak(user, today)
+    assert result["days"] == 2
+
+
+@pytest.mark.django_db
+def test_plan_streak_unplanned_active_day_counts():
+    user = User.objects.create_user(username="ps4", password="Pass12345")
+    today = dt.date(2026, 6, 10)
+    _make_aggregate(user, today, 45, 0)
+    _make_aggregate(user, today - dt.timedelta(days=1), 60, 60)
+
+    result = compute_plan_streak(user, today)
+    assert result["days"] == 2
+
+
+@pytest.mark.django_db
+def test_intensity_streak_uses_any_activity():
+    user = User.objects.create_user(username="is1", password="Pass12345")
+    today = dt.date(2026, 6, 10)
+    _make_aggregate(user, today, 5, 0)
+    _make_aggregate(user, today - dt.timedelta(days=1), 30, 60)
+    _make_aggregate(user, today - dt.timedelta(days=2), 0, 0)
+
+    result = compute_intensity_streak(user, today)
+    assert result["days"] == 2
+
+
+@pytest.mark.django_db
+def test_category_plan_streaks_track_per_category():
+    user = User.objects.create_user(username="cs1", password="Pass12345")
+    category = ActivityCategory.objects.create(user=user, name="Work")
+    activity = Activity.objects.create(
+        user=user, title="Focus", category=category, weight=3
+    )
+    today = dt.date(2026, 6, 10)
+    tz = dt.timezone.utc
+
+    for offset, actual_min in enumerate([60, 60, 30]):
+        day = today - dt.timedelta(days=offset)
+        ScheduleBlock.objects.create(
+            user=user,
+            activity=activity,
+            category=category,
+            date=day,
+            duration_minutes=60,
+        )
+        Session.objects.create(
+            user=user,
+            activity=activity,
+            category=category,
+            local_date=day,
+            start=dt.datetime.combine(day, dt.time(9, 0), tzinfo=tz),
+            end=dt.datetime.combine(day, dt.time(9, 0), tzinfo=tz)
+            + dt.timedelta(minutes=actual_min),
+            source=Session.SOURCE_MANUAL,
+        )
+
+    streaks = compute_category_plan_streaks(user, today)
+    work = next(row for row in streaks if row["name"] == "Work")
+    assert work["streak"] == 2
+    assert work["met_days"] == 2
+
+
+@pytest.mark.django_db
+def test_dashboard_exposes_plan_streak_kpi(monkeypatch, client):
+    user = User.objects.create_user(username="ps5", password="Pass12345")
+    profile = UserProfile.objects.get(user=user)
+    profile.timezone = "UTC"
+    profile.save(update_fields=["timezone"])
+
+    fixed_now = dt.datetime(2026, 6, 2, 12, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(analytics_views.timezone, "now", lambda: fixed_now)
+
+    _make_aggregate(user, dt.date(2026, 6, 2), 60, 60)
+    _make_aggregate(user, dt.date(2026, 6, 1), 70, 60)
+
+    client.force_login(user)
+    response = client.get(reverse("dashboard"))
+
+    assert response.status_code == 200
+    kpis = response.context["kpis"]
+    assert kpis["plan_streak"] == 2
+    assert kpis["plan_streak_is_record"] is True
+    assert "top_category" not in kpis
+    assert "category_plan_streaks" in response.context

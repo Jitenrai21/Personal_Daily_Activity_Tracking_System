@@ -168,6 +168,67 @@ body {
   background: #f5efe5;
   color: var(--dashboard-ink);
 }
+<<<<<<< HEAD
+=======
+
+/* Hamburger toggle — visible only on small screens */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.nav-toggle-icon,
+.nav-toggle-icon::before,
+.nav-toggle-icon::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-color);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-toggle-icon {
+  position: relative;
+}
+
+.nav-toggle-icon::before,
+.nav-toggle-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.nav-toggle-icon::before {
+  top: -6px;
+}
+
+.nav-toggle-icon::after {
+  top: 6px;
+}
+
+.nav-toggle.is-open .nav-toggle-icon {
+  background: transparent;
+}
+
+.nav-toggle.is-open .nav-toggle-icon::before {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-toggle.is-open .nav-toggle-icon::after {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+>>>>>>> master
 .content {
   flex: 1;
   padding: 0 2rem 2rem;
@@ -424,7 +485,11 @@ h2 {
 }
 
 .section {
+<<<<<<< HEAD
   margin-top: 1.2rem;
+=======
+  margin-top: 0.5rem;
+>>>>>>> master
 }
 
 .pill {
@@ -586,6 +651,20 @@ textarea {
   }
 }
 
+<<<<<<< HEAD
+=======
+@keyframes navDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+>>>>>>> master
 .dashboard-shell {
   background: linear-gradient(140deg, var(--dashboard-glow), var(--bg-color));
   border: 1px solid var(--border-color);
@@ -757,6 +836,7 @@ textarea {
 
 @media (max-width: 720px) {
   .site-header {
+<<<<<<< HEAD
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
@@ -765,6 +845,67 @@ textarea {
     font-size: 0.95rem;
   }
   .form-row {
+=======
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+  }
+  .brand-link {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .brand-text {
+    min-width: 0;
+  }
+  .brand-title {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .nav {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    min-width: 200px;
+    background: var(--main-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem;
+    z-index: 200;
+  }
+  .nav.is-open {
+    display: flex;
+    animation: navDropIn 0.15s ease;
+  }
+  .nav-link {
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+  }
+  .nav form {
+    display: flex;
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--border-color);
+  }
+  .nav form .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .form-row,
+  .session-form-row {
+>>>>>>> master
     grid-template-columns: 1fr;
   }
   .form-label {
@@ -773,42 +914,215 @@ textarea {
   .table {
     overflow-x: auto;
   }
+<<<<<<< HEAD
   .table-row {
     min-width: 620px;
   }
+=======
+>>>>>>> master
   .session-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.2rem;
   }
+<<<<<<< HEAD
+=======
+  .card-header {
+    flex-wrap: wrap;
+  }
+  .card-actions {
+    flex-wrap: wrap;
+  }
+  .list-item {
+    flex-wrap: wrap;
+  }
+
+  /* Generic table rows become stacked cards on mobile */
+  .table-row {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 0.35rem;
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--border-color);
+  }
+  .table-row > div {
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .table-row > div::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-color);
+  }
+  .table-row.table-head {
+    display: none;
+  }
+  .table-row .row-actions {
+    justify-self: stretch;
+    justify-content: flex-end;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.2rem;
+  }
+  .table-row .row-actions::before {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    padding: 0.75rem 1rem;
+  }
+  .brand-subtitle {
+    display: none;
+  }
+  .brand-mark {
+    padding: 0.35rem;
+  }
+  .brand-logo {
+    height: 36px;
+  }
+  .page-header {
+    padding: 1rem;
+  }
+  .page-title {
+    font-size: 1.5rem;
+  }
+  .page-card {
+    padding: 1rem;
+  }
+  .form-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+>>>>>>> master
 }
 
 .site-footer {
   border-top: 1px solid var(--border-color);
   background: var(--main-color);
+<<<<<<< HEAD
   padding: 2rem;
+=======
+  padding: 1.5rem 2rem;
+>>>>>>> master
 }
 
 .footer-inner {
   max-width: 1240px;
   margin: 0 auto;
+<<<<<<< HEAD
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+=======
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.5rem;
+>>>>>>> master
 }
 
 .brand-footer {
   display: inline-flex;
   align-items: center;
   gap: 0.85rem;
+<<<<<<< HEAD
 }
 
 .footer-note {
   margin: 0;
   color: var(--accent-color);
   font-size: 0.9rem;
+=======
+  min-width: 0;
+}
+
+.brand-footer .brand-mark {
+  padding: 0.35rem;
+}
+
+.brand-footer .brand-logo {
+  height: 28px;
+  width: auto;
+}
+
+.brand-footer .brand-text {
+  min-width: 0;
+}
+
+.brand-footer .brand-title {
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.brand-footer .brand-subtitle {
+  font-size: 0.85rem;
+}
+
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1.5rem;
+}
+
+.footer-nav a {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--cta-color);
+}
+
+.footer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.footer-note,
+.footer-copy {
+  margin: 0;
+  color: var(--accent-color);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+  .site-footer {
+    padding: 1.5rem 1rem;
+  }
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .brand-footer {
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer-nav {
+    justify-content: center;
+    gap: 0.35rem 1.25rem;
+  }
+  .footer-meta {
+    align-items: center;
+    text-align: center;
+  }
+>>>>>>> master
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -833,7 +1147,11 @@ textarea {
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
+<<<<<<< HEAD
   padding: var(--space-6) var(--container-pad);
+=======
+  padding: var(--space-2) var(--container-pad) var(--space-6);
+>>>>>>> master
 }
 
 .page__footer {
@@ -1730,7 +2048,11 @@ textarea {
   }
 
   .page__main {
+<<<<<<< HEAD
     padding: var(--space-4) var(--container-pad);
+=======
+    padding: var(--space-2) var(--container-pad) var(--space-4);
+>>>>>>> master
   }
 
   .card__body {
@@ -1768,3 +2090,31 @@ textarea {
     padding: var(--space-3) var(--space-5);
   }
 }
+<<<<<<< HEAD
+=======
+
+/* ─── Mobile heatmap slider ───
+   Horizontal sliding surface for the year-wide grid. Placed at the end so it
+   overrides the base `.contribution-heatmap` overflow rules. */
+@media (max-width: 768px) {
+  .contribution-heatmap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    cursor: grab;
+    padding-bottom: var(--space-1);
+  }
+
+  .contribution-heatmap:active {
+    cursor: grabbing;
+  }
+
+  .heatmap-grid {
+    min-width: 640px;
+    width: max-content;
+  }
+}
+>>>>>>> master

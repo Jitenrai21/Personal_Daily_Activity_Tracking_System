@@ -242,6 +242,190 @@ def compute_category_totals(user, start_date, end_date):
     return list(category_map.values())
 
 
+<<<<<<< HEAD
+=======
+def day_meets_plan(actual_minutes, planned_minutes):
+    """
+    A day meets its plan when there is tracked activity and actual time
+    does not fall short of planned time.
+
+    - planned > 0: success only when actual >= planned
+    - planned == 0: any actual activity counts (nothing to miss)
+    - empty day (0, 0): does not count — idle days break streaks
+    """
+    return actual_minutes > 0 and actual_minutes >= planned_minutes
+
+
+def _aggregate_day_map(user, end_date):
+    return {
+        row.date: row
+        for row in AggregatedDaily.objects.filter(user=user, date__lte=end_date)
+    }
+
+
+def _streak_stats(day_map, local_today, day_ok, grace_today=True):
+    """
+    Walk day_map to derive current and best streaks.
+
+    grace_today: if the in-progress local_today does not qualify yet,
+    count the streak ending yesterday instead of resetting to zero.
+    """
+
+    def meets(day):
+        row = day_map.get(day)
+        return bool(row) and day_ok(row)
+
+    days = 0
+    cursor = local_today
+    if grace_today and not meets(cursor):
+        cursor -= dt.timedelta(days=1)
+    while meets(cursor):
+        days += 1
+        cursor -= dt.timedelta(days=1)
+
+    best = 0
+    if day_map:
+        run = 0
+        cursor = min(day_map)
+        while cursor <= local_today:
+            if meets(cursor):
+                run += 1
+                best = max(best, run)
+            else:
+                run = 0
+            cursor += dt.timedelta(days=1)
+
+    is_record = days > 0 and days >= best
+    return days, best, is_record
+
+
+def compute_intensity_streak(user, local_today):
+    """Consecutive local days with any tracked activity (total_minutes > 0)."""
+    day_map = _aggregate_day_map(user, local_today)
+    days, best, is_record = _streak_stats(
+        day_map,
+        local_today,
+        day_ok=lambda row: row.total_minutes > 0,
+    )
+    return {"days": days, "best": best, "is_record": is_record}
+
+
+def compute_plan_streak(user, local_today):
+    """
+    Consecutive local days where actual minutes met planned minutes
+    (see day_meets_plan). Uses AggregatedDaily totals — categories are
+    not required for the day to count.
+    """
+    day_map = _aggregate_day_map(user, local_today)
+    days, best, is_record = _streak_stats(
+        day_map,
+        local_today,
+        day_ok=lambda row: day_meets_plan(row.total_minutes, row.planned_minutes),
+    )
+    return {"days": days, "best": best, "is_record": is_record}
+
+
+def compute_category_plan_streaks(user, local_today, lookback_days=400):
+    """
+    Per-category plan-fulfillment streaks over a lookback window.
+
+    Returns a list of:
+      {id, name, streak, met_days}
+    where streak is consecutive days (ending today/yesterday) that meet
+    day_meets_plan for that category, and met_days is how many days in
+    the window had planned > 0 and actual >= planned.
+    """
+    start_date = local_today - dt.timedelta(days=lookback_days)
+
+    categories = list(ActivityCategory.objects.filter(user=user).order_by("name"))
+    cat_names = {category.pk: category.name for category in categories}
+
+    actual_by_day = {}
+    planned_by_day = {}
+
+    def resolve_category_id(direct_category, activity):
+        if direct_category_id := getattr(direct_category, "pk", None):
+            return direct_category_id
+        if activity is not None and activity.category_id:
+            return activity.category_id
+        return None
+
+    sessions = (
+        Session.objects.filter(
+            user=user,
+            local_date__range=(start_date, local_today),
+            duration_minutes__isnull=False,
+        )
+        .select_related("activity", "activity__category", "category")
+    )
+    for session in sessions:
+        minutes = session.duration_minutes or 0
+        if minutes <= 0:
+            continue
+        category_id = resolve_category_id(session.category, session.activity)
+        day_actual = actual_by_day.setdefault(session.local_date, {})
+        day_actual[category_id] = day_actual.get(category_id, 0) + minutes
+
+    blocks = ScheduleBlock.objects.filter(
+        user=user, date__range=(start_date, local_today)
+    ).select_related("activity", "category")
+    for block in blocks:
+        if block.start_time and block.end_time:
+            start_dt = dt.datetime.combine(block.date, block.start_time)
+            end_dt = dt.datetime.combine(block.date, block.end_time)
+            minutes = int((end_dt - start_dt).total_seconds() // 60)
+        elif block.duration_minutes:
+            minutes = int(block.duration_minutes)
+        else:
+            minutes = 0
+        if minutes <= 0:
+            continue
+        category_id = resolve_category_id(block.category, block.activity)
+        day_planned = planned_by_day.setdefault(block.date, {})
+        day_planned[category_id] = day_planned.get(category_id, 0) + minutes
+
+    category_ids = set(cat_names)
+    for day_map in (actual_by_day, planned_by_day):
+        for day_minutes in day_map.values():
+            category_ids.update(day_minutes)
+
+    results = []
+    for category_id in category_ids:
+        def meets(day, category_id=category_id):
+            actual = actual_by_day.get(day, {}).get(category_id, 0)
+            planned = planned_by_day.get(day, {}).get(category_id, 0)
+            return day_meets_plan(actual, planned)
+
+        streak = 0
+        cursor = local_today
+        if not meets(cursor):
+            cursor -= dt.timedelta(days=1)
+        while cursor >= start_date and meets(cursor):
+            streak += 1
+            cursor -= dt.timedelta(days=1)
+
+        met_days = 0
+        cursor = start_date
+        while cursor <= local_today:
+            actual = actual_by_day.get(cursor, {}).get(category_id, 0)
+            planned = planned_by_day.get(cursor, {}).get(category_id, 0)
+            if planned > 0 and actual >= planned:
+                met_days += 1
+            cursor += dt.timedelta(days=1)
+
+        results.append(
+            {
+                "id": category_id,
+                "name": cat_names.get(category_id, "Unassigned"),
+                "streak": streak,
+                "met_days": met_days,
+            }
+        )
+
+    return sorted(results, key=lambda item: (item["name"] or "").lower())
+
+
+>>>>>>> master
 def compute_daily_intensity(user, date):
     start_utc, end_utc = get_day_bounds_utc(user, date)
 
