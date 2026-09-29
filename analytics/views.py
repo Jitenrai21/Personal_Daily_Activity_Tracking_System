@@ -20,6 +20,7 @@ from analytics.services import (
     compute_daily_intensity,
     compute_intensity_streak,
     compute_plan_streak,
+    compute_weekly_timer_sessions,
     get_day_bounds_utc,
     get_user_timezone,
 )
@@ -575,6 +576,15 @@ def build_context(request):
     heatmap = build_heatmap(heatmap_dates, heatmap_intensity)
     heatmap_total = sum(cell["value"] for week in heatmap["weeks"] for cell in week)
 
+    hourly_end = end_date
+    hourly_week_raw = request.GET.get("hourly_week", "").strip()
+    if hourly_week_raw and hourly_week_raw != "latest":
+        parsed_week = _parse_date(hourly_week_raw)
+        if parsed_week:
+            hourly_end = min(parsed_week, local_today)
+    hourly_start = hourly_end - dt.timedelta(days=6)
+    hourly_data = compute_weekly_timer_sessions(user, hourly_start, hourly_end)
+
     # Streaks from full history up to today — never filtered by range
     intensity_streak = compute_intensity_streak(user, local_today)
     plan_streak = compute_plan_streak(user, local_today)
@@ -595,9 +605,7 @@ def build_context(request):
         series["labels"],
     )
 
-    streaks_by_category_id = {
-        row["id"]: row for row in category_plan_streaks
-    }
+    streaks_by_category_id = {row["id"]: row for row in category_plan_streaks}
     for item in category_daily_series:
         streak_row = streaks_by_category_id.get(item["id"])
         item["plan_streak"] = streak_row["streak"] if streak_row else 0
@@ -632,6 +640,14 @@ def build_context(request):
         "heatmap": heatmap,
         "heatmap_total": heatmap_total,
         "selected_heatmap_year": selected_heatmap_year,
+        "hourly_labels": hourly_data["labels"],
+        "hourly_days": hourly_data["days"],
+        "hourly_start": hourly_start,
+        "hourly_end": hourly_end,
+        "hourly_prev": (hourly_end - dt.timedelta(days=7)).isoformat(),
+        "hourly_next": (hourly_end + dt.timedelta(days=7)).isoformat(),
+        "hourly_next_enabled": hourly_end < local_today,
+        "hourly_is_latest": hourly_end == end_date,
         "kpis": kpis,
         "local_today": local_today,
     }

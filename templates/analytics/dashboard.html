@@ -10,6 +10,8 @@
       --color-chart-actual-bottom: #1F6B1F;
       --color-chart-planned-top: #FFD54F;
       --color-chart-planned-bottom: #F0A500;
+      --hourly-green-top: #3CB371;
+      --hourly-green-bottom: #1F6B1F;
     }
 
     .dashboard-eyebrow-pill {
@@ -139,6 +141,38 @@
         flex: 1 1 28%;
       }
     }
+
+    .hourly-tooltip {
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      background: rgba(28, 43, 34, 0.95);
+      color: #f2f6f2;
+      padding: 8px 11px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.55;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+      max-width: 240px;
+    }
+
+    .hourly-tooltip[hidden] {
+      display: none;
+    }
+
+    .hourly-tooltip strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: #fff;
+    }
+
+    .hourly-hint {
+      font-size: 0.7rem;
+      color: var(--accent-color);
+      opacity: 0.8;
+      align-self: center;
+    }
   </style>
 {% endblock %}
 
@@ -219,8 +253,206 @@
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
+    function ensureHourlyTooltip() {
+      let tip = document.getElementById("hourlyTooltip");
+      if (!tip) {
+        tip = document.createElement("div");
+        tip.id = "hourlyTooltip";
+        tip.className = "hourly-tooltip";
+        tip.hidden = true;
+        document.body.appendChild(tip);
+      }
+      return tip;
+    }
+
+    function formatHour(h) {
+      const hh = Math.floor(h);
+      const mm = Math.round((h - hh) * 60);
+      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderHourlyChart() {
+      const dayLabels = loadJson("hourly-labels");
+      const daysMatrix = loadJson("hourly-days");
+      if (!dayLabels || !daysMatrix) return;
+
+      const style = getComputedStyle(document.documentElement);
+      const greenTop = style.getPropertyValue("--hourly-green-top").trim() || "#a7e8c4";
+      const greenBottom = style.getPropertyValue("--hourly-green-bottom").trim() || "#45b87c";
+      const track = style.getPropertyValue("--surface-soft").trim() || "#eef1ee";
+
+      const formattedDayLabels = dayLabels.map((d) => {
+        const date = new Date(`${d}T00:00:00`);
+        return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+      });
+
+      const activeSegmentsPlugin = {
+        id: "activeSegments",
+        beforeDraw(chart) {
+          const ctx = chart.ctx;
+          const xScale = chart.scales.x;
+          const area = chart.chartArea;
+          if (!area || !xScale) return;
+          const bands = [
+            [0, 7],
+            [23, 24],
+          ];
+          ctx.save();
+          ctx.fillStyle = "rgba(97, 113, 103, 0.07)";
+          for (const [from, to] of bands) {
+            const x1 = xScale.getPixelForValue(from);
+            const x2 = xScale.getPixelForValue(to);
+            ctx.fillRect(x1, area.top, x2 - x1, area.bottom - area.top);
+          }
+          ctx.fillStyle = "#617167";
+          const fontFamily = getComputedStyle(document.body).fontFamily || "sans-serif";
+          ctx.font = `italic 600 10px ${fontFamily}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          const mid = (xScale.getPixelForValue(0) + xScale.getPixelForValue(7)) / 2;
+          ctx.fillText("Sleep", mid, area.top + 6);
+          ctx.restore();
+        },
+        afterDatasetsDraw(chart) {
+          const ctx = chart.ctx;
+          const xScale = chart.scales.x;
+          const yScale = chart.scales.y;
+          const trackMeta = chart.getDatasetMeta(0);
+          const numDays = daysMatrix.length;
+          const hits = [];
+          ctx.save();
+          for (let d = 0; d < numDays; d++) {
+            const sessions = daysMatrix[d] || [];
+            if (!sessions.length) continue;
+            const bar = trackMeta.data[d];
+            const center = bar && typeof bar.y === "number" ? bar.y : yScale.getPixelForTick(d);
+            const rowH = bar && bar.height ? bar.height : (yScale.height / numDays) * 0.7;
+            const top = center - rowH / 2 + 2;
+            const segH = rowH - 4;
+            for (const s of sessions) {
+              const x1 = Math.max(xScale.getPixelForValue(s.start), chart.chartArea.left);
+              const x2 = Math.min(xScale.getPixelForValue(s.end), chart.chartArea.right);
+              const w = Math.max(x2 - x1, 3);
+              hits.push({ x: x1, y: top, w: w, h: segH, session: s, dayLabel: formattedDayLabels[d] });
+              const grad = ctx.createLinearGradient(x1, 0, x2, 0);
+              grad.addColorStop(0, greenTop);
+              grad.addColorStop(1, greenBottom);
+              ctx.beginPath();
+              if (typeof ctx.roundRect === "function") ctx.roundRect(x1, top, w, segH, 3);
+              else ctx.rect(x1, top, w, segH);
+              ctx.fillStyle = grad;
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+          chart.$hourlyHits = hits;
+        },
+      };
+
+      renderChart("hourlyChart", {
+        type: "bar",
+        data: {
+          labels: formattedDayLabels,
+          datasets: [{
+            label: "Day",
+            data: daysMatrix.map(() => [0, 24]),
+            backgroundColor: track,
+            borderWidth: 0,
+            borderRadius: 4,
+            borderSkipped: false,
+            barPercentage: 0.88,
+            categoryPercentage: 0.72,
+            maxBarThickness: 24,
+          }],
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+          },
+          scales: {
+            x: {
+              min: 0,
+              max: 24,
+              title: { display: true, text: "Hour of day", color: "#617167", font: { size: 11, weight: "600" } },
+              grid: { color: "rgba(28, 43, 34, 0.06)", drawBorder: false },
+              ticks: { stepSize: 2, color: "#617167", font: { size: 10 }, callback(v) { return `${v}:00`; } },
+              border: { display: false },
+            },
+            y: {
+              type: "category",
+              labels: formattedDayLabels,
+              reverse: true,
+              grid: { display: false },
+              ticks: { color: "#617167", font: { size: 11 } },
+              border: { display: false },
+            },
+          },
+        },
+        plugins: [activeSegmentsPlugin],
+      });
+
+      const canvas = document.getElementById("hourlyChart");
+      if (!canvas || canvas.dataset.hourlyBound) return;
+      canvas.dataset.hourlyBound = "1";
+      const tip = ensureHourlyTooltip();
+
+      canvas.addEventListener("mousemove", (e) => {
+        const chart = chartStore["hourlyChart"];
+        if (!chart || !chart.$hourlyHits) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        let hit = null;
+        for (const h of chart.$hourlyHits) {
+          if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) {
+            hit = h;
+            break;
+          }
+        }
+        if (!hit) {
+          tip.hidden = true;
+          canvas.style.cursor = "default";
+          return;
+        }
+        canvas.style.cursor = "pointer";
+        const s = hit.session;
+        let html = `<strong>${formatHour(s.start)} – ${formatHour(s.end)}</strong>`;
+        html += `<div>${s.minutes} min active</div>`;
+        html += `<div>${escapeHtml(s.activity || "Timer session")}</div>`;
+        if (s.category) html += `<div>Category: ${escapeHtml(s.category)}</div>`;
+        html += `<div>${escapeHtml(hit.dayLabel)}</div>`;
+        tip.innerHTML = html;
+        tip.hidden = false;
+        let left = e.clientX + 14;
+        let topPos = e.clientY + 14;
+        if (left + tip.offsetWidth > window.innerWidth - 8) left = e.clientX - tip.offsetWidth - 14;
+        if (topPos + tip.offsetHeight > window.innerHeight - 8) topPos = e.clientY - tip.offsetHeight - 14;
+        tip.style.left = `${left}px`;
+        tip.style.top = `${topPos}px`;
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        tip.hidden = true;
+        canvas.style.cursor = "default";
+      });
+    }
+
     function renderDashboardCharts() {
       destroyDashboardCharts();
+
+      renderHourlyChart();
 
       const categorySeries = loadJson("category-daily-series");
       if (!categorySeries) return;
@@ -393,10 +625,20 @@
 
     document.body.addEventListener("click", (event) => {
       const btn = event.target.closest(".year-btn");
-      if (!btn) return;
+      if (!btn || btn.dataset.hourlyWeek !== undefined) return;
       const year = btn.dataset.year;
       const params = new URLSearchParams(window.location.search);
       params.set("heatmap_year", year);
+      htmx.ajax("GET", `{% url 'dashboard_partial' %}?${params.toString()}`, { target: "#dashboard-pane", swap: "innerHTML" });
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-hourly-week]");
+      if (!btn || btn.disabled) return;
+      const value = btn.dataset.hourlyWeek;
+      const params = new URLSearchParams(window.location.search);
+      if (value === "latest") params.delete("hourly_week");
+      else params.set("hourly_week", value);
       htmx.ajax("GET", `{% url 'dashboard_partial' %}?${params.toString()}`, { target: "#dashboard-pane", swap: "innerHTML" });
     });
   </script>

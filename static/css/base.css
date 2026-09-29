@@ -1825,6 +1825,17 @@ textarea {
   color: var(--bg-color);
   border-color: var(--text-color);
 }
+
+.year-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.year-btn:disabled:hover {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--accent-color);
+}
 /* ─── Auth Shell (replaces .auth-shell, .auth-card) ─── */
 .auth-shell {
   min-height: 100vh;

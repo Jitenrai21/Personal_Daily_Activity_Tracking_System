@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from activities.models import ActivityCategory
@@ -348,14 +349,11 @@ def compute_category_plan_streaks(user, local_today, lookback_days=400):
             return activity.category_id
         return None
 
-    sessions = (
-        Session.objects.filter(
-            user=user,
-            local_date__range=(start_date, local_today),
-            duration_minutes__isnull=False,
-        )
-        .select_related("activity", "activity__category", "category")
-    )
+    sessions = Session.objects.filter(
+        user=user,
+        local_date__range=(start_date, local_today),
+        duration_minutes__isnull=False,
+    ).select_related("activity", "activity__category", "category")
     for session in sessions:
         minutes = session.duration_minutes or 0
         if minutes <= 0:
@@ -389,6 +387,7 @@ def compute_category_plan_streaks(user, local_today, lookback_days=400):
 
     results = []
     for category_id in category_ids:
+
         def meets(day, category_id=category_id):
             actual = actual_by_day.get(day, {}).get(category_id, 0)
             planned = planned_by_day.get(day, {}).get(category_id, 0)
@@ -467,3 +466,79 @@ def compute_daily_intensity(user, date):
         intensity += minutes * max(1, weight)
 
     return intensity
+
+
+def compute_weekly_timer_sessions(user, start_date, end_date):
+    """Return timer sessions for each day in [start_date, end_date] with precise
+    start/end hours (float) for Gantt-style rendering.
+
+    Returns dict: {"labels": [day_iso...], "days": [[{start, end, minutes}, ...], ...]}
+    """
+    tz = get_user_timezone(user)
+
+    dates = [
+        start_date + dt.timedelta(days=i)
+        for i in range((end_date - start_date).days + 1)
+    ]
+    labels = [d.isoformat() for d in dates]
+    all_days = []
+
+    for day in dates:
+        day_start = dt.datetime.combine(day, dt.time.min, tzinfo=tz)
+        day_end = day_start + dt.timedelta(days=1)
+        start_utc = day_start.astimezone(dt.timezone.utc)
+        end_utc = day_end.astimezone(dt.timezone.utc)
+
+        sessions = (
+            Session.objects.filter(
+                user=user,
+                source=Session.SOURCE_TIMER,
+                start__isnull=False,
+                start__lt=end_utc,
+            )
+            .filter(Q(end__isnull=True) | Q(end__gt=start_utc))
+            .select_related("activity", "activity__category", "category")
+            .order_by("start")
+        )
+
+        now = timezone.now()
+        day_sessions = []
+        for session in sessions:
+            overlap_start = max(session.start, start_utc)
+            raw_end = session.end or now
+            overlap_end = min(raw_end, end_utc)
+            raw_seconds = (overlap_end - overlap_start).total_seconds()
+            if raw_seconds <= 0:
+                continue
+            effective_seconds = max(0.0, raw_seconds - (session.paused_seconds or 0))
+            if effective_seconds <= 0:
+                continue
+
+            local_start = overlap_start.astimezone(tz)
+            local_end = overlap_end.astimezone(tz)
+            start_hour = (
+                local_start.hour + local_start.minute / 60 + local_start.second / 3600
+            )
+            end_hour = local_end.hour + local_end.minute / 60 + local_end.second / 3600
+
+            day_sessions.append(
+                {
+                    "start": round(start_hour, 3),
+                    "end": round(end_hour, 3),
+                    "minutes": round(effective_seconds / 60, 1),
+                    "activity": session.activity.title if session.activity else None,
+                    "category": (
+                        session.category.name
+                        if session.category
+                        else (
+                            session.activity.category.name
+                            if session.activity and session.activity.category
+                            else None
+                        )
+                    ),
+                }
+            )
+
+        all_days.append(day_sessions)
+
+    return {"labels": labels, "days": all_days}

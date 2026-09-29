@@ -97,6 +97,26 @@
 
   <div class="chart-card chart-wide surface-card page-card">
     <div class="chart-header">
+      <h2>Active time — weekly 24h view</h2>
+      <div class="chart-actions hourly-week-nav">
+        <button type="button" class="year-btn" data-hourly-week="{{ hourly_prev }}"
+                title="Previous week">&lsaquo;</button>
+        <span class="pill">{{ hourly_start|date:"M j" }} – {{ hourly_end|date:"M j, Y" }}</span>
+        <button type="button" class="year-btn" data-hourly-week="{{ hourly_next }}"
+                title="Next week" {% if not hourly_next_enabled %}disabled{% endif %}>&rsaquo;</button>
+<button type="button" class="year-btn {% if hourly_is_latest %}active{% endif %}"
+                data-hourly-week="latest">Latest</button>
+        <!-- <span class="pill" title="Light bands mark typical sleep hours (23:00 – 07:00)">Timer sessions</span> -->
+        <span class="hourly-hint">Shaded region suggests sleep hours (23:00–07:00)</span>
+      </div>
+    </div>
+    <div class="chart-frame dashboard-chart-frame">
+      <canvas id="hourlyChart" aria-label="Weekly active time by hour of day"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card chart-wide surface-card page-card">
+    <div class="chart-header">
       <h2>Heatmap</h2>
       <span class="muted">{{ heatmap_total }} pts in
         {% if selected_heatmap_year %}{{ selected_heatmap_year }}{% else %}the last year{% endif %}</span>
@@ -147,3 +167,5 @@
 </section>
 
 {{ category_daily_series|json_script:"category-daily-series" }}
+{{ hourly_labels|json_script:"hourly-labels" }}
+{{ hourly_days|json_script:"hourly-days" }}
