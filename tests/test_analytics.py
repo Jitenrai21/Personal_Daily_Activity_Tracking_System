@@ -4,9 +4,8 @@ from zoneinfo import ZoneInfo
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils import timezone
 
-from activities.models import Activity, ActivityCategory
+from activities.models import CATEGORY_NO_COLOR, Activity, ActivityCategory
 from analytics import views as analytics_views
 from analytics.models import AggregatedDaily
 from analytics.services import (
@@ -16,6 +15,7 @@ from analytics.services import (
     compute_daily_intensity,
     compute_intensity_streak,
     compute_plan_streak,
+    compute_weekly_active_sessions,
     day_meets_plan,
     update_daily,
 )
@@ -62,7 +62,83 @@ def test_compute_daily_splits_midnight_session():
     metrics = compute_daily(user, dt.date(2026, 1, 2))
     assert metrics["total_minutes"] == 30
     assert metrics["planned_minutes"] == 60
-    assert metrics["completion_rate"] == pytest.approx(0.5)
+    # Per-category completion: the unassigned session does not fulfil the
+    # Work plan, so completion is 0 — unrelated time never fills a plan.
+    assert metrics["completion_rate"] == pytest.approx(0.0)
+
+
+@pytest.mark.django_db
+def test_compute_daily_completion_capped_per_category():
+    user = User.objects.create_user(username="u12", password="Pass12345")
+    profile = UserProfile.objects.get(user=user)
+    profile.timezone = "UTC"
+    profile.save(update_fields=["timezone"])
+    work = ActivityCategory.objects.create(user=user, name="Work")
+    gym = ActivityCategory.objects.create(user=user, name="Gym")
+    work_activity = Activity.objects.create(
+        user=user, title="Deep", category=work, weight=1
+    )
+    gym_activity = Activity.objects.create(
+        user=user, title="Run", category=gym, weight=1
+    )
+
+    day = dt.date(2026, 1, 5)
+    ScheduleBlock.objects.create(
+        user=user,
+        activity=work_activity,
+        category=work,
+        date=day,
+        start_time=dt.time(9, 0),
+        end_time=dt.time(10, 0),
+    )
+    ScheduleBlock.objects.create(
+        user=user,
+        activity=gym_activity,
+        category=gym,
+        date=day,
+        start_time=dt.time(10, 0),
+        end_time=dt.time(10, 30),
+    )
+    start = dt.datetime(2026, 1, 5, 11, 0, tzinfo=dt.timezone.utc)
+    Session.objects.create(
+        user=user,
+        activity=gym_activity,
+        category=gym,
+        local_date=day,
+        start=start,
+        end=start + dt.timedelta(minutes=90),
+        source=Session.SOURCE_MANUAL,
+    )
+
+    metrics = compute_daily(user, day)
+    assert metrics["total_minutes"] == 90
+    assert metrics["planned_minutes"] == 90
+    # Gym capped at its 30-min plan, Work's 60 unmet: (0 + 30) / 90.
+    # Naive totals would show 90/90 = 100% or worse (never over 100%).
+    assert metrics["completion_rate"] == pytest.approx(1 / 3)
+
+    over_day = dt.date(2026, 1, 6)
+    ScheduleBlock.objects.create(
+        user=user,
+        activity=work_activity,
+        category=work,
+        date=over_day,
+        start_time=dt.time(9, 0),
+        end_time=dt.time(10, 0),
+    )
+    over_start = dt.datetime(2026, 1, 6, 11, 0, tzinfo=dt.timezone.utc)
+    Session.objects.create(
+        user=user,
+        activity=work_activity,
+        category=work,
+        local_date=over_day,
+        start=over_start,
+        end=over_start + dt.timedelta(minutes=90),
+        source=Session.SOURCE_MANUAL,
+    )
+    over_metrics = compute_daily(user, over_day)
+    # 90 min actual vs 60 planned in one category caps at 1.0, never 1.5.
+    assert over_metrics["completion_rate"] == pytest.approx(1.0)
 
 
 @pytest.mark.django_db
@@ -72,7 +148,7 @@ def test_update_daily_creates_record():
     profile.timezone = "UTC"
     profile.save(update_fields=["timezone"])
 
-    start = timezone.now()
+    start = dt.datetime(2026, 1, 5, 10, 0, tzinfo=dt.timezone.utc)
     end = start + dt.timedelta(minutes=20)
     Session.objects.create(
         user=user,
@@ -105,7 +181,7 @@ def test_category_totals_weighted_by_weight():
         weight=1,
     )
 
-    start = timezone.now()
+    start = dt.datetime(2026, 1, 5, 10, 0, tzinfo=dt.timezone.utc)
     Session.objects.create(
         user=user,
         activity=high,
@@ -141,7 +217,7 @@ def test_daily_intensity_uses_weight():
         category=category,
         weight=2,
     )
-    start = timezone.now()
+    start = dt.datetime(2026, 1, 5, 10, 0, tzinfo=dt.timezone.utc)
     Session.objects.create(
         user=user,
         activity=activity,
@@ -193,6 +269,63 @@ def test_dashboard_defaults_to_current_window(monkeypatch, client):
     assert response.context["from_date_value"] == "2026-05-04"
     assert response.context["to_date_value"] == "2026-06-02"
     assert response.context["kpis"]["total_actual"] == 105
+
+
+@pytest.mark.django_db
+def test_dashboard_completion_rate_capped_at_100(monkeypatch, client):
+    user = User.objects.create_user(username="u8", password="Pass12345")
+    profile = UserProfile.objects.get(user=user)
+    profile.timezone = "UTC"
+    profile.save(update_fields=["timezone"])
+    work = ActivityCategory.objects.create(user=user, name="Work")
+    gym = ActivityCategory.objects.create(user=user, name="Gym")
+    work_activity = Activity.objects.create(
+        user=user, title="Deep", category=work, weight=1
+    )
+    gym_activity = Activity.objects.create(
+        user=user, title="Run", category=gym, weight=1
+    )
+
+    fixed_now = dt.datetime(2026, 6, 2, 12, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(analytics_views.timezone, "now", lambda: fixed_now)
+
+    day = dt.date(2026, 6, 1)
+    ScheduleBlock.objects.create(
+        user=user,
+        activity=work_activity,
+        category=work,
+        date=day,
+        start_time=dt.time(9, 0),
+        end_time=dt.time(10, 0),
+    )
+    ScheduleBlock.objects.create(
+        user=user,
+        activity=gym_activity,
+        category=gym,
+        date=day,
+        start_time=dt.time(10, 0),
+        end_time=dt.time(10, 30),
+    )
+    start = dt.datetime(2026, 6, 1, 11, 0, tzinfo=dt.timezone.utc)
+    Session.objects.create(
+        user=user,
+        activity=gym_activity,
+        category=gym,
+        local_date=day,
+        start=start,
+        end=start + dt.timedelta(minutes=90),
+        source=Session.SOURCE_MANUAL,
+    )
+
+    client.force_login(user)
+    response = client.get(reverse("dashboard"))
+
+    assert response.status_code == 200
+    kpis = response.context["kpis"]
+    # (min(0, 60) + min(90, 30)) / (60 + 30) = 30/90 -> 33%, never > 100.
+    assert kpis["completion_rate"] == 33
+    assert kpis["total_actual"] == 90
+    assert kpis["total_planned"] == 90
 
 
 @pytest.mark.django_db
@@ -278,6 +411,7 @@ def test_dashboard_single_boundary_filters(monkeypatch, client):
     response = client.get(reverse("dashboard"), {"from_date": "2026-05-30"})
 
     assert response.status_code == 200
+    assert response.context["range_days"] == 4
     assert response.context["daily_labels"][0] == "2026-05-30"
     assert response.context["daily_labels"][-1] == "2026-06-02"
     assert response.context["from_date_value"] == "2026-05-30"
@@ -426,3 +560,82 @@ def test_dashboard_exposes_plan_streak_kpi(monkeypatch, client):
     assert kpis["plan_streak_is_record"] is True
     assert "top_category" not in kpis
     assert "category_plan_streaks" in response.context
+
+
+@pytest.mark.django_db
+def test_weekly_active_sessions_include_manual_and_color_legend():
+    user = User.objects.create_user(username="u1", password="Pass12345")
+    profile = UserProfile.objects.get(user=user)
+    profile.timezone = "Asia/Kathmandu"
+    profile.save(update_fields=["timezone"])
+
+    category = ActivityCategory.objects.create(user=user, name="Work")
+    activity = Activity.objects.create(
+        user=user, title="Deep work", category=category, weight=1
+    )
+
+    tz = ZoneInfo("Asia/Kathmandu")
+    day = dt.date(2026, 1, 5)
+
+    Session.objects.create(
+        user=user,
+        local_date=day,
+        start=dt.datetime.combine(day, dt.time(10, 0), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        end=dt.datetime.combine(day, dt.time(11, 0), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        source=Session.SOURCE_TIMER,
+        activity=activity,
+    )
+    Session.objects.create(
+        user=user,
+        local_date=day,
+        start=dt.datetime.combine(day, dt.time(12, 0), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        end=dt.datetime.combine(day, dt.time(12, 45), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        source=Session.SOURCE_MANUAL,
+        activity=activity,
+    )
+    Session.objects.create(
+        user=user,
+        local_date=day,
+        start=dt.datetime.combine(day, dt.time(13, 0), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        source=Session.SOURCE_MANUAL,
+        activity=activity,
+        duration_minutes=30,
+    )
+    Session.objects.create(
+        user=user,
+        local_date=day,
+        start=dt.datetime.combine(day, dt.time(14, 0), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        end=dt.datetime.combine(day, dt.time(14, 30), tzinfo=tz).astimezone(
+            dt.timezone.utc
+        ),
+        source=Session.SOURCE_TIMER,
+    )
+
+    data = compute_weekly_active_sessions(user, day, day)
+    sessions = data["days"][0]
+    assert len(sessions) == 3
+
+    timer_session, manual_session, uncategorized = sessions
+    assert timer_session["category"] == "Work"
+    assert timer_session["color"] == category.color
+    assert manual_session["category"] == "Work"
+    assert manual_session["color"] == category.color
+    assert manual_session["minutes"] == 45
+    assert uncategorized["category"] is None
+    assert uncategorized["color"] == CATEGORY_NO_COLOR
+    assert data["legend"] == [
+        {"name": "Work", "color": category.color},
+        {"name": "Uncategorized", "color": CATEGORY_NO_COLOR},
+    ]

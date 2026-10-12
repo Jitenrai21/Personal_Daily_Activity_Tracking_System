@@ -15,12 +15,13 @@ from analytics.models import AggregatedDaily, DailyReflection, DailyScore
 from analytics.reflection import ensure_daily_reflection
 from analytics.scoring import upsert_daily_score
 from analytics.services import (
+    capped_completion_rate,
     compute_category_plan_streaks,
     compute_category_totals,
     compute_daily_intensity,
     compute_intensity_streak,
     compute_plan_streak,
-    compute_weekly_timer_sessions,
+    compute_weekly_active_sessions,
     get_day_bounds_utc,
     get_user_timezone,
 )
@@ -491,15 +492,24 @@ def parse_heatmap_year(request, year_options):
     return None
 
 
-def build_kpis(total_actual, total_planned, intensity_streak, plan_streak):
-    completion_rate = None
-    if total_planned > 0:
-        completion_rate = round(total_actual / total_planned * 100)
+def build_kpis(
+    total_actual, total_planned, intensity_streak, plan_streak, category_totals
+):
+    # Completion is category-aware and capped: each category counts at
+    # most its own plan, so the percentage never exceeds 100 and
+    # overachievement in one category cannot mask another's shortfall.
+    completion_rate = capped_completion_rate(category_totals)
+    if completion_rate is None and total_planned > 0:
+        # Stale/no category rows but aggregates show a plan: cap totals.
+        completion_rate = min(total_actual, total_planned) / total_planned
+    completion_percent = (
+        round(completion_rate * 100) if completion_rate is not None else None
+    )
 
     return {
         "total_actual": total_actual,
         "total_planned": total_planned,
-        "completion_rate": completion_rate,
+        "completion_rate": completion_percent,
         "streak": intensity_streak["days"],
         "streak_best": intensity_streak["best"],
         "streak_is_record": intensity_streak["is_record"],
@@ -583,7 +593,7 @@ def build_context(request):
         if parsed_week:
             hourly_end = min(parsed_week, local_today)
     hourly_start = hourly_end - dt.timedelta(days=6)
-    hourly_data = compute_weekly_timer_sessions(user, hourly_start, hourly_end)
+    hourly_data = compute_weekly_active_sessions(user, hourly_start, hourly_end)
 
     # Streaks from full history up to today — never filtered by range
     intensity_streak = compute_intensity_streak(user, local_today)
@@ -595,6 +605,7 @@ def build_context(request):
         total_planned=sum(series["planned"]),
         intensity_streak=intensity_streak,
         plan_streak=plan_streak,
+        category_totals=category_totals,
     )
 
     category_daily_series = build_category_daily_series(
@@ -642,6 +653,7 @@ def build_context(request):
         "selected_heatmap_year": selected_heatmap_year,
         "hourly_labels": hourly_data["labels"],
         "hourly_days": hourly_data["days"],
+        "hourly_legend": hourly_data["legend"],
         "hourly_start": hourly_start,
         "hourly_end": hourly_end,
         "hourly_prev": (hourly_end - dt.timedelta(days=7)).isoformat(),

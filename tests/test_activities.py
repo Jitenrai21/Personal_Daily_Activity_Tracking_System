@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.urls import reverse
 
-from activities.models import Activity, ActivityCategory
+from activities.models import CATEGORY_COLOR_PALETTE, Activity, ActivityCategory
 
 
 @pytest.mark.django_db
@@ -12,6 +12,18 @@ def test_category_unique_per_user():
     ActivityCategory.objects.create(user=user, name="Health")
     with pytest.raises(IntegrityError):
         ActivityCategory.objects.create(user=user, name="Health")
+
+
+@pytest.mark.django_db
+def test_category_color_assigned_from_palette():
+    user = User.objects.create_user(username="u1", password="Pass12345")
+    first = ActivityCategory.objects.create(user=user, name="Health")
+    second = ActivityCategory.objects.create(user=user, name="Work")
+    assert first.color == CATEGORY_COLOR_PALETTE[0]
+    assert second.color == CATEGORY_COLOR_PALETTE[1]
+
+    custom = ActivityCategory.objects.create(user=user, name="Custom", color="#123456")
+    assert custom.color == "#123456"
 
 
 @pytest.mark.django_db

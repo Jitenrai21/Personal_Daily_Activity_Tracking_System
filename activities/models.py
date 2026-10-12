@@ -1,11 +1,23 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+CATEGORY_COLOR_PALETTE = (  # noqa: RUF012
+    "#3CB371",  # green (chart actual top)
+    "#F0A500",  # amber (chart planned bottom)
+    "#9c6669",  # dusty rose (KPI activity-streak icon)
+    "#6d6593",  # periwinkle (KPI plan-streak icon)
+    "#5685e8",  # blue (info token)
+    "#3f8f6b",  # deep green (success token)
+)
+
+CATEGORY_NO_COLOR = "#9aa79c"
+
 
 class ActivityCategory(models.Model):
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
+    color = models.CharField(max_length=7, blank=True, default="")
 
     class Meta:
         constraints = [  # noqa: RUF012
@@ -13,6 +25,16 @@ class ActivityCategory(models.Model):
                 fields=["user", "name"], name="unique_category_per_user"
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.color:
+            used = (
+                ActivityCategory.objects.filter(user=self.user)
+                .exclude(pk=self.pk)
+                .count()
+            )
+            self.color = CATEGORY_COLOR_PALETTE[used % len(CATEGORY_COLOR_PALETTE)]
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name

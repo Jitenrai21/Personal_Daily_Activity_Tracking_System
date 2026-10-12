@@ -14,9 +14,9 @@
       <div class="kpi-icon"><i class="ti ti-target" aria-hidden="true"></i></div>
       <p class="kpi-label">Completion</p>
       <p class="kpi-value">
-        {% if kpis.completion_rate %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
+        {% if kpis.completion_rate is not None %}{{ kpis.completion_rate }}%{% else %}--{% endif %}
       </p>
-      {% if kpis.completion_rate %}
+      {% if kpis.completion_rate is not None %}
         <div class="kpi-progress-bar">
           <div class="kpi-progress-fill" style="width: {{ kpis.completion_rate }}%"></div>
         </div>
@@ -110,6 +110,16 @@
         <span class="hourly-hint">Shaded region suggests sleep hours (23:00–07:00)</span>
       </div>
     </div>
+    {% if hourly_legend %}
+      <div class="hourly-legend">
+        {% for item in hourly_legend %}
+          <span class="hourly-legend__item">
+            <span class="hourly-legend__swatch" style="background: {{ item.color }}"></span>
+            {{ item.name }}
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
     <div class="chart-frame dashboard-chart-frame">
       <canvas id="hourlyChart" aria-label="Weekly active time by hour of day"></canvas>
     </div>

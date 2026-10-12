@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from activities.models import ActivityCategory
+from activities.models import CATEGORY_NO_COLOR, ActivityCategory
 from analytics.models import AggregatedDaily
 from planner.models import ScheduleBlock
 from tracking.models import Session
@@ -30,6 +30,22 @@ def get_day_bounds_utc(user, date):
     )
 
 
+def capped_completion_rate(rows):
+    """Category-aware completion ratio in [0, 1].
+
+    Each category is capped at its own plan: overachieving in one
+    category never masks underachieving in another, so the result can
+    never exceed 1.0. Categories with no planned minutes are excluded
+    (unplanned time neither raises nor lowers completion). Returns None
+    when nothing was planned.
+    """
+    planned_total = sum(row["planned_minutes"] for row in rows)
+    if planned_total <= 0:
+        return None
+    achieved = sum(min(row["actual_minutes"], row["planned_minutes"]) for row in rows)
+    return achieved / planned_total
+
+
 def compute_daily(user, date):
     start_utc, end_utc = get_day_bounds_utc(user, date)
 
@@ -40,7 +56,7 @@ def compute_daily(user, date):
             start__lt=end_utc,
             end__gt=start_utc,
         )
-        .select_related("activity")
+        .select_related("activity", "activity__category", "category")
         .order_by("start")
     )
 
@@ -50,9 +66,17 @@ def compute_daily(user, date):
         duration_minutes__isnull=False,
         start__isnull=True,
         end__isnull=True,
-    )
+    ).select_related("activity", "activity__category", "category")
 
     total_minutes = 0
+    by_category = {}
+
+    def resolve_category(obj):
+        category = getattr(obj, "category", None) or getattr(
+            getattr(obj, "activity", None), "category", None
+        )
+        return category.pk if category else None
+
     for session in sessions:
         overlap_start = max(session.start, start_utc)
         overlap_end = min(session.end, end_utc)
@@ -61,24 +85,36 @@ def compute_daily(user, date):
             (overlap_end - overlap_start).total_seconds()
             - (session.paused_seconds or 0),
         )
-        total_minutes += int(seconds // 60)
+        minutes = int(seconds // 60)
+        total_minutes += minutes
+        by_category.setdefault(resolve_category(session), [0, 0])[0] += minutes
 
     for session in duration_only_sessions:
-        total_minutes += session.duration_minutes or 0
+        minutes = session.duration_minutes or 0
+        total_minutes += minutes
+        by_category.setdefault(resolve_category(session), [0, 0])[0] += minutes
 
-    blocks = ScheduleBlock.objects.filter(user=user, date=date)
+    blocks = ScheduleBlock.objects.filter(user=user, date=date).select_related(
+        "activity", "activity__category", "category"
+    )
     planned_minutes = 0
     for block in blocks:
+        block_minutes = 0
         if block.start_time and block.end_time:
             start_dt = dt.datetime.combine(date, block.start_time)
             end_dt = dt.datetime.combine(date, block.end_time)
-            planned_minutes += int((end_dt - start_dt).total_seconds() // 60)
+            block_minutes = int((end_dt - start_dt).total_seconds() // 60)
         elif block.duration_minutes:
-            planned_minutes += int(block.duration_minutes)
+            block_minutes = int(block.duration_minutes)
+        planned_minutes += block_minutes
+        by_category.setdefault(resolve_category(block), [0, 0])[1] += block_minutes
 
-    completion_rate = None
-    if planned_minutes > 0:
-        completion_rate = total_minutes / planned_minutes
+    completion_rate = capped_completion_rate(
+        [
+            {"actual_minutes": actual, "planned_minutes": planned}
+            for actual, planned in by_category.values()
+        ]
+    )
 
     return {
         "total_minutes": total_minutes,
@@ -468,11 +504,17 @@ def compute_daily_intensity(user, date):
     return intensity
 
 
-def compute_weekly_timer_sessions(user, start_date, end_date):
-    """Return timer sessions for each day in [start_date, end_date] with precise
+def compute_weekly_active_sessions(user, start_date, end_date):
+    """Return active sessions for each day in [start_date, end_date] with precise
     start/end hours (float) for Gantt-style rendering.
 
-    Returns dict: {"labels": [day_iso...], "days": [[{start, end, minutes}, ...], ...]}
+    Includes timer sessions (including a running one, end=NULL) and any
+    session with explicit start/end datetimes (manual or import entries).
+    Duration-only entries without a time range cannot be placed on the
+    timeline and are excluded.
+
+    Returns dict: {"labels": [day_iso...], "days": [[{start, end, minutes,
+    activity, category, color}, ...], ...], "legend": [{name, color}, ...]}
     """
     tz = get_user_timezone(user)
 
@@ -482,6 +524,7 @@ def compute_weekly_timer_sessions(user, start_date, end_date):
     ]
     labels = [d.isoformat() for d in dates]
     all_days = []
+    legend_map = {}
 
     for day in dates:
         day_start = dt.datetime.combine(day, dt.time.min, tzinfo=tz)
@@ -492,11 +535,13 @@ def compute_weekly_timer_sessions(user, start_date, end_date):
         sessions = (
             Session.objects.filter(
                 user=user,
-                source=Session.SOURCE_TIMER,
                 start__isnull=False,
                 start__lt=end_utc,
             )
-            .filter(Q(end__isnull=True) | Q(end__gt=start_utc))
+            .filter(
+                (Q(source=Session.SOURCE_TIMER) & Q(end__isnull=True))
+                | Q(end__gt=start_utc)
+            )
             .select_related("activity", "activity__category", "category")
             .order_by("start")
         )
@@ -521,24 +566,34 @@ def compute_weekly_timer_sessions(user, start_date, end_date):
             )
             end_hour = local_end.hour + local_end.minute / 60 + local_end.second / 3600
 
+            category = session.category or (
+                session.activity.category if session.activity else None
+            )
+            category_name = category.name if category else None
+            category_color = (
+                category.color if category and category.color else None
+            ) or CATEGORY_NO_COLOR
+            legend_key = category_name or "Uncategorized"
+            if legend_key not in legend_map:
+                legend_map[legend_key] = category_color
+
             day_sessions.append(
                 {
                     "start": round(start_hour, 3),
                     "end": round(end_hour, 3),
                     "minutes": round(effective_seconds / 60, 1),
                     "activity": session.activity.title if session.activity else None,
-                    "category": (
-                        session.category.name
-                        if session.category
-                        else (
-                            session.activity.category.name
-                            if session.activity and session.activity.category
-                            else None
-                        )
-                    ),
+                    "category": category_name,
+                    "color": category_color,
                 }
             )
 
         all_days.append(day_sessions)
 
-    return {"labels": labels, "days": all_days}
+    return {
+        "labels": labels,
+        "days": all_days,
+        "legend": [
+            {"name": name, "color": color} for name, color in legend_map.items()
+        ],
+    }
